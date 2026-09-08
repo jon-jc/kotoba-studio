@@ -215,9 +215,19 @@ Direct dependencies of the `pyproject.toml` manifests, plus `uv` as the developm
 
 | Package | License | Role |
 | --- | --- | --- |
+| [`fastapi`](https://github.com/fastapi/fastapi) | MIT | local OpenWhispr bridge |
+| [`faster-whisper`](https://github.com/SYSTRAN/faster-whisper) | MIT | local bilingual speech recognition |
 | [`hatchling`](https://github.com/pypa/hatch) | MIT | build backend |
+| [`numpy`](https://github.com/numpy/numpy) | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 | voice signal processing |
 | [`pydantic`](https://github.com/pydantic/pydantic) | MIT | runtime dependency of `deepseek-harness-sdk` |
+| [`pyinstaller`](https://github.com/pyinstaller/pyinstaller) | GPL-2.0-or-later WITH Bootloader-exception | voice desktop packaging only |
+| [`pyside6`](https://code.qt.io/cgit/pyside/pyside-setup.git/) | LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only | voice desktop runtime |
 | [`pytest`](https://github.com/pytest-dev/pytest) | MIT | test-only |
+| [`python-multipart`](https://github.com/Kludex/python-multipart) | Apache-2.0 | bridge audio upload parsing |
+| [`setuptools`](https://github.com/pypa/setuptools) | MIT | voice build backend |
+| [`sounddevice`](https://github.com/spatialaudio/python-sounddevice) | MIT | microphone capture |
+| [`soundfile`](https://github.com/bastibe/python-soundfile) | BSD-3-Clause | voice audio files |
+| [`uvicorn`](https://github.com/Kludex/uvicorn) | BSD-3-Clause | local bridge server |
 | [`uv`](https://github.com/astral-sh/uv) | MIT / Apache-2.0 | development workflow tool |
 
 ## First-party native packages

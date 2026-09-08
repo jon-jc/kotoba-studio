@@ -88,6 +88,16 @@ const PYTHON_METADATA: Record<string, { license: string; repo: string; role: str
   pydantic: { license: 'MIT', repo: 'https://github.com/pydantic/pydantic', role: 'runtime dependency of `deepseek-harness-sdk`' },
   hatchling: { license: 'MIT', repo: 'https://github.com/pypa/hatch', role: 'build backend' },
   pytest: { license: 'MIT', repo: 'https://github.com/pytest-dev/pytest', role: 'test-only' },
+  setuptools: { license: 'MIT', repo: 'https://github.com/pypa/setuptools', role: 'voice build backend' },
+  pyside6: { license: 'LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only', repo: 'https://code.qt.io/cgit/pyside/pyside-setup.git/', role: 'voice desktop runtime' },
+  'faster-whisper': { license: 'MIT', repo: 'https://github.com/SYSTRAN/faster-whisper', role: 'local bilingual speech recognition' },
+  sounddevice: { license: 'MIT', repo: 'https://github.com/spatialaudio/python-sounddevice', role: 'microphone capture' },
+  soundfile: { license: 'BSD-3-Clause', repo: 'https://github.com/bastibe/python-soundfile', role: 'voice audio files' },
+  numpy: { license: 'BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0', repo: 'https://github.com/numpy/numpy', role: 'voice signal processing' },
+  fastapi: { license: 'MIT', repo: 'https://github.com/fastapi/fastapi', role: 'local OpenWhispr bridge' },
+  uvicorn: { license: 'BSD-3-Clause', repo: 'https://github.com/Kludex/uvicorn', role: 'local bridge server' },
+  'python-multipart': { license: 'Apache-2.0', repo: 'https://github.com/Kludex/python-multipart', role: 'bridge audio upload parsing' },
+  pyinstaller: { license: 'GPL-2.0-or-later WITH Bootloader-exception', repo: 'https://github.com/pyinstaller/pyinstaller', role: 'voice desktop packaging only' },
 }
 
 type PythonMetadata = typeof PYTHON_METADATA

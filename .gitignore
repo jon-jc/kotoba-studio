@@ -44,3 +44,12 @@ worktrees/
 .agents/worktrees/
 .typert-*/
 native/system/test/bin/
+
+# Local voice models, recordings, build output, and development metadata.
+python/voice/build/
+python/voice/dist/
+python/voice/*.spec
+python/voice/src/*.egg-info/
+.venv/
+.codex/
+chatgpt-*/

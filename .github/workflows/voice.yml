@@ -1,0 +1,30 @@
+name: Kotoba voice
+on:
+  pull_request:
+    paths: ['python/voice/**', 'integrations/**', '.gitmodules', '.github/workflows/voice.yml']
+  push:
+    branches: [master]
+    paths: ['python/voice/**', 'integrations/**', '.gitmodules', '.github/workflows/voice.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  voice-tests:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e "python/voice[test]" httpx
+      - run: python -m pip install --no-deps -e python/sdk
+      - run: python -m pytest python/voice/tests
+      - run: python -m kotoba.desktop --smoke
+        env:
+          QT_QPA_PLATFORM: offscreen
+          KOTOBA_SCREENSHOT: kotoba-smoke.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kotoba-desktop-smoke
+          path: kotoba-smoke.png

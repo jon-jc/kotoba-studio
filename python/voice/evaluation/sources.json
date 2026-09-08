@@ -1,0 +1,7 @@
+{
+  "reference_policy": "Human verification required for accuracy claims; automatic captions measure agreement only.",
+  "sources": [
+    {"id": "lBVtvOpU80Q", "url": "https://www.youtube.com/watch?v=lBVtvOpU80Q", "language": "en", "development_windows": [[30, 50], [180, 200]], "held_out_windows": [[600, 620]]},
+    {"id": "J_1p8pCcFPU", "url": "https://www.youtube.com/watch?v=J_1p8pCcFPU", "language": "ja", "development_windows": [[30, 50], [180, 200]], "held_out_windows": [[600, 620]]}
+  ]
+}

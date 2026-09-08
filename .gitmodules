@@ -1,0 +1,3 @@
+[submodule "integrations/openwhispr"]
+	path = integrations/openwhispr
+	url = https://github.com/OpenWhispr/openwhispr.git
