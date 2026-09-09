@@ -1,0 +1,48 @@
+"""English/Japanese copy for the native desktop shell; upstream web owns its locale."""
+
+COPY = {
+    "Voice × intelligence\n日本語 / English": ("Voice × intelligence\nJapanese / English", "音声 × AI\n日本語 / English"),
+    "◈  Workspace / 会話": ("◈  Workspace", "◈  ワークスペース"),
+    "◉  Voice / 音声": ("◉  Voice", "◉  音声"),
+    "⌘  Code / コード": ("⌘  Code", "⌘  コード"),
+    "›_  Terminal": ("›_  Terminal", "›_  ターミナル"),
+    "⇄  Routing / 接続": ("⇄  Routing", "⇄  モデル接続"),
+    "⊞  Plugins": ("⊞  Plugins", "⊞  プラグイン"),
+    "Open workspace…\n作業フォルダー": ("Open workspace…", "作業フォルダーを開く…"),
+    "DEEPSEEK HARNESS\n+ OPENWHISPR\n\nLocal voice · Full runtime": ("DEEPSEEK HARNESS\n+ OPENWHISPR\n\nLocal voice · Full runtime", "DEEPSEEK HARNESS\n+ OPENWHISPR\n\nローカル音声 · 全機能"),
+    "Code explorer / コード": ("Code explorer", "コードエクスプローラー"),
+    "Read files in your selected workspace. Agent edits and diffs remain available in the full Harness workspace.": ("Read files in your selected workspace. Agent edits and diffs remain available in the full Harness workspace.", "選択した作業フォルダーのファイルを閲覧します。エージェントによる編集と差分は Harness ワークスペースで確認できます。"),
+    "Select a source file · ファイルを選択": ("Select a source file", "ソースファイルを選択"),
+    "Terminal / ターミナル": ("Terminal", "ターミナル"),
+    "Local PowerShell command console. For interactive PTY sessions, use the terminal tools in the Harness workspace.": ("Local PowerShell command console. For interactive PTY sessions, use the terminal tools in the Harness workspace.", "ローカルの PowerShell コンソールです。対話型 PTY セッションは Harness ワークスペースのターミナルツールをご利用ください。"),
+    "PowerShell command · Enter to run": ("PowerShell command · Enter to run", "PowerShell コマンド · Enter で実行"),
+    "Model routing / モデル接続": ("Model routing", "モデル接続"),
+    "The full Harness Models settings manage provider routes, credentials, endpoints, model discovery, and per-session selection.": ("The full Harness Models settings manage provider routes, credentials, endpoints, model discovery, and per-session selection.", "Harness のモデル設定で、プロバイダー、認証情報、エンドポイント、モデルの検出、会話ごとのモデル選択を管理します。"),
+    "01   Add a provider": ("01   Add a provider", "01   プロバイダーを追加"),
+    "Open Workspace → Settings → Models. Add DeepSeek or another supported provider, or configure a compatible gateway with its endpoint and model ID.": ("Open Workspace → Settings → Models. Add DeepSeek or another supported provider, or configure a compatible gateway with its endpoint and model ID.", "Workspace → Settings → Models を開きます。DeepSeek などのプロバイダーを追加するか、互換ゲートウェイのエンドポイントとモデル ID を設定します。"),
+    "02   Connect credentials": ("02   Connect credentials", "02   認証情報を設定"),
+    "Store each API key through Harness's credential manager. Keep separate keys per provider. This app does not put credentials into source or session exports.": ("Store each API key through Harness's credential manager. Keep separate keys per provider. This app does not put credentials into source or session exports.", "Harness の認証情報管理で API キーを保存します。プロバイダーごとにキーを管理してください。認証情報はソースコードや会話のエクスポートには含まれません。"),
+    "03   Choose the route": ("03   Choose the route", "03   接続先を選択"),
+    "Choose a provider/model in the chat composer. Voice-direct SDK settings currently select the official DeepSeek route; reviewed voice text can also be copied into any Harness chat.": ("Choose a provider/model in the chat composer. Voice-direct SDK settings currently select the official DeepSeek route; reviewed voice text can also be copied into any Harness chat.", "チャット入力欄でプロバイダーとモデルを選択します。音声からの直接送信は公式 DeepSeek 接続を使用します。確認済みの文字起こしは、任意の Harness チャットにコピーできます。"),
+    "Open full Harness settings  →": ("Open full Harness settings  →", "Harness の設定を開く  →"),
+    "Voice-direct API settings / 音声API設定": ("Voice-direct API settings", "音声 API 設定"),
+    "Plugin workspace / プラグイン": ("Plugin workspace", "プラグイン"),
+    "The original Cordis plugin architecture remains intact. Inspect active plugins and model adapters in Harness Settings → Plugins.": ("The original Cordis plugin architecture remains intact. Inspect active plugins and model adapters in Harness Settings → Plugins.", "Cordis のプラグイン構成をそのまま使用します。Harness の Settings → Plugins で、有効なプラグインとモデルアダプターを確認できます。"),
+    "Tools · Agent presets · Model adapters · Skills · Subagents · Workflows\n\nUse the upstream plugin interface to inspect the complete composition. External plugin installation follows the dsh profile workflow and requires pnpm. Plugins execute code with the runtime's access; inspect their source before installing.": ("Tools · Agent presets · Model adapters · Skills · Subagents · Workflows\n\nUse the upstream plugin interface to inspect the complete composition. External plugin installation follows the dsh profile workflow and requires pnpm. Plugins execute code with the runtime's access; inspect their source before installing.", "ツール · エージェントプリセット · モデルアダプター · スキル · サブエージェント · ワークフロー\n\nHarness のプラグイン画面で構成全体を確認できます。外部プラグインのインストールは dsh プロファイルの手順に従い、pnpm が必要です。プラグインはランタイムの権限でコードを実行するため、導入前にソースを確認してください。"),
+    "Open full Harness workspace  →": ("Open full Harness workspace  →", "Harness ワークスペースを開く  →"),
+    "starting": ("Starting Harness…", "Harness を起動中…"),
+    "connected": ("● Runtime connected", "● ランタイム接続済み"),
+    "stopped": ("Runtime stopped", "ランタイム停止"),
+    "failed": ("Runtime failed to start", "ランタイムの起動に失敗しました"),
+    "timeout": ("Startup timed out. Inspect local Harness configuration.", "起動がタイムアウトしました。Harness の設定を確認してください。"),
+    "setup": ("Complete Harness setup first.", "Harness の初期設定を完了してください。"),
+    "file_large": ("Preview limited to 1 MiB. Open larger files in your editor.", "プレビューは1 MiBまでです。大きなファイルはエディターで開いてください。"),
+    "file_invalid": ("This file cannot be displayed as UTF-8 text.", "このファイルは UTF-8 テキストとして表示できません。"),
+    "terminal_failed": ("PowerShell could not start.", "PowerShell を起動できませんでした。"),
+    "scope": ("Interface language · desktop and voice panels", "表示言語 · デスクトップと音声パネル"),
+    "paste": ("Text copied. Paste into your chosen chat and review before sending.", "コピーしました。チャットに貼り付け、確認してから送信してください。"),
+}
+
+
+def translate(key: str, locale: str) -> str:
+    return COPY[key][0 if locale == "en" else 1]

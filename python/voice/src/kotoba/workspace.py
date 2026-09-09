@@ -11,12 +11,13 @@ from PySide6.QtCore import QProcess, QProcessEnvironment, QTimer, QUrl, Qt
 from PySide6.QtGui import QFont, QTextCursor
 from PySide6.QtWidgets import (QApplication, QFileSystemModel, QFileDialog, QFrame, QHBoxLayout, QLabel,
     QLineEdit, QMainWindow, QPlainTextEdit, QPushButton, QSplitter, QStackedWidget,
-    QTreeView, QVBoxLayout, QWidget)
+    QTreeView, QVBoxLayout, QWidget, QComboBox)
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile
 from .desktop import Window as VoiceWindow, STYLE
 from .harness import runtime_path
 from .terminal import powershell_arguments
+from .workspace_copy import COPY as SHELL_COPY, translate
 
 
 class LocalPage(QWebEnginePage):
@@ -34,7 +35,7 @@ class LocalPage(QWebEnginePage):
 class Workspace(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.voice = VoiceWindow()
+        self.voice = VoiceWindow(embedded=True)
         self.setWindowTitle("Kotoba Studio · ことば — DeepSeek Harness")
         self.resize(1536, 960)
         self.setMinimumSize(1180, 780)
@@ -42,8 +43,8 @@ class Workspace(QMainWindow):
         self.backend = QProcess(self)
         self.backend.setProcessChannelMode(QProcess.MergedChannels)
         self.backend.readyReadStandardOutput.connect(self.backend_output)
-        self.backend.errorOccurred.connect(lambda _: self.health.setText("Runtime failed to start · ランタイム起動失敗"))
-        self.backend.finished.connect(lambda *_: self.health.setText("Runtime stopped · 停止"))
+        self.backend.errorOccurred.connect(lambda _: self.set_health("failed"))
+        self.backend.finished.connect(lambda *_: self.set_health("stopped"))
         self.output = ""
         self.url = None
         self.console_process = QProcess(self)
@@ -51,6 +52,10 @@ class Workspace(QMainWindow):
         self.console_process.setProcessChannelMode(QProcess.MergedChannels)
         self.console_process.readyReadStandardOutput.connect(self.console_output)
         self.build()
+        self.voice.locale_changed.connect(self.apply_locale)
+        self.voice.draft_handoff.connect(self.handoff_draft)
+        self.voice.busy_changed.connect(lambda busy: self.locale_toggle.setEnabled(not busy))
+        self.apply_locale(self.voice.locale)
         self.start_backend()
 
     def build(self):
@@ -99,7 +104,8 @@ class Workspace(QMainWindow):
         folder = QPushButton("Open workspace…\n作業フォルダー")
         folder.clicked.connect(self.choose_workspace)
         side.addWidget(folder)
-        self.health = QLabel("Starting Harness…\n起動中")
+        self.health_key = "starting"
+        self.health = QLabel()
         self.health.setWordWrap(True)
         self.health.setStyleSheet("color:#9fb8aa;font-size:11px")
         side.addWidget(self.health)
@@ -107,9 +113,63 @@ class Workspace(QMainWindow):
         footer.setStyleSheet("font-size:10px;color:#738f7d")
         side.addWidget(footer)
         layout.addWidget(rail)
-        layout.addWidget(self.stack, 1)
+        body = QVBoxLayout()
+        body.setContentsMargins(0, 0, 0, 0)
+        bar = QHBoxLayout()
+        bar.setContentsMargins(24, 10, 20, 10)
+        self.locale_scope = QLabel()
+        self.locale_scope.setStyleSheet("color:#91a69d;font-size:12px")
+        bar.addWidget(self.locale_scope)
+        bar.addStretch()
+        self.locale_toggle = QComboBox()
+        self.locale_toggle.setObjectName("interface-language")
+        self.locale_toggle.setAccessibleName("Interface language / 表示言語")
+        self.locale_toggle.addItem("English", "en")
+        self.locale_toggle.addItem("日本語", "ja")
+        self.locale_toggle.currentIndexChanged.connect(self.change_locale)
+        bar.addWidget(self.locale_toggle)
+        body.addLayout(bar)
+        body.addWidget(self.stack, 1)
+        layout.addLayout(body, 1)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(lambda index: self.nav[index].setChecked(True))
+
+    def change_locale(self):
+        self.voice.set_locale(self.locale_toggle.currentData())
+        self.apply_locale(self.voice.locale)
+
+    def apply_locale(self, locale):
+        """Update shell labels without rebuilding web, terminal, or file state."""
+        self.locale_toggle.blockSignals(True)
+        self.locale_toggle.setCurrentIndex(self.locale_toggle.findData(locale))
+        self.locale_toggle.blockSignals(False)
+        self.locale_scope.setText(translate("scope", locale))
+        for widget in self.centralWidget().findChildren(QWidget):
+            if widget == self.voice or self.voice.isAncestorOf(widget):
+                continue
+            placeholder = isinstance(widget, (QLineEdit, QPlainTextEdit))
+            if not placeholder and not isinstance(widget, (QLabel, QPushButton)):
+                continue
+            text = widget.placeholderText() if placeholder else widget.text()
+            key = widget.property("localeSource") or text
+            if key in SHELL_COPY:
+                widget.setProperty("localeSource", key)
+                if placeholder:
+                    widget.setPlaceholderText(translate(key, locale))
+                else:
+                    widget.setText(translate(key, locale))
+        if self.health_key:
+            self.set_health(self.health_key)
+
+    def set_health(self, key):
+        self.health_key = key
+        self.health.setText(translate(key, self.voice.locale))
+
+    def handoff_draft(self, text):
+        QApplication.clipboard().setText(text)
+        self.stack.setCurrentIndex(0)
+        self.web.setFocus()
+        self.set_health("paste")
 
     def panel(self, title, description):
         widget = QWidget()
@@ -155,7 +215,7 @@ class Workspace(QMainWindow):
             return
         try:
             if path.stat().st_size > 1024 * 1024:
-                self.code.setPlainText("Preview limited to 1 MiB. Open larger files in your editor.")
+                self.code.setPlainText(translate("file_large", self.voice.locale))
                 return
             content = path.read_text(encoding="utf-8")
             if "\x00" in content:
@@ -163,7 +223,7 @@ class Workspace(QMainWindow):
             self.code.setPlainText(content)
             self.path_label.setText(str(path))
         except (OSError, UnicodeError):
-            self.code.setPlainText("This file cannot be displayed as UTF-8 text.")
+            self.code.setPlainText(translate("file_invalid", self.voice.locale))
 
     def terminal_page(self):
         widget, layout = self.panel("Terminal / ターミナル", "Local PowerShell command console. For interactive PTY sessions, use the terminal tools in the Harness workspace.")
@@ -187,7 +247,7 @@ class Workspace(QMainWindow):
             self.console_decoder.reset()
             self.console_process.start("powershell.exe", powershell_arguments())
             if not self.console_process.waitForStarted(3000):
-                self.console.appendPlainText("PowerShell could not start.")
+                self.console.appendPlainText(translate("terminal_failed", self.voice.locale))
                 return
         self.console_process.write((command + "\n").encode("utf-8"))
         self.command.clear()
@@ -254,7 +314,7 @@ class Workspace(QMainWindow):
                 QTimer.singleShot(200, lambda: self.web.page().runJavaScript(
                     "Array.from(document.querySelectorAll('button')).find(b => " + json.dumps(labels) + ".includes(b.textContent.trim()))?.click()"))
             else:
-                self.health.setText("Complete Harness setup first.\n初期設定を完了してください。")
+                self.set_health("setup")
         self.web.page().runJavaScript(script, opened)
 
     def choose_workspace(self):
@@ -270,6 +330,7 @@ class Workspace(QMainWindow):
         try:
             runtime = runtime_path()
         except FileNotFoundError as error:
+            self.health_key = None
             self.health.setText(str(error))
             return
         environment = QProcessEnvironment.systemEnvironment()
@@ -286,7 +347,7 @@ class Workspace(QMainWindow):
 
     def startup_deadline(self):
         if self.url is None and self.backend.state() != QProcess.NotRunning:
-            self.health.setText("Startup timed out. Inspect local Harness configuration.")
+            self.set_health("timeout")
             self.backend.kill()
 
     def backend_output(self):
@@ -296,7 +357,7 @@ class Workspace(QMainWindow):
             self.url = QUrl(match.group())
             self.web.page().origin = self.url
             self.web.load(self.url)
-            self.health.setText("● Runtime connected\nローカル接続")
+            self.set_health("connected")
 
     def closeEvent(self, event):
         if self.voice.job is not None or self.voice.stream is not None:
@@ -338,8 +399,21 @@ def main():
                 return
             completed = True
             screenshot = Path(os.environ.get("KOTOBA_SCREENSHOT", "kotoba-workspace.png"))
+            original_locale = window.voice.locale
+            for locale in ("en", "ja"):
+                window.locale_toggle.setCurrentIndex(window.locale_toggle.findData(locale))
+                if window.voice.locale != locale:
+                    window.close()
+                    app.exit(1)
+                    return
+                app.processEvents()
+                window.grab().save(str(screenshot.with_name(screenshot.stem + "-" + locale + ".png")))
+            window.locale_toggle.setCurrentIndex(window.locale_toggle.findData(original_locale))
             window.grab().save(str(screenshot))
-            screenshot.with_suffix(".json").write_text(json.dumps({"runtime_ready": True, **state}), encoding="utf-8")
+            window.stack.setCurrentIndex(1)
+            app.processEvents()
+            window.grab().save(str(screenshot.with_name(screenshot.stem + "-voice.png")))
+            screenshot.with_suffix(".json").write_text(json.dumps({"runtime_ready": True, "locale_toggle": True, **state}), encoding="utf-8")
             window.close()
         timer = QTimer(window)
         timer.timeout.connect(check)
