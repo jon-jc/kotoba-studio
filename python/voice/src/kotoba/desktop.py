@@ -192,7 +192,7 @@ class Window(QMainWindow):
         switch.clicked.connect(self.switch_locale)
         self.locale_button = switch
         side.addWidget(switch)
-        side.addWidget(self.label("DEEPSEEK HARNESS\nFull SDK profile · v0.2.1", "muted"))
+        side.addWidget(self.label("DEEPSEEK HARNESS\nFull SDK profile · v0.2.2", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
         content.setSpacing(16)

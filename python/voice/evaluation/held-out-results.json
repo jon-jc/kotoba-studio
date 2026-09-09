@@ -1,0 +1,85 @@
+{
+  "qualification": "Unverified caption agreement on held-out windows. One clip per language per model; not a production accuracy claim.",
+  "rows": [
+    {
+      "model": "large-v3",
+      "source_id": "lBVtvOpU80Q",
+      "start": 600,
+      "end": 620,
+      "split": "held_out",
+      "audio_sha256": "f78863a7799615a74d9c0d54e8fc8e99777d5be1aa6d38a546229d207e98ab2a",
+      "device": "cpu",
+      "compute_type": "int8",
+      "latency_seconds": 8.796095300000161,
+      "reference_provenance": "youtube_captions_unverified",
+      "caption_agreement": {
+        "metric": "WER",
+        "errors": 1,
+        "reference_units": 51,
+        "error_rate": 0.0196078431372549,
+        "silence_hallucination": false,
+        "exact_match": false
+      }
+    },
+    {
+      "model": "large-v3",
+      "source_id": "J_1p8pCcFPU",
+      "start": 600,
+      "end": 620,
+      "split": "held_out",
+      "audio_sha256": "8c81a3e7306728e979d17b187000c0775426e7e551aa627a864d60b9ae9b1e39",
+      "device": "cpu",
+      "compute_type": "int8",
+      "latency_seconds": 10.718867700001283,
+      "reference_provenance": "youtube_captions_unverified",
+      "caption_agreement": {
+        "metric": "CER",
+        "errors": 39,
+        "reference_units": 116,
+        "error_rate": 0.33620689655172414,
+        "silence_hallucination": false,
+        "exact_match": false
+      }
+    },
+    {
+      "model": "turbo",
+      "source_id": "lBVtvOpU80Q",
+      "start": 600,
+      "end": 620,
+      "split": "held_out",
+      "audio_sha256": "f78863a7799615a74d9c0d54e8fc8e99777d5be1aa6d38a546229d207e98ab2a",
+      "device": "cpu",
+      "compute_type": "int8",
+      "latency_seconds": 4.927358000000822,
+      "reference_provenance": "youtube_captions_unverified",
+      "caption_agreement": {
+        "metric": "WER",
+        "errors": 2,
+        "reference_units": 51,
+        "error_rate": 0.0392156862745098,
+        "silence_hallucination": false,
+        "exact_match": false
+      }
+    },
+    {
+      "model": "turbo",
+      "source_id": "J_1p8pCcFPU",
+      "start": 600,
+      "end": 620,
+      "split": "held_out",
+      "audio_sha256": "8c81a3e7306728e979d17b187000c0775426e7e551aa627a864d60b9ae9b1e39",
+      "device": "cpu",
+      "compute_type": "int8",
+      "latency_seconds": 5.343725900002028,
+      "reference_provenance": "youtube_captions_unverified",
+      "caption_agreement": {
+        "metric": "CER",
+        "errors": 39,
+        "reference_units": 116,
+        "error_rate": 0.33620689655172414,
+        "silence_hallucination": false,
+        "exact_match": false
+      }
+    }
+  ]
+}

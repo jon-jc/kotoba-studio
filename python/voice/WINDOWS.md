@@ -1,6 +1,6 @@
 # Kotoba Studio for Windows
 
-The installer is `python/voice/dist/Kotoba-Studio-0.2.1-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes Python, Qt WebEngine, the complete matching Harness executable, ripgrep, and the OpenWhispr-derived capture helper. Speech weights download on first use and are not included in the installer.
+The installer is `python/voice/dist/Kotoba-Studio-0.2.2-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes Python, Qt WebEngine, the complete matching Harness executable, ripgrep, and the OpenWhispr-derived capture helper. Speech weights download on first use and are not included in the installer.
 
 ## Try the application
 
@@ -17,6 +17,8 @@ Audio capture remains in memory. Only text you send goes to the model provider. 
 Japanese/English voice input is supported. The original Harness interface retains its upstream English/Chinese locale set; the added voice interface supports Japanese/English. Speaker diarization, streaming interruption, automatic provider failover, and system-wide paste-at-cursor dictation are not implemented in this milestone.
 
 ## Build
+
+The PowerShell console initializes UTF-8 before reading its first command and decodes output across chunk boundaries, preserving Japanese text. The Windows test executes Japanese commands and checks their output and persistent session state.
 
 Use the repository's matching runtime build described in [the Python runtime README](../sdk-runtime/README.md). Build the capture helper from [its source](native/windows-system-audio-helper.c) using a Windows C compiler; place `kotoba-audio-capture.exe` beside the matching runtime and ripgrep executables under `dist-exe/`. The source includes MSVC and MinGW commands. Install `python/voice[build]` and the same-checkout Python SDK in your environment.
 

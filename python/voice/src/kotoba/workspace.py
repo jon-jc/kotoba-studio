@@ -2,12 +2,13 @@
 
 import os
 import json
+import codecs
 from pathlib import Path
 import re
 import sys
 
 from PySide6.QtCore import QProcess, QProcessEnvironment, QTimer, QUrl, Qt
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QTextCursor
 from PySide6.QtWidgets import (QApplication, QFileSystemModel, QFileDialog, QFrame, QHBoxLayout, QLabel,
     QLineEdit, QMainWindow, QPlainTextEdit, QPushButton, QSplitter, QStackedWidget,
     QTreeView, QVBoxLayout, QWidget)
@@ -15,6 +16,7 @@ from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile
 from .desktop import Window as VoiceWindow, STYLE
 from .harness import runtime_path
+from .terminal import powershell_arguments
 
 
 class LocalPage(QWebEnginePage):
@@ -45,6 +47,7 @@ class Workspace(QMainWindow):
         self.output = ""
         self.url = None
         self.console_process = QProcess(self)
+        self.console_decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
         self.console_process.setProcessChannelMode(QProcess.MergedChannels)
         self.console_process.readyReadStandardOutput.connect(self.console_output)
         self.build()
@@ -181,16 +184,20 @@ class Workspace(QMainWindow):
             return
         if self.console_process.state() == QProcess.NotRunning:
             self.console_process.setWorkingDirectory(self.voice.workspace)
-            self.console_process.start("powershell.exe", ["-NoLogo", "-NoProfile", "-NoExit", "-Command", "-"])
+            self.console_decoder.reset()
+            self.console_process.start("powershell.exe", powershell_arguments())
             if not self.console_process.waitForStarted(3000):
                 self.console.appendPlainText("PowerShell could not start.")
                 return
-        self.console.appendPlainText("PS > " + command)
         self.console_process.write((command + "\n").encode("utf-8"))
         self.command.clear()
 
     def console_output(self):
-        self.console.insertPlainText(bytes(self.console_process.readAllStandardOutput()).decode("utf-8", errors="replace"))
+        text = self.console_decoder.decode(bytes(self.console_process.readAllStandardOutput()))
+        cursor = self.console.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        cursor.insertText(text)
+        self.console.setTextCursor(cursor)
         scrollbar = self.console.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
 
