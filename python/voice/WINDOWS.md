@@ -1,6 +1,6 @@
 # Kotoba Studio for Windows
 
-The installer is `python/voice/dist/Kotoba-Studio-0.2.2-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes Python, Qt WebEngine, the complete matching Harness executable, ripgrep, and the OpenWhispr-derived capture helper. Speech weights download on first use and are not included in the installer.
+The installer is `python/voice/dist/Kotoba-Studio-0.3.0-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes Python, Qt WebEngine, the complete matching Harness executable, ripgrep, and the OpenWhispr-derived capture helper. Speech weights download on first use and are not included in the installer.
 
 ## Try the application
 

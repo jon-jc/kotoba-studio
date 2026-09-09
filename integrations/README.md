@@ -20,6 +20,8 @@ The bridge admits one operation at a time and returns HTTP 429 while busy. An ag
 
 The dictionary-echo detector is a Python adaptation of OpenWhispr's `src/utils/dictionaryEchoFilter.js`, retaining the MIT copyright notice in `python/voice/THIRD_PARTY_LICENSES/OpenWhispr.txt`. Kotoba flags suspected dictionary echoes for review instead of silently discarding text. Its conservative cleanup preserves Japanese fillers, numbers, and bilingual terms; raw transcripts remain in the session export.
 
+Kotoba also ports `src/utils/snippets.ts` into [the saved-phrase matcher](../python/voice/src/kotoba/snippets.py), retaining attribution. Its local phrase editor and explicit expansion action support reusable Japanese/English instructions and templates, with longest-first Unicode matching and undo before sending. See [the voice workflow](../python/voice/README.md) for usage and storage. The native application capture helper is adapted from OpenWhispr's `resources/windows-system-audio-helper.c` and adds process-tree inclusion.
+
 The translation manifest excludes `integrations/` because it contains independently maintained upstream documentation, and `python/voice/` because this fork's voice documentation targets English/Japanese rather than the parent's English/Chinese pairing contract. Other upstream translation checks remain active.
 
 ## 日本語

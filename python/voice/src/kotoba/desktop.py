@@ -9,12 +9,12 @@ import sys
 from time import perf_counter
 
 import numpy as np
-from PySide6.QtCore import Qt, QThread, QTimer, Signal, QStandardPaths
-from PySide6.QtGui import QFont
+from PySide6.QtCore import Qt, QThread, QTimer, Signal, QStandardPaths, QSettings
+from PySide6.QtGui import QFont, QTextCursor
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
     QFileDialog, QFormLayout, QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
     QMessageBox, QPlainTextEdit, QPushButton, QSplitter, QTabWidget, QTextBrowser,
-    QVBoxLayout, QWidget)
+    QVBoxLayout, QWidget, QListWidget)
 from PySide6.QtTextToSpeech import QTextToSpeech
 
 from .harness import HarnessSession
@@ -22,6 +22,7 @@ from .speech import SpeechConfig, SpeechEngine, load_audio
 from .evaluate import score
 from .audio_sources import sources, LoopbackStream
 from .dictation import format_dictation
+from .snippets import load_snippets, save_snippets, expand_snippets
 
 
 COPY = {
@@ -110,11 +111,26 @@ class Job(QThread):
 
 
 class Window(QMainWindow):
-    def __init__(self):
+    locale_changed = Signal(str)
+    busy_changed = Signal(bool)
+    draft_handoff = Signal(str)
+
+    def __init__(self, embedded=False):
         super().__init__()
+        self.embedded = embedded
         self.locale = "ja"
         self.home = Path(os.environ.get("KOTOBA_HOME") or QStandardPaths.writableLocation(QStandardPaths.AppLocalDataLocation))
         self.home.mkdir(parents=True, exist_ok=True)
+        self.preferences = QSettings(str(self.home / "preferences.ini"), QSettings.IniFormat)
+        self.locale = self.preferences.value("locale", "ja")
+        if self.locale not in COPY:
+            self.locale = "ja"
+        self.snippets = []
+        self.snippet_error = ""
+        try:
+            self.snippets = load_snippets(self.home / "snippets.json")
+        except (OSError, ValueError) as error:
+            self.snippet_error = str(error)
         self.engine = SpeechEngine(self.home / "models")
         self.harness = HarnessSession(self.home / "harness")
         self.config = SpeechConfig()
@@ -192,10 +208,11 @@ class Window(QMainWindow):
         switch.clicked.connect(self.switch_locale)
         self.locale_button = switch
         side.addWidget(switch)
-        side.addWidget(self.label("DEEPSEEK HARNESS\nFull SDK profile · v0.2.2", "muted"))
+        switch.setVisible(not self.embedded)
+        side.addWidget(self.label("DEEPSEEK HARNESS\nFull SDK profile · v0.3.0", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
-        content.setSpacing(16)
+        content.setSpacing(12)
         content.addWidget(self.label(self.t("workspace"), "muted"))
         content.addWidget(self.label(self.t("welcome"), "hero"))
         self.status = self.label(self.t("ready"), "muted")
@@ -243,19 +260,34 @@ class Window(QMainWindow):
         self.audio_source.setMinimumWidth(280)
         self.audio_source.setToolTip("Application selection captures its process tree, including child processes. Browser tabs may share a process. / アプリのプロセスツリーを録音します。")
         source_row.addWidget(self.audio_source, 1)
-        self.refresh_sources = QPushButton("↻ Sources / 音声入力")
+        self.refresh_sources = QPushButton("↻ Refresh sources" if self.locale == "en" else "↻ 音声入力を更新")
         self.refresh_sources.clicked.connect(self.load_sources)
         source_row.addWidget(self.refresh_sources)
         content.addLayout(source_row)
         self.load_sources()
         copy_row = QHBoxLayout()
-        copy_button = QPushButton("Copy reviewed text / 確認した文をコピー")
+        copy_button = QPushButton("Copy reviewed text" if self.locale == "en" else "確認した文をコピー")
         copy_button.clicked.connect(lambda: QApplication.clipboard().setText(self.draft.toPlainText()))
-        tidy_button = QPushButton("Tidy spacing / 空白を整理")
+        tidy_button = QPushButton("Tidy spacing" if self.locale == "en" else "空白を整理")
         tidy_button.clicked.connect(lambda: self.draft.setPlainText(format_dictation(self.draft.toPlainText())))
         copy_row.addWidget(copy_button)
         copy_row.addWidget(tidy_button)
         content.addLayout(copy_row)
+        phrases = QHBoxLayout()
+        self.phrase_button = QPushButton("Saved phrases…" if self.locale == "en" else "定型文を管理…")
+        self.phrase_button.clicked.connect(self.edit_snippets)
+        self.expand_button = QPushButton("Expand phrases" if self.locale == "en" else "定型文を展開")
+        self.expand_button.clicked.connect(self.expand_phrases)
+        undo = QPushButton("Undo" if self.locale == "en" else "元に戻す")
+        undo.clicked.connect(self.draft.undo)
+        phrases.addWidget(self.phrase_button)
+        phrases.addWidget(self.expand_button)
+        phrases.addWidget(undo)
+        content.addLayout(phrases)
+        if self.embedded:
+            handoff = QPushButton("Copy and open Harness chat →" if self.locale == "en" else "コピーして Harness チャットを開く →")
+            handoff.clicked.connect(self.handoff)
+            copy_row.addWidget(handoff)
         controls = QHBoxLayout()
         self.record_button = self.button("record", self.record, "record")
         self.import_button = self.button("import", self.import_audio)
@@ -283,9 +315,10 @@ class Window(QMainWindow):
                 self.audio_source.setCurrentIndex(self.audio_source.count() - 1)
 
     def busy(self, value):
+        self.busy_changed.emit(value)
         for widget in (self.record_button, self.import_button, self.send_button, self.prepare_button,
                        self.settings_button, self.new_button, self.locale_button, self.language, self.speech_model,
-                       self.audio_source, self.refresh_sources):
+                       self.audio_source, self.refresh_sources, self.phrase_button, self.expand_button):
             widget.setEnabled(not value)
 
     def work(self, task, result):
@@ -458,12 +491,19 @@ class Window(QMainWindow):
         self.status.setText(self.t("ready"))
 
     def switch_locale(self):
+        self.set_locale("en" if self.locale == "ja" else "ja")
+
+    def set_locale(self, locale):
+        if locale == self.locale or locale not in COPY or self.job is not None or self.stream is not None:
+            return
         draft, conversation, activity = self.draft.toPlainText(), self.conversation.toPlainText(), self.activity.toPlainText()
         reference, score_text = self.reference.toPlainText(), self.score_label.text()
         metrics = [metric.text() for metric in self.metrics]
         audio_source = self.audio_source.currentData()
         language, model = self.language.currentIndex(), self.speech_model.currentIndex()
-        self.locale = "en" if self.locale == "ja" else "ja"
+        spoken, tab = self.speak.isChecked(), self.tabs.currentIndex()
+        self.locale = locale
+        self.preferences.setValue("locale", locale)
         self.build()
         self.draft.setPlainText(draft)
         if self.entries:
@@ -473,11 +513,127 @@ class Window(QMainWindow):
         self.speech_model.setCurrentIndex(model)
         self.reference.setPlainText(reference)
         self.score_label.setText(score_text)
+        self.speak.setChecked(spoken)
+        self.tabs.setCurrentIndex(tab)
+        if self.last_transcript:
+            self.review.setText(self.t("review") + " · " + ", ".join(self.last_transcript.review_reasons)
+                               if self.last_transcript.review_reasons else self.t("clean"))
         for metric, text in zip(self.metrics, metrics):
             metric.setText(text)
         for index in range(self.audio_source.count()):
             if self.audio_source.itemData(index) == audio_source:
                 self.audio_source.setCurrentIndex(index)
+        self.locale_changed.emit(locale)
+
+    def expand_phrases(self):
+        """Keep the raw transcript in session evidence; expansion is one undoable edit."""
+        text = self.draft.toPlainText()
+        expanded = expand_snippets(text, self.snippets)
+        if expanded != text:
+            cursor = self.draft.textCursor()
+            cursor.beginEditBlock()
+            cursor.select(QTextCursor.Document)
+            cursor.insertText(expanded)
+            cursor.endEditBlock()
+        self.review.setText(self.t("clean"))
+
+    def handoff(self):
+        text = self.draft.toPlainText().strip()
+        if text:
+            self.draft_handoff.emit(text)
+
+    def edit_snippets(self):
+        if self.snippet_error:
+            self.failure(self.snippet_error)
+            return
+        def tr(en, ja):
+            return en if self.locale == "en" else ja
+        dialog = QDialog(self)
+        dialog.setWindowTitle(tr("Saved phrases", "定型文"))
+        dialog.resize(720, 620)
+        layout = QVBoxLayout(dialog)
+        hint = QLabel(tr("Say a short trigger, then choose Expand phrases before sending. Japanese triggers must be separated by punctuation or spaces. Saved locally; never sent automatically.",
+                         "短い合図を話し、送信前に「定型文を展開」を押します。日本語の合図は句読点や空白で区切ってください。端末内に保存し、自動送信しません。"))
+        hint.setWordWrap(True)
+        layout.addWidget(hint)
+        items = [dict(item) for item in self.snippets]
+        listing = QListWidget()
+        layout.addWidget(listing)
+        trigger = QLineEdit()
+        trigger.setMaxLength(100)
+        trigger.setPlaceholderText(tr("Trigger, e.g. meeting template", "合図（例：議事録テンプレート）"))
+        replacement = QPlainTextEdit()
+        replacement.setPlaceholderText(tr("Expanded text, including multiple lines", "展開する文章（複数行可）"))
+        layout.addWidget(trigger)
+        layout.addWidget(replacement)
+        message = QLabel()
+        message.setWordWrap(True)
+        layout.addWidget(message)
+        def refresh():
+            listing.clear()
+            listing.addItems([item["trigger"] for item in items])
+        def select(row):
+            if 0 <= row < len(items):
+                trigger.setText(items[row]["trigger"])
+                replacement.setPlainText(items[row]["replacement"])
+        listing.currentRowChanged.connect(select)
+        refresh()
+        def apply_item():
+            from .snippets import validate_snippets
+            row = listing.currentRow()
+            updated = [dict(item) for item in items]
+            item = {"trigger": trigger.text(), "replacement": replacement.toPlainText()}
+            if row >= 0:
+                updated[row] = item
+            else:
+                updated.append(item)
+            try:
+                checked = validate_snippets(updated)
+            except ValueError as error:
+                message.setText(str(error))
+                return
+            items[:] = checked
+            refresh()
+            trigger.clear()
+            replacement.clear()
+            message.setText(tr("Phrase applied. Save to keep changes.", "定型文を反映しました。保存すると確定します。"))
+        def new():
+            listing.setCurrentRow(-1)
+            trigger.clear()
+            replacement.clear()
+        def remove():
+            row = listing.currentRow()
+            if row >= 0:
+                items.pop(row)
+                refresh()
+                new()
+        row = QHBoxLayout()
+        for caption, action in [(tr("New", "新規"), new), (tr("Apply phrase", "定型文を反映"), apply_item), (tr("Delete", "削除"), remove)]:
+            button = QPushButton(caption)
+            button.clicked.connect(action)
+            row.addWidget(button)
+        layout.addLayout(row)
+        buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        buttons.button(QDialogButtonBox.Save).setText(tr("Save", "保存"))
+        buttons.button(QDialogButtonBox.Cancel).setText(tr("Cancel", "キャンセル"))
+        def save():
+            # Require explicit application so an unfinished edit is never silently lost.
+            selected = listing.currentRow()
+            current = items[selected] if selected >= 0 else {"trigger": "", "replacement": ""}
+            if trigger.text() != current["trigger"] or replacement.toPlainText() != current["replacement"]:
+                message.setText(tr("Apply the edited phrase before saving.", "編集中の定型文を反映してから保存してください。"))
+                return
+            try:
+                save_snippets(self.home / "snippets.json", items)
+            except (OSError, ValueError) as error:
+                message.setText(str(error))
+                return
+            self.snippets = items
+            dialog.accept()
+        buttons.accepted.connect(save)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        dialog.exec()
 
     def settings(self):
         dialog = QDialog(self)
