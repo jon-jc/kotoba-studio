@@ -113,7 +113,7 @@ class Window(QMainWindow):
     def __init__(self):
         super().__init__()
         self.locale = "ja"
-        self.home = Path(QStandardPaths.writableLocation(QStandardPaths.AppLocalDataLocation))
+        self.home = Path(os.environ.get("KOTOBA_HOME") or QStandardPaths.writableLocation(QStandardPaths.AppLocalDataLocation))
         self.home.mkdir(parents=True, exist_ok=True)
         self.engine = SpeechEngine(self.home / "models")
         self.harness = HarnessSession(self.home / "harness")
@@ -192,7 +192,7 @@ class Window(QMainWindow):
         switch.clicked.connect(self.switch_locale)
         self.locale_button = switch
         side.addWidget(switch)
-        side.addWidget(self.label("DEEPSEEK HARNESS\nFull SDK profile · v0.1.0", "muted"))
+        side.addWidget(self.label("DEEPSEEK HARNESS\nFull SDK profile · v0.2.1", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
         content.setSpacing(16)

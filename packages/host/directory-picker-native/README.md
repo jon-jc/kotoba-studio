@@ -37,6 +37,8 @@ Each call opens one native chooser on the host display and waits for the operato
 
 ### Observable failures
 
+The Python single-executable runtime launches the Windows dialog through the private `DSH_DIRECTORY_DIALOG_WORKER` bootstrap selector with an IPC channel. Passing a snapshot worker filename to that executable invokes its CLI instead of the dialog.
+
 A cancel returns `null`, not an error. Missing platform tooling, a failed chooser launch, or an aborted pick surfaces as a rejection the UI can present; the [browse backend](../directory-picker-browse/README.md) remains the composition-level fallback for deployments where native picking is unreliable.
 
 -----

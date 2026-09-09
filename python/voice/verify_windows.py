@@ -56,6 +56,7 @@ def main():
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
+    env["KOTOBA_HOME"] = str((args.output / "app-data").resolve())
     env["KOTOBA_SCREENSHOT"] = str((args.output / "workspace.png").resolve())
     env["KOTOBA_VERIFY_REPORT"] = str((args.output / "dependencies.json").resolve())
     for name in ("workspace.json", "dependencies.json"):

@@ -12,15 +12,15 @@ from PySide6.QtWidgets import (QApplication, QFileSystemModel, QFileDialog, QFra
     QLineEdit, QMainWindow, QPlainTextEdit, QPushButton, QSplitter, QStackedWidget,
     QTreeView, QVBoxLayout, QWidget)
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWebEngineCore import QWebEnginePage
+from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile
 from .desktop import Window as VoiceWindow, STYLE
 from .harness import runtime_path
 
 
 class LocalPage(QWebEnginePage):
     """Keep the embedded app on its owned loopback origin."""
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, profile, parent):
+        super().__init__(profile, parent)
         self.origin = None
 
     def acceptNavigationRequest(self, url, navigation_type, is_main_frame):
@@ -70,7 +70,10 @@ class Workspace(QMainWindow):
         side.addSpacing(28)
         self.stack = QStackedWidget()
         self.web = QWebEngineView()
-        self.web.setPage(LocalPage(self.web))
+        self.browser_profile = QWebEngineProfile("KotobaHarness", self.web)
+        self.browser_profile.setPersistentStoragePath(str(self.voice.home / "browser"))
+        self.browser_profile.setCachePath(str(self.voice.home / "browser-cache"))
+        self.web.setPage(LocalPage(self.browser_profile, self.web))
         self.web.setStyleSheet("background:#101416")
         self.stack.addWidget(self.web)
         self.stack.addWidget(self.voice)

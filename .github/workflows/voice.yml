@@ -1,10 +1,10 @@
 name: Kotoba voice
 on:
   pull_request:
-    paths: ['python/voice/**', 'integrations/**', 'packages/client/modules/**', 'packages/preset/agent-presets/**', '.gitmodules', '.github/workflows/voice.yml']
+    paths: ['python/voice/**', 'python/sdk-runtime/**', 'integrations/**', 'packages/client/modules/**', 'packages/preset/agent-presets/**', 'packages/host/directory-picker-native/**', '.gitmodules', '.github/workflows/voice.yml']
   push:
     branches: [master]
-    paths: ['python/voice/**', 'integrations/**', 'packages/client/modules/**', 'packages/preset/agent-presets/**', '.gitmodules', '.github/workflows/voice.yml']
+    paths: ['python/voice/**', 'python/sdk-runtime/**', 'integrations/**', 'packages/client/modules/**', 'packages/preset/agent-presets/**', 'packages/host/directory-picker-native/**', '.gitmodules', '.github/workflows/voice.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,7 +20,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build:lib:host
-      - run: pnpm exec vitest run packages/client/modules/tests/node-half.client.spec.ts packages/preset/agent-presets/tests/discovery.spec.ts packages/preset/agent-presets/tests/composition-inventory.spec.ts
+      - run: pnpm exec vitest run packages/client/modules/tests/node-half.client.spec.ts packages/preset/agent-presets/tests/discovery.spec.ts packages/preset/agent-presets/tests/composition-inventory.spec.ts packages/host/directory-picker-native/tests/packaged-launch.spec.ts packages/host/directory-picker-native/tests/win32-dialog.spec.ts
   voice-tests:
     runs-on: windows-latest
     timeout-minutes: 15
