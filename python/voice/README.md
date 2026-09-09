@@ -12,7 +12,7 @@ python -m venv .venv
 .venv/Scripts/python -m pip install --no-deps -e python/sdk
 pnpm install --frozen-lockfile
 pnpm run build
-.venv/Scripts/python -m kotoba.desktop
+.venv/Scripts/python -m kotoba.workspace
 ```
 
 The desktop finds the built checkout CLI in development and the colocated runtime executable in a Windows distribution. Configure the model API key through the environment (`DEEPSEEK_API_KEY`) or the session-only settings field. Speech recognition runs locally; the first model load downloads model weights. Reviewed prompts go to the configured Harness model provider and are persisted by Harness. Audio is not saved by microphone capture. Export is explicit.
@@ -23,6 +23,10 @@ python -m kotoba.evaluate references.jsonl --output report.json
 ```
 
 Reference records contain `language` (`ja`, `en`, or `mixed`), `reference`, and `hypothesis`. Scores from automatic captions must be labeled caption agreement. Model decoder scores are not accuracy percentages.
+
+## Windows desktop
+
+See [installation and testing](WINDOWS.md) for the installer, source build, and verification commands. Kotoba Studio embeds the original Harness web composition and adds a bilingual voice workspace, explicit microphone/system/application capture, a read-only code explorer, and a PowerShell command console. The Models and Plugins buttons open the upstream settings controls.
 
 ## 日本語
 

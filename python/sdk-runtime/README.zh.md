@@ -25,6 +25,8 @@ Wheel 会安装 `dsh` 控制台命令和 `deepseek_harness_runtime` Python 模�
 
 ## 打包后的 profile 解析
 
+Windows 目录选择器使用私有的 `DSH_DIRECTORY_DIALOG_WORKER=1` 启动选择器和 IPC 父进程进入打包的 worker。导入 worker 前会清除该选择器；没有 Windows 环境和 IPC 通道时不能使用它。
+
 `dsh` 在显式 home 下初始化随附 profile、组合其 bundle patch，并从可执行程序的虚拟文件系统加载内置插件。操作系统符号链接无法进入该文件系统，因此打包运行会在 `$DSH_HOME/profiles/node_modules` 下维护小型真实 ESM 代理包。每个代理镜像显式运行时 exports、记录原包身份，并重新导出虚拟模块 URL。因此，内置配置项与外部插件 peer 会共享同一个 Cordis／模块实例。原生共享库与 Windows ConPTY addon 会同其他原生 addon 一起打包；ripgrep 与 macOS PTY helper 仍是可执行伴随程序。
 
 外部 profile 管理使用 `dsh plugin --profile <name> ...`。该命令要求 `PATH` 中存在 `pnpm`；普通 SDK／profile 运行不需要它。

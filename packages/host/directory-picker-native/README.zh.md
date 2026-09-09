@@ -37,6 +37,8 @@ kind: "package-reference"
 
 ### 可观察的失败
 
+Python 单文件可执行运行时通过私有的 `DSH_DIRECTORY_DIALOG_WORKER` 启动选择器和 IPC 通道启动 Windows 对话框。将快照中的 worker 文件名传给该可执行文件会启动 CLI，而不是对话框。
+
 取消返回 `null`，不是错误。平台工具缺失、选择器启动失败或 pick 被中止都会以界面可以呈现的拒绝形式浮现；[浏览后端](../directory-picker-browse/README.zh.md)仍是原生选择不可靠的部署在组合层面的回退。
 
 -----

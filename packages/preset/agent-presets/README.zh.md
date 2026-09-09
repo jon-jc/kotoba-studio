@@ -29,6 +29,8 @@ kind: "package-reference"
 
 ### preset 给会话带来什么
 
+发现过程分别枚举名称和检查目录元数据，使可执行文件虚拟文件系统中的 preset 仍然可见。符号链接不作为 preset 目录。
+
 从 preset 组装的会话会运行该 preset `agent.cordis.yml` 所列插件：它的工具、提示词段落与 skill。加入同一 preset 的会话共享一份已安装的组装，且各会话的状态彼此隔离。子 agent（subagent）会加入其父方的组装，因此它看到的工具与提示词段落和创建它的 agent 相同。
 
 可选的 preset 来自两处：本包 `presets/` 下随包交付的 preset，以及你自己放在 `<dshHome>/.agent-presets` 下的 preset。选择器会展示每个 preset 的显示名与描述；组装无法加载的 preset 会连同原因一起列出而不是被隐藏，因此你能看到该修什么或删什么。

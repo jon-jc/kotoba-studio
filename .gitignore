@@ -53,3 +53,5 @@ python/voice/src/*.egg-info/
 .venv/
 .codex/
 chatgpt-*/
+kotoba-smoke.png
+kotoba-workspace.png

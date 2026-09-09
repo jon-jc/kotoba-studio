@@ -10,7 +10,9 @@ def runtime_path() -> Path:
     if getattr(sys, "frozen", False):
         path = Path(sys.executable).parent / "runtime" / "deepseek-harness-sdk-runtime-win-x64.exe"
     else:
-        path = Path(__file__).resolve().parents[4] / "apps" / "cli" / "lib" / "bin.js"
+        root = Path(__file__).resolve().parents[4]
+        native = root / "dist-exe" / "deepseek-harness-sdk-runtime-win-x64.exe"
+        path = native if native.is_file() else root / "apps" / "cli" / "lib" / "bin.js"
     if not path.is_file():
         raise FileNotFoundError("Matching Harness runtime missing. Build the checkout or reinstall Kotoba.")
     return path

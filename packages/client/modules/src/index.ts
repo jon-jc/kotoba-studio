@@ -802,10 +802,10 @@ export class ClientModuleRegistry extends Service {
         return this.nearestPackage(moduleUrl)
       }
       try {
-        return {
-          path: createRequire(baseUrl).resolve(`${expectedPackageName}/package.json`),
-          packageName: expectedPackageName,
-        }
+        return this.nearestPackage(
+          pathToFileURL(createRequire(baseUrl).resolve(`${expectedPackageName}/package.json`)).href,
+          expectedPackageName,
+        )
       } catch {
         // Without Node internals the owning tree is the only resolver; an
         // unresolvable name is classified exactly as below.
@@ -828,15 +828,25 @@ export class ClientModuleRegistry extends Service {
   private nearestPackage(
     moduleUrl: string,
     expectedPackageName?: string,
+    visited = new Set<string>(),
   ): { path: string; packageName: string } | undefined {
-    if (!moduleUrl.startsWith('file:')) return undefined
+    if (!moduleUrl.startsWith('file:') || visited.has(moduleUrl)) return undefined
+    visited.add(moduleUrl)
     let dir = dirname(fileURLToPath(moduleUrl))
     while (true) {
       const candidate = join(dir, 'package.json')
       if (existsSync(candidate)) {
         try {
-          const name = (JSON.parse(readFileSync(candidate, 'utf8')) as { name?: unknown }).name
+          const manifest = JSON.parse(readFileSync(candidate, 'utf8')) as {
+            name?: unknown
+            dsh?: { moduleFallback?: { targets?: Record<string, unknown> } }
+          }
+          const name = manifest.name
           if (typeof name === 'string' && (expectedPackageName === undefined || name === expectedPackageName)) {
+            // Packaged profile proxies contain ESM re-exports, not browser
+            // bundles or client metadata. The original package owns both.
+            const target = manifest.dsh?.moduleFallback?.targets?.['.']
+            if (typeof target === 'string') return this.nearestPackage(target, name, visited)
             return { path: candidate, packageName: name }
           }
         } catch {
