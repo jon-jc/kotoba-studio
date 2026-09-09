@@ -240,6 +240,44 @@ describe('HTML bootstrap facade', () => {
 })
 
 describe('client bundle activation', () => {
+  it('serves original browser bytes through a packaged module proxy', async () => {
+    const packageName = '@fixture/packaged-client'
+    const proxyClient = writePackage(packageName)
+    const proxyRoot = dirname(dirname(proxyClient))
+    const originalRoot = join(root!, 'snapshot', 'original')
+    mkdirSync(originalRoot, { recursive: true })
+    const clientPath = join(originalRoot, 'client.js')
+    writeFileSync(clientPath, 'globalThis.packagedClient = true\n')
+    writeFileSync(join(originalRoot, 'package.json'), JSON.stringify({
+      name: packageName,
+      exports: { './client': './client.js' },
+      dsh: { client: { platform: 'web', immediately: true } },
+    }))
+    writeFileSync(join(proxyRoot, 'package.json'), JSON.stringify({
+      name: packageName,
+      exports: { './package.json': './package.json', './client': './entry-1.js' },
+      dsh: { moduleFallback: { targets: { '.': pathToFileURL(join(originalRoot, 'index.js')).href } } },
+    }))
+    const { service, route } = constructWithRoute([packageName])
+    expect(service.clientPath(packageName)).toBe(clientPath)
+    expect(service.graph().entries.map(entry => entry.id)).toEqual([packageName])
+    const response = await routeRequest(route, service.graph().batches[0]!.url)
+    expect(response.status).toBe(200)
+    expect(response.body.toString()).toContain('globalThis.packagedClient = true')
+  })
+
+  it('does not recurse indefinitely through a malformed packaged proxy', () => {
+    const packageName = '@fixture/cyclic-proxy'
+    const clientPath = writePackage(packageName)
+    const packageRoot = dirname(dirname(clientPath))
+    writeFileSync(join(packageRoot, 'package.json'), JSON.stringify({
+      name: packageName,
+      exports: { './package.json': './package.json' },
+      dsh: { moduleFallback: { targets: { '.': pathToFileURL(join(packageRoot, 'index.js')).href } } },
+    }))
+    expect(construct([packageName]).graph().entries).toEqual([])
+  })
+
   it.each(['v1', 'v2'] as const)(
     'resolves %s package metadata from the owning entry tree',
     (version) => {

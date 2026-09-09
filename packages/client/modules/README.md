@@ -43,6 +43,8 @@ The shell seeds a frozen module table (`PLATFORM_MODULES`: React, Cordis, and st
 
 ### Build requirements
 
+Packaged executable profiles resolve `dsh.moduleFallback.targets['.']` back to the original package before reading client metadata and bundle bytes. Generated ESM proxy entries are not browser bundles.
+
 The host serves built client bundles, so `pnpm run build` must have produced each `lib/client.js` before launch; a missing bundle fails activation loudly with one build instruction and a package/path list. Source launch maps host imports to TypeScript source but still consumes the built client export. The package accepts no plugin config of its own.
 
 -----

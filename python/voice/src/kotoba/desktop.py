@@ -20,6 +20,8 @@ from PySide6.QtTextToSpeech import QTextToSpeech
 from .harness import HarnessSession
 from .speech import SpeechConfig, SpeechEngine, load_audio
 from .evaluate import score
+from .audio_sources import sources, LoopbackStream
+from .dictation import format_dictation
 
 
 COPY = {
@@ -76,6 +78,7 @@ QFrame#metric {background:#1b2522; border:1px solid #2b3b34; border-radius:12px;
 QLabel#value {font-size:24px; color:#b3e8ca; font-weight:600;}
 QPushButton {background:#24342d; border:1px solid #3a5145; border-radius:8px; padding:11px 16px;}
 QPushButton:hover {background:#314b3c; border-color:#8dccaa;}
+QPushButton:checked {background:#365044; border-color:#9bccad; color:#e9fff0;}
 QPushButton:disabled {color:#62736a; background:#1c2520; border-color:#26372e;}
 QPushButton#primary {background:#c8ecd5; color:#163826; font-weight:700; border:0;}
 QPushButton#record {background:#5b332e; border-color:#bd776c;}
@@ -235,6 +238,24 @@ class Window(QMainWindow):
         content.addWidget(self.draft)
         self.review = self.label(self.t("clean"), "muted")
         content.addWidget(self.review)
+        source_row = QHBoxLayout()
+        self.audio_source = QComboBox()
+        self.audio_source.setMinimumWidth(280)
+        self.audio_source.setToolTip("Application selection captures its process tree, including child processes. Browser tabs may share a process. / アプリのプロセスツリーを録音します。")
+        source_row.addWidget(self.audio_source, 1)
+        self.refresh_sources = QPushButton("↻ Sources / 音声入力")
+        self.refresh_sources.clicked.connect(self.load_sources)
+        source_row.addWidget(self.refresh_sources)
+        content.addLayout(source_row)
+        self.load_sources()
+        copy_row = QHBoxLayout()
+        copy_button = QPushButton("Copy reviewed text / 確認した文をコピー")
+        copy_button.clicked.connect(lambda: QApplication.clipboard().setText(self.draft.toPlainText()))
+        tidy_button = QPushButton("Tidy spacing / 空白を整理")
+        tidy_button.clicked.connect(lambda: self.draft.setPlainText(format_dictation(self.draft.toPlainText())))
+        copy_row.addWidget(copy_button)
+        copy_row.addWidget(tidy_button)
+        content.addLayout(copy_row)
         controls = QHBoxLayout()
         self.record_button = self.button("record", self.record, "record")
         self.import_button = self.button("import", self.import_audio)
@@ -253,9 +274,18 @@ class Window(QMainWindow):
     def selected_config(self):
         return replace(self.config, language=self.language.currentData(), model=self.speech_model.currentData())
 
+    def load_sources(self):
+        selected = self.audio_source.currentData()
+        self.audio_source.clear()
+        for source in sources():
+            self.audio_source.addItem(source.label, source)
+            if source == selected:
+                self.audio_source.setCurrentIndex(self.audio_source.count() - 1)
+
     def busy(self, value):
         for widget in (self.record_button, self.import_button, self.send_button, self.prepare_button,
-                       self.settings_button, self.new_button, self.locale_button, self.language, self.speech_model):
+                       self.settings_button, self.new_button, self.locale_button, self.language, self.speech_model,
+                       self.audio_source, self.refresh_sources):
             widget.setEnabled(not value)
 
     def work(self, task, result):
@@ -294,6 +324,7 @@ class Window(QMainWindow):
         if self.stream is not None:
             self.timer.stop()
             self.stream.stop()
+            self.record_error = getattr(self.stream, "error", "") or self.record_error
             self.stream.close()
             self.stream = None
             self.record_button.setText(self.t("record"))
@@ -315,7 +346,11 @@ class Window(QMainWindow):
             self.frames.append(data[:, 0].copy())
         try:
             import sounddevice as sd
-            self.stream = sd.InputStream(samplerate=16000, channels=1, dtype="float32", callback=capture)
+            source = self.audio_source.currentData()
+            if source.kind == "microphone":
+                self.stream = sd.InputStream(device=source.device, samplerate=16000, channels=1, dtype="float32", callback=capture)
+            else:
+                self.stream = LoopbackStream(source, capture)
             self.stream.start()
         except Exception as error:
             if self.stream is not None:
@@ -424,6 +459,9 @@ class Window(QMainWindow):
 
     def switch_locale(self):
         draft, conversation, activity = self.draft.toPlainText(), self.conversation.toPlainText(), self.activity.toPlainText()
+        reference, score_text = self.reference.toPlainText(), self.score_label.text()
+        metrics = [metric.text() for metric in self.metrics]
+        audio_source = self.audio_source.currentData()
         language, model = self.language.currentIndex(), self.speech_model.currentIndex()
         self.locale = "en" if self.locale == "ja" else "ja"
         self.build()
@@ -433,6 +471,13 @@ class Window(QMainWindow):
         self.activity.setPlainText(activity)
         self.language.setCurrentIndex(language)
         self.speech_model.setCurrentIndex(model)
+        self.reference.setPlainText(reference)
+        self.score_label.setText(score_text)
+        for metric, text in zip(self.metrics, metrics):
+            metric.setText(text)
+        for index in range(self.audio_source.count()):
+            if self.audio_source.itemData(index) == audio_source:
+                self.audio_source.setCurrentIndex(index)
 
     def settings(self):
         dialog = QDialog(self)

@@ -1,0 +1,172 @@
+{
+  "qualification": "Caption agreement only; unverified references; development split; two clips per language. Not an accuracy claim.",
+  "decoder": {
+    "beam_size": 5,
+    "temperature": 0,
+    "task": "transcribe",
+    "condition_on_previous_text": false,
+    "vad_filter": true
+  },
+  "rows": [
+    {
+      "model": "large-v3",
+      "source_id": "lBVtvOpU80Q",
+      "start": 30,
+      "end": 50,
+      "split": "development",
+      "audio_sha256": "0c35fca73be4da9b29e55f097775e88223dd62055b69a91d640478d1fea0ae90",
+      "device": "cpu",
+      "compute_type": "int8",
+      "latency_seconds": 9.572991199998796,
+      "reference_provenance": "youtube_captions_unverified",
+      "caption_agreement": {
+        "metric": "WER",
+        "errors": 1,
+        "reference_units": 45,
+        "error_rate": 0.022222222222222223,
+        "silence_hallucination": false,
+        "exact_match": false
+      }
+    },
+    {
+      "model": "large-v3",
+      "source_id": "lBVtvOpU80Q",
+      "start": 180,
+      "end": 200,
+      "split": "development",
+      "audio_sha256": "d24d4fcb010beb6e60be6f79ced8b882afda0b7f9ff6799ac11005db459720ed",
+      "device": "cpu",
+      "compute_type": "int8",
+      "latency_seconds": 9.292308799998864,
+      "reference_provenance": "youtube_captions_unverified",
+      "caption_agreement": {
+        "metric": "WER",
+        "errors": 2,
+        "reference_units": 53,
+        "error_rate": 0.03773584905660377,
+        "silence_hallucination": false,
+        "exact_match": false
+      }
+    },
+    {
+      "model": "large-v3",
+      "source_id": "J_1p8pCcFPU",
+      "start": 30,
+      "end": 50,
+      "split": "development",
+      "audio_sha256": "30489a837c11b3e1844368fb597a54c896b9c9bfff89f16ee8bf7bee896e1297",
+      "device": "cpu",
+      "compute_type": "int8",
+      "latency_seconds": 10.90157360000012,
+      "reference_provenance": "youtube_captions_unverified",
+      "caption_agreement": {
+        "metric": "CER",
+        "errors": 19,
+        "reference_units": 82,
+        "error_rate": 0.23170731707317074,
+        "silence_hallucination": false,
+        "exact_match": false
+      }
+    },
+    {
+      "model": "large-v3",
+      "source_id": "J_1p8pCcFPU",
+      "start": 180,
+      "end": 200,
+      "split": "development",
+      "audio_sha256": "b806055daf0e772e2a6a40d472fe3d842f2c5cead2ba41b4085b6e53077b722b",
+      "device": "cpu",
+      "compute_type": "int8",
+      "latency_seconds": 11.239594999999099,
+      "reference_provenance": "youtube_captions_unverified",
+      "caption_agreement": {
+        "metric": "CER",
+        "errors": 18,
+        "reference_units": 113,
+        "error_rate": 0.1592920353982301,
+        "silence_hallucination": false,
+        "exact_match": false
+      }
+    },
+    {
+      "model": "turbo",
+      "source_id": "lBVtvOpU80Q",
+      "start": 30,
+      "end": 50,
+      "split": "development",
+      "audio_sha256": "0c35fca73be4da9b29e55f097775e88223dd62055b69a91d640478d1fea0ae90",
+      "device": "cpu",
+      "compute_type": "int8",
+      "latency_seconds": 5.937975599998026,
+      "reference_provenance": "youtube_captions_unverified",
+      "caption_agreement": {
+        "metric": "WER",
+        "errors": 3,
+        "reference_units": 45,
+        "error_rate": 0.06666666666666667,
+        "silence_hallucination": false,
+        "exact_match": false
+      }
+    },
+    {
+      "model": "turbo",
+      "source_id": "lBVtvOpU80Q",
+      "start": 180,
+      "end": 200,
+      "split": "development",
+      "audio_sha256": "d24d4fcb010beb6e60be6f79ced8b882afda0b7f9ff6799ac11005db459720ed",
+      "device": "cpu",
+      "compute_type": "int8",
+      "latency_seconds": 5.945545599999605,
+      "reference_provenance": "youtube_captions_unverified",
+      "caption_agreement": {
+        "metric": "WER",
+        "errors": 2,
+        "reference_units": 53,
+        "error_rate": 0.03773584905660377,
+        "silence_hallucination": false,
+        "exact_match": false
+      }
+    },
+    {
+      "model": "turbo",
+      "source_id": "J_1p8pCcFPU",
+      "start": 30,
+      "end": 50,
+      "split": "development",
+      "audio_sha256": "30489a837c11b3e1844368fb597a54c896b9c9bfff89f16ee8bf7bee896e1297",
+      "device": "cpu",
+      "compute_type": "int8",
+      "latency_seconds": 6.152803100005258,
+      "reference_provenance": "youtube_captions_unverified",
+      "caption_agreement": {
+        "metric": "CER",
+        "errors": 22,
+        "reference_units": 82,
+        "error_rate": 0.2682926829268293,
+        "silence_hallucination": false,
+        "exact_match": false
+      }
+    },
+    {
+      "model": "turbo",
+      "source_id": "J_1p8pCcFPU",
+      "start": 180,
+      "end": 200,
+      "split": "development",
+      "audio_sha256": "b806055daf0e772e2a6a40d472fe3d842f2c5cead2ba41b4085b6e53077b722b",
+      "device": "cpu",
+      "compute_type": "int8",
+      "latency_seconds": 6.37606739999319,
+      "reference_provenance": "youtube_captions_unverified",
+      "caption_agreement": {
+        "metric": "CER",
+        "errors": 18,
+        "reference_units": 113,
+        "error_rate": 0.1592920353982301,
+        "silence_hallucination": false,
+        "exact_match": false
+      }
+    }
+  ]
+}
