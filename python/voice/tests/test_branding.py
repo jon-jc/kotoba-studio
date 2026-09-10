@@ -1,7 +1,11 @@
+"""Windows process identity agrees with the installed shortcut identity."""
 from pathlib import Path
+import subprocess
+import sys
 import struct
 
-from kotoba.branding import icon_path
+import pytest
+from kotoba.branding import APP_USER_MODEL_ID, icon_path
 
 
 def test_native_icon_has_all_windows_sizes_and_matches_browser_artwork():
@@ -19,3 +23,27 @@ def test_native_icon_has_all_windows_sizes_and_matches_browser_artwork():
     assert sizes == [16, 24, 32, 48, 64, 128, 256]
     root = Path(__file__).resolve().parents[3]
     assert path.with_suffix(".svg").read_text(encoding="utf-8") == (root / "apps/web/public/favicon.svg").read_text(encoding="utf-8")
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows taskbar identity API")
+def test_windows_process_identity_matches_shortcuts():
+    code = '''
+import ctypes
+from kotoba.branding import configure_windows_identity
+configure_windows_identity()
+value = ctypes.c_wchar_p()
+assert ctypes.windll.shell32.GetCurrentProcessExplicitAppUserModelID(ctypes.byref(value)) == 0
+try:
+    print(value.value)
+finally:
+    ctypes.windll.ole32.CoTaskMemFree(ctypes.cast(value, ctypes.c_void_p))
+'''
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
+                            check=True, timeout=15, creationflags=subprocess.CREATE_NO_WINDOW)
+    assert result.stdout.strip() == APP_USER_MODEL_ID
+    installer = (Path(__file__).resolve().parents[1] / "installer.iss").read_text(encoding="utf-8")
+    shortcuts = [line for line in installer.splitlines() if line.startswith('Name: "{group}') or line.startswith('Name: "{autodesktop}')]
+    assert len(shortcuts) == 2
+    for shortcut in shortcuts:
+        assert f'AppUserModelID: "{APP_USER_MODEL_ID}"' in shortcut
+        assert 'IconFilename: "{app}\\_internal\\assets\\kotoba.ico"' in shortcut

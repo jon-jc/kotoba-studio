@@ -32,7 +32,7 @@
 
 ## 在 Windows 上开始
 
-桌面版本为 **Kotoba Studio 0.5.0**，是面向 Windows x64 的未签名开发预览版。从构建输出安装 `Kotoba-Studio-0.5.0-Setup.exe`。安装包包含桌面应用、智能体运行时、音频捕获助手和 CPU 推理引擎。语音与语言模型权重单独提供。构建和验证安装包的方法见 [Windows 指南](python/voice/WINDOWS.md)。
+桌面版本为 **Kotoba Studio 0.5.1**，是面向 Windows x64 的未签名开发预览版。从构建输出安装 `Kotoba-Studio-0.5.1-Setup.exe`。安装包包含桌面应用、智能体运行时、音频捕获助手和 CPU 推理引擎。语音与语言模型权重单独提供。构建和验证安装包的方法见 [Windows 指南](python/voice/WINDOWS.md)。
 
 1. **选择文件夹。** 为任务指定智能体的工作目录。
 2. **连接模型。** 在 **··· → Routing** 中配置 API 提供方，或选择 Configure later 后打开 Local models。注册本地模型后，在聊天输入框中选择 Kotoba Local。
@@ -49,6 +49,8 @@ Voice Studio 的 **Agent → Ask voice agent** 还提供独立的智能体会话
 | `Ctrl+Shift+E` | 打开代码浏览器 |
 | `Ctrl+F` | 搜索当前源文件 |
 | `Ctrl+Shift+Space` | 开始或停止录音 |
+
+关闭窗口后 Kotoba 保留在系统托盘；可从托盘菜单重新打开或退出。参阅[托盘行为与图标](python/voice/README.md#system-tray-and-windows-icons)。
 
 <a id="japanese"></a>
 

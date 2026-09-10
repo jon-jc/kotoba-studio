@@ -1,6 +1,6 @@
 # Kotoba Studio for Windows
 
-The installer is `python/voice/dist/Kotoba-Studio-0.5.0-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes Python, Qt WebEngine, the complete matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Speech weights download on first use and are not included in the installer.
+The installer is `python/voice/dist/Kotoba-Studio-0.5.1-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes Python, Qt WebEngine, the complete matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Speech weights download on first use and are not included in the installer.
 
 ## Try the application
 
@@ -15,6 +15,10 @@ The installer is `python/voice/dist/Kotoba-Studio-0.5.0-Setup.exe` after a succe
 Audio capture remains in memory. Only text you send goes to the model provider. Harness stores submitted conversations in its application data directory. Session exports are explicit. Uninstall preserves user data and downloaded models. The application is an unsigned developer preview; it has not completed code-signing, clean-machine compatibility, security, or production qualification. The upstream Harness version is itself an alpha.
 
 Japanese/English voice input is supported. The top-right English/Japanese selector updates both the native panels and core embedded chat controls. Extension strings without Japanese translations fall back to English. Speaker diarization, streaming interruption, automatic provider failover, and system-wide paste-at-cursor dictation are not implemented in this milestone.
+
+## System tray
+
+Closing the main window keeps the app in the system tray when available. Use the tray menu to restore the workspace, open Voice Studio, or quit. Quit stops the owned runtime and local engine; active recording or processing must finish first. The installer assigns the same Kotoba Studio icon and Windows application identity to the Start menu and optional desktop shortcuts. Re-pin an older Python shortcut from the updated Start menu entry if Windows retains its previous icon.
 
 ## Build
 

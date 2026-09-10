@@ -15,9 +15,13 @@ def workspace(tmp_path, monkeypatch):
     monkeypatch.setattr(Workspace, "start_backend", lambda self: None)
     window = Workspace()
     original_clipboard = app.clipboard().text()
+    original_quit_policy = app.quitOnLastWindowClosed()
+    monkeypatch.setattr(app, "quit", lambda: None)
     yield window
     app.clipboard().setText(original_clipboard)
+    window.exit_requested = True
     window.close()
+    app.setQuitOnLastWindowClosed(original_quit_policy)
     from PySide6.QtCore import QCoreApplication, QEvent
     window.web.page().deleteLater()
     QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
@@ -221,3 +225,49 @@ def test_reviewed_handoff_pastes_without_submitting(workspace):
     workspace.handoff_draft("Copied fallback")
     until(lambda: workspace.health_key == "paste")
     assert QApplication.clipboard().text() == "Copied fallback"
+
+
+def test_tray_close_restore_localize_and_quit(workspace, monkeypatch):
+    from PySide6.QtWidgets import QSystemTrayIcon
+    monkeypatch.setattr(QSystemTrayIcon, "isSystemTrayAvailable", lambda: True)
+    workspace.enable_tray()
+    workspace.show()
+    workspace.voice.draft.setPlainText("続けて作業")
+    workspace.console.setPlainText("saved terminal output")
+    cleanup = []
+    monkeypatch.setattr(workspace.local_models, "stop_engine", lambda: cleanup.append("engine"))
+    workspace.close()
+    assert workspace.isHidden() and workspace.tray.isVisible()
+    assert not cleanup and not workspace.shutdown_complete
+    workspace.tray_activated(QSystemTrayIcon.Trigger)
+    assert workspace.isVisible()
+    assert workspace.voice.draft.toPlainText() == "続けて作業"
+    assert workspace.console.toPlainText() == "saved terminal output"
+    workspace.voice.set_locale("en")
+    assert workspace.tray_quit.text() == "Quit Kotoba Studio"
+    workspace.voice.set_locale("ja")
+    assert workspace.tray_quit.text() == "Kotoba Studio を終了"
+    workspace.request_quit()
+    assert cleanup == ["engine"]
+    assert workspace.shutdown_complete and not workspace.tray.isVisible()
+
+
+def test_tray_cannot_hide_active_capture_and_falls_back_without_tray(workspace, monkeypatch):
+    from PySide6.QtWidgets import QSystemTrayIcon
+    monkeypatch.setattr(QSystemTrayIcon, "isSystemTrayAvailable", lambda: False)
+    workspace.enable_tray()
+    assert workspace.tray is None
+    monkeypatch.setattr(QSystemTrayIcon, "isSystemTrayAvailable", lambda: True)
+    workspace.enable_tray()
+    workspace.show()
+    workspace.voice.stream = object()
+    try:
+        workspace.close()
+        assert workspace.isVisible() and not workspace.shutdown_complete
+        workspace.request_quit()
+        assert not workspace.exit_requested and not workspace.shutdown_complete
+    finally:
+        workspace.voice.stream = None
+    monkeypatch.setattr(QSystemTrayIcon, "isSystemTrayAvailable", lambda: False)
+    workspace.close()
+    assert workspace.shutdown_complete and not workspace.tray.isVisible()

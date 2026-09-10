@@ -1,7 +1,7 @@
 [Setup]
 AppId={{62638D33-46D2-498E-A5D7-DC3434020298}
 AppName=Kotoba Studio
-AppVersion=0.5.0
+AppVersion=0.5.1
 AppPublisher=Kotoba Studio
 AppPublisherURL=https://github.com/jon-jc/kotoba-studio
 DefaultDirName={localappdata}\Programs\Kotoba Studio
@@ -10,7 +10,7 @@ PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=dist
-OutputBaseFilename=Kotoba-Studio-0.5.0-Setup
+OutputBaseFilename=Kotoba-Studio-0.5.1-Setup
 Compression=lzma2/fast
 SolidCompression=yes
 WizardStyle=modern
@@ -29,8 +29,8 @@ Source: "dist\Kotoba\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs c
 Name: "desktopicon"; Description: "Create a desktop shortcut"; Flags: unchecked
 
 [Icons]
-Name: "{group}\Kotoba Studio"; Filename: "{app}\Kotoba.exe"
-Name: "{autodesktop}\Kotoba Studio"; Filename: "{app}\Kotoba.exe"; Tasks: desktopicon
+Name: "{group}\Kotoba Studio"; Filename: "{app}\Kotoba.exe"; IconFilename: "{app}\_internal\assets\kotoba.ico"; AppUserModelID: "KotobaStudio.Desktop"
+Name: "{autodesktop}\Kotoba Studio"; Filename: "{app}\Kotoba.exe"; IconFilename: "{app}\_internal\assets\kotoba.ico"; AppUserModelID: "KotobaStudio.Desktop"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\Kotoba.exe"; Description: "Launch Kotoba Studio"; Flags: nowait postinstall skipifsilent
