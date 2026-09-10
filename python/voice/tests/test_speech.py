@@ -18,7 +18,7 @@ def test_transcription_preserves_original_language_and_flags_uncertainty(tmp_pat
         def transcribe(self, audio, **options):
             assert options["task"] == "transcribe"
             assert options["language"] == (None if language == "auto" else language)
-            assert options["vad_filter"] is True
+            assert options["vad_filter"] is False
             assert options["condition_on_previous_text"] is False
             assert options["hotwords"] == "田中 Kubernetes"
             return iter([SimpleNamespace(start=0, end=1, text=" 田中さん、deployします。", avg_logprob=-1.2, no_speech_prob=0.1)]), SimpleNamespace(language="ja", language_probability=0.7)

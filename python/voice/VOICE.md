@@ -1,0 +1,66 @@
+# Voice, meetings, and notes
+
+Kotoba Studio adapts [OpenWhispr](https://github.com/OpenWhispr/openwhispr)'s Windows capture, dictation, model registry, and meeting lifecycle patterns to its Python desktop. The complete Harness remains available for reviewed agent instructions. The [upstream documentation](https://docs.openwhispr.com/) is a reference for OpenWhispr; it is not a list of features shipped by Kotoba.
+
+## Choose a speech model
+
+In Voice Studio, choose the input language, expand **Audio settings**, and choose **Download / warm model**. Downloads are explicit. Recording and transcription only load existing local weights; missing weights produce an error. No audio is sent during a model download. Hugging Face telemetry is disabled.
+
+| Input language | Recommended default | Other choices |
+| --- | --- | --- |
+| English | NVIDIA Parakeet Unified EN 0.6B, int8 CPU | Parakeet TDT v3, Whisper large-v3, Turbo, small, base |
+| Japanese | Kotoba Technologies' Kotoba-Whisper v2.0, int8 CPU | Whisper large-v3, Turbo, small, base |
+| Auto / mixed Japanese-English | Whisper Turbo | Other multilingual Whisper sizes |
+
+Kotoba Technologies is an independent model publisher, not affiliated with Kotoba Studio. Its official CTranslate2 conversion runs without downloading executable model code. Japanese decoding uses 15-second windows and segment timestamps; the distilled model's incompatible word-alignment path is disabled. Parakeet does not expose calibrated confidence scores through this integration. Selected-language models are not automatic language detectors.
+
+The [Japanese model evaluation](https://huggingface.co/kotoba-tech/kotoba-whisper-v2.0) shows dataset-dependent tradeoffs with large-v3. No model is universally best. Parakeet's English default follows [OpenWhispr's registry](https://github.com/OpenWhispr/openwhispr/blob/c6a871db1b8ada646eb728d3592431ecc8c17723/src/models/modelRegistryData.json); its archive is verified against a pinned SHA-256 before installation. Japanese and Whisper weights use the upstream Hugging Face cache. Model files are stored in the application-data `models` directory, separately from the installer.
+
+Use a modern x64 CPU and start with 16 GB RAM for the recommended models. These are practical starting points, not a tested minimum hardware specification. Model memory competes with your coding agent and other applications. Smaller Whisper models trade accuracy for lower resource use. Parakeet runs on CPU; CUDA for Whisper requires a compatible separately installed NVIDIA runtime. The installer includes both speech engines, without a Python setup step.
+
+## Dictate at your cursor
+
+1. Prepare the selected local model and select a microphone.
+2. Enable **Desktop dictation** in Voice Studio.
+3. Focus an editable field in another application. Tap **Ctrl+Shift+Space**, speak, and tap again to finish. The floating indicator does not take focus.
+4. Recognized text is pasted into the focused target and remains on the clipboard. The previous clipboard is replaced. No Enter key is sent.
+
+If the target window changes, modifier keys remain held, Windows blocks injection, or recognition flags uncertainty, text stays available in Voice Studio for review. Kotoba does not redirect a failed paste to an unrelated window. Standard native terminals receive Ctrl+Shift+V; ordinary apps receive Ctrl+V. Custom terminal bindings, elevated applications, browser-based terminals, password fields, and applications that reject synthetic input may require manual paste. A conflicting global hotkey is reported; it is not silently replaced.
+
+Global dictation is an opt-in Windows feature. Leave Kotoba in the tray to use it while working in other apps. Meeting capture and dictation share one inference worker; finish one before starting the other. Dictation is capped at 60 seconds. **Add to chat** and **Ask voice agent** retain their explicit review/send boundary.
+
+## Record a meeting
+
+Open **Meetings & notes**, name the meeting, and select an audio source. Window titles select the owning application's process tree, which can include other windows and browser tabs. Closing the selected window stops capture explicitly. **All system audio** is a separate choice and is never a fallback for failed application capture.
+
+Enable **Include my microphone** and select your microphone to capture your side as well. Use headphones to prevent speaker playback from being transcribed twice. Source labels distinguish capture channels; this release does not perform speaker diarization or acoustic echo cancellation.
+
+The recorder prefers quiet chunk boundaries after ten seconds and caps chunks at thirty seconds. Each completed transcript is committed to local SQLite with timestamps, model identity, source, and review flags. **Stop & save** stops the inputs, waits for callbacks to finish, drains queued audio, and saves the partial final chunk. It does not depend on a mounted notes editor to save the final transcript.
+
+The queue holds at most eight audio chunks, with a four-hour capture limit. If inference cannot keep up, capture stops with an explicit incomplete status while queued audio is saved. For two-channel Japanese meetings, compare real-time factor and select a faster model or compatible GPU if needed. Audio lives in memory and is not retained on disk; a crash can lose the active and queued audio. Completed transcript segments remain recoverable. Another running Kotoba process's meeting is not marked interrupted.
+
+## Turn meetings into development references
+
+Select a transcript line and choose **Highlight**, or use **Find key points** for extractive keyword suggestions covering English and Japanese decisions, owners, deadlines, and follow-ups. Suggestions preserve original wording and timestamps; they are not an AI-generated summary or verified commitments.
+
+Development notes save automatically. Search titles, notes, and transcripts with English or Japanese text. Export Markdown with notes, highlights, source labels, and the full timestamped transcript. Delete a meeting to remove its note and transcript from the local database; exported copies and backups remain independent.
+
+**Add to agent draft** prepares the meeting record for an AI recap and proposed development follow-ups. Review that draft in Voice Studio, choose the desired model, then send. Meeting text alone never automatically triggers agent tools. Agent permissions remain governed by the Harness.
+
+## Local or cloud
+
+**Processing: local** is the default on every launch. Local speech processing has no cloud fallback, analytics collection, or automatic audio upload. Captured audio stays in memory; notes and transcripts are unencrypted local data in `meetings.sqlite3`. Exporting is an explicit action. Model downloads contact GitHub or Hugging Face. Agent tools can access the network when the user invokes them.
+
+Choose **Processing → Cloud** to configure an HTTPS OpenAI-compatible file-transcription endpoint, model, and session-only API key. The default endpoint uses OpenAI's file transcription API. Applying cloud mode authorizes audio and terminology hints to be uploaded for subsequent dictation, imports, and meetings. Provider fees and retention rules apply. Cloud failures do not retry automatically, follow redirects, or fall back to another provider. Generic providers return chunk timestamps rather than word timing; live provider credentials are required to qualify each service.
+
+## 日本語
+
+**音声スタジオ → 音声設定 → モデルを準備** でモデルをダウンロードしてください。英語は Parakeet Unified、日本語は Kotoba-Whisper v2、言語の自動判定は Whisper Turbo が推奨の初期設定です。Whisper large-v3 なども選択できます。文字起こしの精度は音声や専門用語に依存します。
+
+**デスクトップ音声入力** を有効にし、入力したいアプリで **Ctrl+Shift+Space** を押すと録音を開始します。もう一度押すと文字起こしを貼り付けます。クリップボードも置き換えます。入力先の変更や確認が必要な結果は、音声スタジオで確認してください。
+
+**会議とメモ** でウィンドウを選択すると、そのアプリのプロセス全体を録音します。同じブラウザーの他のタブが含まれる場合があります。自分のマイクも選択できます。ヘッドホンを使用してください。ラベルは録音元を示し、話者分離ではありません。
+
+完了した文字起こしは時刻付きで端末に保存します。**停止して保存** で残りの音声も処理します。重要事項の候補はキーワード抽出なので、決定事項やタスクとして使う前に確認してください。開発メモは自動保存し、検索・Markdown 書き出し・エージェントの下書きへの追加ができます。
+
+ローカル処理が既定で、クラウドへの自動切替はありません。クラウドを明示的に選択すると、音声と用語を指定した提供者へ送信します。API キーは今回の起動中のみ保持します。録音音声は保存しませんが、完了した文字起こしとメモは暗号化せず端末に保存します。クラッシュ時の未処理音声は復元できません。Windows の全体ホットキーとアプリ音声捕獲を実装しています。macOS/Linux 向けインストーラーや全体ホットキーは、この版の提供範囲に含まれません。

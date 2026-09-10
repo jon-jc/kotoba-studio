@@ -49,7 +49,7 @@ QTreeView::item:selected {background:#333a3a;}
 QHeaderView::section {background:#202127; border:0; padding:8px; color:#a3a6b2;}
 QListWidget {background:#1c1d22; border:1px solid #343640; border-radius:8px; padding:6px;}
 QListWidget::item {padding:12px; border-radius:6px;}
-QListWidget::item:selected {background:#333a3a;}
+QListWidget::item:selected {background:#333a3a; color:#f1f4f2;}
 QScrollArea {background:#191a1e; border:0;}
 QScrollBar:vertical {background:transparent; width:7px; margin:0;}
 QScrollBar::handle:vertical {background:#454853; min-height:32px; border-radius:3px;}

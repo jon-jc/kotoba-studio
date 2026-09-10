@@ -19,6 +19,7 @@ class AudioSource:
     label: str
     device: int | None = None
     pid: int | None = None
+    window: int | None = None
 
 
 def sources():
@@ -59,7 +60,7 @@ def window_sources():
                 user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
                 if pid.value and pid.value != os.getpid() and pid.value not in seen:
                     seen.add(pid.value)
-                    rows.append(AudioSource("application", f"{title.value[:85]} · PID {pid.value}", pid=pid.value))
+                    rows.append(AudioSource("application", f"{title.value[:85]} · PID {pid.value}", pid=pid.value, window=hwnd))
         return True
     user32.EnumWindows(callback_type(visit), 0)
     return sorted(rows, key=lambda row: row.label.casefold())
@@ -74,12 +75,25 @@ def capture_arguments(source):
     if source.kind == "application":
         if source.pid is None or source.pid <= 0:
             raise ValueError("Select a running application.")
+        if not source_available(source):
+            raise ValueError("Selected window closed. Refresh audio sources. / 選択したウィンドウが閉じられました。")
         target = ["--include-pid", str(source.pid)]
     elif source.kind == "system":
         target = ["--exclude-pid", str(os.getpid())]
     else:
         raise ValueError("Loopback capture requires a system or application source.")
     return [str(helper_path()), "start", "--sample-rate", "16000", *target]
+
+
+def source_available(source):
+    if source.window is None:
+        return True
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    user32.IsWindow.argtypes = [wintypes.HWND]
+    user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+    pid = wintypes.DWORD()
+    user32.GetWindowThreadProcessId(source.window, ctypes.byref(pid))
+    return bool(user32.IsWindow(source.window)) and pid.value == source.pid
 
 
 class LoopbackStream:
@@ -90,6 +104,7 @@ class LoopbackStream:
         self.error = ""
         self.ready = threading.Event()
         self.readers = []
+        self.stopping = False
 
     def start(self):
         self.process = subprocess.Popen(capture_arguments(self.source), stdin=subprocess.PIPE,
@@ -106,14 +121,21 @@ class LoopbackStream:
                 except (ValueError, UnicodeError):
                     continue
         def pcm():
-            remaining = 16000 * 60 * 2
-            while remaining:
-                data = self.process.stdout.read(min(3200, remaining))
+            while True:
+                if not source_available(self.source):
+                    self.error = "Selected window closed. / 選択したウィンドウが閉じられました。"
+                    break
+                data = self.process.stdout.read(3200)
                 if not data:
                     break
-                remaining -= len(data)
                 samples = np.frombuffer(data[:len(data) // 2 * 2], dtype="<i2").astype(np.float32) / 32768
-                self.callback(samples[:, None], len(samples), None, "")
+                try:
+                    self.callback(samples[:, None], len(samples), None, "")
+                except Exception as error:
+                    self.error = str(error)
+                    break
+            if not self.stopping and not self.error:
+                self.error = "Application audio stream ended. / アプリの音声ストリームが終了しました。"
         self.readers = [threading.Thread(target=events, daemon=True), threading.Thread(target=pcm, daemon=True)]
         for reader in self.readers:
             reader.start()
@@ -124,14 +146,18 @@ class LoopbackStream:
     def stop(self):
         if self.process is None:
             return
-        self.process.stdin.close()
+        self.stopping = True
+        if not self.process.stdin.closed:
+            self.process.stdin.close()
         try:
             self.process.wait(timeout=3)
         except subprocess.TimeoutExpired:
             self.process.kill()
             self.process.wait(timeout=3)
         for reader in self.readers:
-            reader.join(timeout=1)
+            reader.join(timeout=3)
+            if reader.is_alive():
+                raise RuntimeError("Audio reader did not stop")
         if self.process.returncode and not self.error:
             self.error = "Audio capture stopped unexpectedly. Refresh and select the application again."
 

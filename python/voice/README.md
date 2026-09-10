@@ -38,7 +38,7 @@ pnpm run build
 .venv/Scripts/python -m kotoba.workspace
 ```
 
-The desktop finds the built checkout CLI in development and the colocated runtime executable in a Windows distribution. Configure the model API key through the environment (`DEEPSEEK_API_KEY`) or the session-only settings field. Speech recognition runs locally; the first model load downloads model weights. Reviewed prompts go to the configured Harness model provider and are persisted by Harness. Audio is not saved by microphone capture. Export is explicit.
+The desktop finds the built checkout CLI in development and the colocated runtime executable in a Windows distribution. Configure the model API key through the environment (`DEEPSEEK_API_KEY`) or the session-only settings field. Speech recognition defaults to local processing; prepare model weights explicitly before transcription. Reviewed prompts go to the configured Harness model provider and are persisted by Harness. Audio is not saved by microphone capture. Export is explicit.
 
 ```powershell
 python -m pytest python/voice/tests
@@ -52,6 +52,8 @@ Reference records contain `language` (`ja`, `en`, or `mixed`), `reference`, and 
 See [installation and testing](WINDOWS.md) for the installer, source build, and verification commands. Kotoba Studio embeds the original Harness web composition and adds a bilingual voice workspace, explicit microphone/system/application capture, a read-only code explorer, and a PowerShell command console. The Models and Plugins buttons open the upstream settings controls.
 
 ## Voice workflow
+
+See [voice, meetings, and notes](VOICE.md) for language-specific defaults, global paste-at-cursor dictation, window capture, local meeting notes, privacy settings, and cloud speech. English defaults to Parakeet Unified; Japanese defaults to Kotoba-Whisper v2; automatic language detection uses Whisper Turbo.
 
 The top-right **English / 日本語** selector changes the native desktop and voice panels and remembers the choice on this device. It preserves the current chat, terminal, code view, transcript, speech settings, and evaluation reference. Language changes are disabled during recording or inference. The same toggle updates the embedded chat language without a reload. Core chat and model settings have Japanese translations; extension strings without Japanese entries fall back to English. Conversation content is not translated.
 
@@ -81,7 +83,7 @@ Kotoba Studio の音声波形付き吹き出しアイコンを、アプリ、イ
 
 The same page discovers models from an already-running **Ollama** (`http://127.0.0.1:11434/v1`) or **LM Studio** (`http://127.0.0.1:1234/v1`) server. Load the model there first and enter its configured context size. External server processes are not managed by Kotoba. Only loopback HTTP endpoints are accepted; model discovery ignores proxy settings and refuses redirects. Native inference uses an ephemeral authenticated loopback port, stores its credential through the existing Harness manager, and stops with the app. Registration replaces only the `kotoba-local` provider and preserves other routes.
 
-The full SDK agent profile, session history, tool execution, and plugin architecture remain available. Native CPU performance, context capacity, Japanese/English generation, and tool reliability depend on the selected model and hardware. A small model is useful for integration smoke checks, not evidence of production accuracy. Speech recognition remains a separate local Whisper pipeline. No cloud fallback or automatic turn retry is enabled; an unavailable server or incomplete generation produces an error. Agent tools may independently access the network when used. GPU acceleration and model downloads are not managed in this release.
+The full SDK agent profile, session history, tool execution, and plugin architecture remain available. Native CPU performance, context capacity, Japanese/English generation, and tool reliability depend on the selected model and hardware. A small model is useful for integration smoke checks, not evidence of production accuracy. Speech recognition has separate local Parakeet/Whisper engines and an explicit cloud option. No cloud fallback or automatic turn retry is enabled; an unavailable server or incomplete generation produces an error. Agent tools may independently access the network when used. GPU acceleration and model downloads are not managed in this release.
 
 **ローカルモデル** で GGUF ファイルとコンテキスト長を指定し、**起動 / モデルを検出 → 音声で使用し、チャットにモデルを登録** を押します。チャット入力欄では **Kotoba Local** を選択してください。GGUF モードは同梱の CPU 推論エンジンで動作し、Ollama は不要です。モデルの重みは含まれません。Ollama / LM Studio を使用する場合は、先にそのアプリでモデルとサーバーを起動してください。アプリを再起動した後は推論エンジンを再度起動します。日本語・英語やツールの品質はモデルに依存します。モデル接続の失敗時にクラウドへ自動転送しません。
 
