@@ -10,7 +10,7 @@ Status: implemented
 
 ## Decision
 
-[桌面启动](../../../../python/voice/src/kotoba/workspace.py) 提供[配置覆盖层](../../../../python/voice/assets/desktop-workspace.patch.yml)，禁用自动目录选择器，并只组合一个浏览后端及其匹配的客户端界面。两个工作区入口都使用已有文件夹浏览器，日语文本由品牌语言字典提供。新建会话控件的图标在与相邻侧栏控件相同的 36 像素按钮中居中。
+[桌面启动](../../../../python/voice/src/kotoba/workspace.py) 提供[配置覆盖层](../../../../python/voice/assets/desktop-workspace.patch.yml)，禁用自动目录选择器，并只组合一个浏览后端及其匹配的客户端界面。两个工作区入口都使用已有文件夹浏览器，日语文本由品牌语言字典提供。桌面语言桥接会在延迟到达的 Host 设置快照切换语言时重新应用原生界面的明确选择，并在卸载时释放订阅。新建会话控件的图标在与相邻侧栏控件相同的 36 像素按钮中居中。
 
 ## Alternatives considered
 

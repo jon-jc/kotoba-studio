@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/bug-fix/2026-09-10-desktop-workspace-picker.md
-2026-09-10-desktop-workspace-picker.md: 73ba7c7dd4305368d48bd3e802e1f77e25b8fb41
-2026-09-10-desktop-workspace-picker.zh.md: b224dfff65f8ac015211c4df9f2ddbebdb6f6770
+2026-09-10-desktop-workspace-picker.md: 1fd4024e864e39fb9cdfc37890059eadfc827463
+2026-09-10-desktop-workspace-picker.zh.md: 4957d98d184c0af3b93be58fec93802822ff4b2f

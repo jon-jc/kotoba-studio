@@ -26,6 +26,9 @@ it('adopts the desktop language before boot, switches live, and leaves drafts un
   expect(t('input.send')).toBe('メッセージを送信')
   expect(locale.bind('conversation' as string)('extension')).toBe('Extension fallback')
   expect(t('todo.completed', { done: 2, total: 3 })).toBe('2/3 件完了')
+  // Simulate a saved Host preference arriving after the native language event.
+  locale.setLocale('en')
+  expect(locale.getLocale().active).toBe('ja')
   document.documentElement.dataset.kotobaLocale = 'en'
   document.dispatchEvent(new Event('kotoba:locale'))
   expect(t('input.send')).toBe('Send message')

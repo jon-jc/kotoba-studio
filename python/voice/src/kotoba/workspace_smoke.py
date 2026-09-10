@@ -27,6 +27,9 @@ def verify(window):
         state["done"] = True
         timer.stop()
         deadline.stop()
+        if error:
+            evidence["last_view"] = state.get("last_view")
+            window.grab().save(str(report.with_suffix(".failure.png")))
         report.write_text(json.dumps({"ok": error is None, "error": error, **evidence}), encoding="utf-8")
         window.request_quit()
         QApplication.instance().exit(0 if error is None else 1)
@@ -40,6 +43,7 @@ def verify(window):
         if state["done"] or not raw:
             return
         view = json.loads(raw)
+        state["last_view"] = view
         if "Failed to load plugins" in view["text"]:
             finish("Plugin composition failed")
             return
@@ -59,7 +63,7 @@ def verify(window):
             advance("rail", click % json.dumps("Collapse sidebar"))
         elif phase == "rail" and view["rail"]:
             centers = view["centers"]
-            if len(centers) != 4 or max(centers) - min(centers) > 1:
+            if len(centers) != 4 or max(centers) - min(centers) > 1 or abs(centers[0] - 28) > 0.5:
                 return  # Wait until the collapse transition settles.
             evidence["rail_icon_centers"] = centers
             window.grab().save(str(report.with_suffix('.png')))

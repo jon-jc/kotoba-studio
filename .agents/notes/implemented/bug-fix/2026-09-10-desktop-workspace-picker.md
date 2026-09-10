@@ -10,7 +10,7 @@ A native folder chooser launched by the separate Harness process can open behind
 
 ## Decision
 
-The [desktop launch](../../../../python/voice/src/kotoba/workspace.py) supplies a [profile overlay](../../../../python/voice/assets/desktop-workspace.patch.yml) that disables the automatic directory picker and composes exactly one browse backend and one matching client interface. Both workspace entries use the existing folder browser, with Japanese strings supplied by the brand locale dictionary. The New Session control centers its glyph within the same 36-pixel button geometry as neighboring rail controls.
+The [desktop launch](../../../../python/voice/src/kotoba/workspace.py) supplies a [profile overlay](../../../../python/voice/assets/desktop-workspace.patch.yml) that disables the automatic directory picker and composes exactly one browse backend and one matching client interface. Both workspace entries use the existing folder browser, with Japanese strings supplied by the brand locale dictionary. The desktop locale bridge reasserts the explicit native language when a late Host settings snapshot adopts another locale, and releases that subscription when unloaded. The New Session control centers its glyph within the same 36-pixel button geometry as neighboring rail controls.
 
 ## Alternatives considered
 
