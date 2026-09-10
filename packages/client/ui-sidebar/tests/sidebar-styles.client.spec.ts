@@ -62,6 +62,7 @@ describe('SidebarRoot.module.css', () => {
     expect(declarations('.collapsed .logoRow')?.get('justify-content')).toBe('flex-start')
     expect(declarations('.collapsed .newSession')?.get('align-self')).toBe('flex-start')
     expect(declarations('.collapsed .newSession')?.get('width')).toBe('36px')
+    expect(declarations('.collapsed .newSession')?.get('justify-content')).toBe('center')
   })
 
   it('keeps the slotted brand row at the full artwork height', () => {

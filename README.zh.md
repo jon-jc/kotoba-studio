@@ -32,7 +32,7 @@
 
 ## 在 Windows 上开始
 
-桌面版本为 **Kotoba Studio 0.6.3**，是面向 Windows x64 的未签名开发预览版。从构建输出安装 `Kotoba-Studio-0.6.3-Setup.exe`。安装包包含桌面应用、智能体运行时、音频捕获助手和 CPU 推理引擎。语音与语言模型权重单独提供。构建和验证安装包的方法见 [Windows 指南](python/voice/WINDOWS.md)。
+桌面版本为 **Kotoba Studio 0.6.4**，是面向 Windows x64 的未签名开发预览版。从构建输出安装 `Kotoba-Studio-0.6.4-Setup.exe`。安装包包含桌面应用、智能体运行时、音频捕获助手和 CPU 推理引擎。语音与语言模型权重单独提供。构建和验证安装包的方法见 [Windows 指南](python/voice/WINDOWS.md)。
 
 1. **选择文件夹。** 为任务指定智能体的工作目录。
 2. **连接模型。** 在 **··· → Routing** 中配置 API 提供方，或选择 Configure later 后打开 Local models。注册本地模型后，在聊天输入框中选择 Kotoba Local。
