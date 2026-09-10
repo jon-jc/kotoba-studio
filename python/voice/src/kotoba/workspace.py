@@ -64,6 +64,7 @@ class Workspace(QMainWindow):
         self.voice.locale_changed.connect(self.apply_locale)
         self.voice.draft_handoff.connect(self.handoff_draft)
         self.voice.busy_changed.connect(lambda busy: self.locale_toggle.setEnabled(not busy))
+        self.voice.busy_changed.connect(lambda busy: self.access_button.setEnabled(not busy and self.backend.state() == QProcess.Running))
         self.apply_locale(self.voice.locale)
         self.start_backend()
 
@@ -90,6 +91,11 @@ class Workspace(QMainWindow):
         self.command_center.clicked.connect(self.command_palette)
         top.addWidget(self.command_center, 1)
         top.addStretch()
+        self.access_button = QPushButton("Access / アクセス")
+        self.access_button.setObjectName("ghost")
+        self.access_button.setEnabled(False)
+        self.access_button.clicked.connect(self.open_access)
+        top.addWidget(self.access_button)
         self.voice_toggle = QPushButton()
         self.voice_toggle.clicked.connect(lambda: self.show_panel(1))
         self.voice_toggle.hide()
@@ -187,7 +193,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         status.addWidget(self.locale_scope)
         status.addSpacing(18)
-        status.addWidget(QLabel("Kotoba Studio  0.6.1"))
+        status.addWidget(QLabel("Kotoba Studio  0.6.2"))
         outer.addWidget(statusbar)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(self.selected_panel)
@@ -281,6 +287,7 @@ class Workspace(QMainWindow):
     def apply_locale(self, locale):
         """Update shell labels without rebuilding web, terminal, or file state."""
         self.locale_toggle.blockSignals(True)
+        self.access_button.setText("Access ▾" if locale == "en" else "アクセス ▾")
         self.locale_toggle.setCurrentIndex(self.locale_toggle.findData(locale))
         self.locale_toggle.blockSignals(False)
         self.locale_scope.setText(translate("scope", locale))
@@ -317,9 +324,23 @@ class Workspace(QMainWindow):
         if self.health_key:
             self.set_health(self.health_key)
 
+    def open_access(self):
+        if self.url is None or self.voice.job is not None or self.voice.stream is not None:
+            return
+        from .access_ui import AccessDialog
+        self.voice.permission_dialog_active = True
+        try:
+            dialog = AccessDialog(self)
+            dialog.exec()
+            dialog.deleteLater()
+        finally:
+            self.voice.permission_dialog_active = False
+
     def set_health(self, key):
         self.health_key = key
         self.health.setText(translate(key, self.voice.locale))
+        if key in ("failed", "stopped", "timeout"):
+            self.access_button.setEnabled(False)
 
     def handoff_draft(self, text):
         QApplication.clipboard().setText(text)
@@ -601,6 +622,9 @@ class Workspace(QMainWindow):
     def closeEvent(self, event):
         if self.shutdown_complete:
             event.accept()
+            return
+        if getattr(self.voice, "permission_dialog_active", False):
+            event.ignore()
             return
         if self.voice.job is not None or self.voice.stream is not None or self.local_models.job is not None:
             self.restore_from_tray()
