@@ -18,12 +18,12 @@ The desktop combines persistent chat, a voice dock, a file explorer, a code view
 
 | Work with | What Kotoba provides |
 | --- | --- |
-| Japanese and English | Local multilingual Whisper transcription, language selection, terminology hints, and bilingual core interface controls |
+| Japanese and English | Parakeet for English, Kotoba-Whisper for Japanese, selectable Whisper alternatives, and bilingual controls |
 | Your audio sources | Microphone, system audio, application process capture, and imported recordings |
 | Local AI | GGUF models through the bundled llama.cpp CPU engine; connections to Ollama and LM Studio |
 | Cloud AI | Native OpenAI, Anthropic Claude, Kimi, and DeepSeek APIs; custom providers and per-conversation model selection |
 | An agent workspace | Persistent sessions, file and terminal tools, skills, workflows, subagents, and Cordis plugins |
-| Repeatable dictation | Saved phrases, Unicode-aware expansion, undo, transcript review, and clipboard handoff to chat |
+| Repeatable dictation | Global Windows hotkey, paste at cursor, saved phrases, undo, and reviewed agent drafts |
 | Measurable results | Transcription latency, real-time factor, Japanese character error rate, and English word error rate against a supplied reference |
 
 ![Kotoba Studio desktop with chat and Voice Studio](assets/brand/kotoba-workspace.png)
@@ -32,7 +32,7 @@ The desktop combines persistent chat, a voice dock, a file explorer, a code view
 
 ## Start on Windows
 
-The desktop build is **Kotoba Studio 0.5.2**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.5.2-Setup.exe` from your build output. The installer includes the desktop application, agent runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
+The desktop build is **Kotoba Studio 0.6.0**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.6.0-Setup.exe` from your build output. The installer includes the desktop application, agent runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
 
 1. **Choose a folder.** Give the agent a working directory for the task.
 2. **Connect a model.** Open **··· → Routing** to configure an API provider, or choose Configure later and open Local models. Register a local model, then select Kotoba Local in the chat composer.
@@ -62,17 +62,21 @@ Kotoba Studio は、日本語・英語の音声入力から AI との作業へ�
 
 **ローカルモデル** では GGUF ファイルを同梱の CPU エンジンで実行できます。Ollama / LM Studio への接続も可能です。モデルの重みは別途必要です。登録後、チャットのモデル選択で **Kotoba Local** を選びます。再起動後はローカルエンジンを起動し直してください。
 
+## Dictation and meeting notes
+
+Enable **Desktop dictation** to speak into the focused application with **Ctrl+Shift+Space**. Open **Meetings & notes** to select a window, optionally include your microphone, save timestamped transcripts, highlight key points, and keep searchable development notes. Highlights retain source text; AI follow-ups start as a reviewed draft. See the [voice workflow guide](python/voice/VOICE.md) for models, capture boundaries, privacy, and limits.
+
 ## Choose where inference runs
 
-Speech recognition runs locally. A native GGUF model also runs on your computer; Ollama and LM Studio connections accept loopback endpoints only. A failed local connection does not silently fall back to a cloud provider or replay a turn. Agent tools can still access the network when used.
+Speech recognition defaults to local processing. Explicit cloud speech uploads are optional. A native GGUF model also runs on your computer; Ollama and LM Studio connections accept loopback endpoints only. A failed local connection does not silently fall back to a cloud provider or replay a turn. Agent tools can still access the network when used.
 
-Cloud providers receive the text you submit to them. The agent runtime stores submitted text and session history locally; capture audio stays in memory. Saved phrases are stored locally as unencrypted text. Local transcription may download speech weights on first use. See the [desktop guide](python/voice/README.md#local-language-models) for model lifecycle and connection details.
+Cloud providers receive the text you submit to them. The agent runtime stores submitted text and session history locally; capture audio stays in memory. Saved phrases are stored locally as unencrypted text. Prepare speech weights explicitly in Audio settings before local transcription. See the [desktop guide](python/voice/README.md#local-language-models) for model lifecycle and connection details.
 
 ## Evaluate before relying on it
 
 Model quality depends on the recording, selected model, hardware, and task. Use human-reviewed references to measure Japanese CER and English WER; agreement with automatic captions is not a ground-truth accuracy score. Small GGUF smoke tests establish integration, not dependable agent tool use.
 
-Speaker diarization, streaming interruption, managed GPU inference, automatic GGUF downloads, and system-wide paste-at-cursor are not implemented. Extensions without Japanese translations fall back to English. Review [SAFETY.md](SAFETY.md) before giving an agent workspace access.
+Speaker diarization, streaming interruption, managed GPU inference, and automatic GGUF downloads are not implemented. Extensions without Japanese translations fall back to English. Review [SAFETY.md](SAFETY.md) before giving an agent workspace access.
 
 <a id="run-from-source"></a>
 

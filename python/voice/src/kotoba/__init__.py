@@ -1,3 +1,9 @@
-"""Japanese and English voice input for the full DeepSeek Harness runtime."""
+"""Japanese and English voice workflows for Kotoba Studio."""
 
-__version__ = "0.1.0"
+import os
+
+# Set before importing Hub clients; model downloads are explicit user actions.
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+os.environ["DO_NOT_TRACK"] = "1"
+
+__version__ = "0.6.0"

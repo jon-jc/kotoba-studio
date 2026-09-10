@@ -1,6 +1,6 @@
 """Local ASR with explicit language selection and reviewable uncertainty."""
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 import math
 from pathlib import Path
 from time import perf_counter
@@ -8,11 +8,12 @@ from typing import Callable, Protocol
 
 import numpy as np
 from .dictation import dictionary_echo
+from .speech_models import resolve_model, PARAKEET_MODELS, JAPANESE_MODEL, prepare_parakeet, ParakeetRecognizer
 
 
 @dataclass(frozen=True)
 class SpeechConfig:
-    model: str = "large-v3"
+    model: str = "auto"
     language: str = "ja"
     device: str = "cpu"
     compute_type: str = "int8"
@@ -21,6 +22,8 @@ class SpeechConfig:
     max_seconds: float = 120
     review_logprob: float = -0.7
     min_rms: float = 0.001
+    context: str = "dictation"
+    processing: str = "local"
 
     def __post_init__(self):
         if self.language not in {"ja", "en", "auto"}:
@@ -31,6 +34,10 @@ class SpeechConfig:
             raise ValueError("Invalid audio limits.")
         if len(self.glossary) > 1000:
             raise ValueError("Glossary is limited to 1,000 characters.")
+        if self.context not in {"dictation", "meeting"}:
+            raise ValueError("Invalid speech context")
+        if self.processing not in {"local", "cloud"}:
+            raise ValueError("Invalid processing mode")
 
 
 @dataclass(frozen=True)
@@ -38,8 +45,8 @@ class Segment:
     start: float
     end: float
     text: str
-    avg_logprob: float
-    no_speech_probability: float
+    avg_logprob: float | None
+    no_speech_probability: float | None
 
 
 @dataclass(frozen=True)
@@ -73,16 +80,39 @@ class SpeechEngine:
         self.factory = factory
         self._model: Recognizer | None = None
         self._key = None
+        self.cloud = None
 
-    def prepare(self, config: SpeechConfig):
+    def prepare(self, config: SpeechConfig, allow_download=True):
+        if config.processing == "cloud":
+            if self.cloud is None:
+                raise RuntimeError("Configure cloud speech in Audio settings first. / 音声設定でクラウドを設定してください。")
+            return
+        config = replace(config, model=resolve_model(config.model, config.language))
         key = (config.model, config.device, config.compute_type)
         if key != self._key:
             factory = self.factory
+            self._model = None
+            self._key = None
+            if factory is None and config.model in PARAKEET_MODELS:
+                self._model = ParakeetRecognizer(prepare_parakeet(self.cache, config.model, allow_download))
+                self._key = key
+                return
             if factory is None:
                 from faster_whisper import WhisperModel
+                from faster_whisper.utils import download_model
                 factory = WhisperModel
-            self._model = factory(config.model, device=config.device,
-                                  compute_type=config.compute_type, download_root=str(self.cache))
+                model_path = Path(config.model) if Path(config.model).is_dir() else Path(download_model(
+                    config.model, cache_dir=str(self.cache), local_files_only=not allow_download))
+                # faster-whisper otherwise fetches a fallback tokenizer even in
+                # local_files_only mode; incomplete local models must fail offline.
+                if not (model_path / "tokenizer.json").is_file():
+                    raise RuntimeError("Speech model tokenizer is missing. Download the complete model first.")
+                model_name = str(model_path)
+            else:
+                model_name = config.model
+            self._model = factory(model_name, device=config.device,
+                                  compute_type=config.compute_type, download_root=str(self.cache),
+                                  local_files_only=not allow_download)
             self._key = key
 
     def transcribe(self, audio: np.ndarray, config: SpeechConfig) -> Transcript:
@@ -99,13 +129,22 @@ class SpeechEngine:
         if float(np.sqrt(np.mean(audio ** 2))) < config.min_rms:
             return Transcript("", config.language, 0, (), duration, perf_counter() - start,
                               config.model, ("no_speech",))
-        self.prepare(config)
+        if config.processing == "cloud":
+            self.prepare(config, allow_download=False)
+            return self.cloud.transcribe(audio, config)
+        config = replace(config, model=resolve_model(config.model, config.language))
+        self.prepare(config, allow_download=False)
         segments, info = self._model.transcribe(
             audio, language=None if config.language == "auto" else config.language,
             task="transcribe", beam_size=config.beam_size, temperature=0.0,
-            vad_filter=True, vad_parameters={"min_silence_duration_ms": 500},
-            condition_on_previous_text=False, word_timestamps=True,
+            # OpenWhispr whisperVadConfig.js: preserve pauses in dictation;
+            # Silero is enabled for long-form meetings, where silence dominates.
+            vad_filter=config.context == "meeting", vad_parameters={"min_silence_duration_ms": 500},
+            # The distilled two-layer Japanese model has no compatible alignment
+            # heads for CTranslate2 word alignment. Keep its segment timestamps.
+            condition_on_previous_text=False, word_timestamps=config.model != JAPANESE_MODEL,
             hotwords=config.glossary or None,
+            chunk_length=15 if config.model == JAPANESE_MODEL else 30,
         )
         kept = tuple(Segment(s.start, s.end, s.text, s.avg_logprob, s.no_speech_prob)
                      for s in segments)
@@ -117,9 +156,9 @@ class SpeechEngine:
             reasons.append("unsupported_language")
         if config.language == "auto" and info.language_probability < 0.8:
             reasons.append("language_uncertain")
-        if any(not math.isfinite(s.avg_logprob) or s.avg_logprob < config.review_logprob for s in kept):
+        if any(s.avg_logprob is not None and (not math.isfinite(s.avg_logprob) or s.avg_logprob < config.review_logprob) for s in kept):
             reasons.append("low_decoder_score")
-        if any(s.no_speech_probability > 0.6 for s in kept):
+        if any(s.no_speech_probability is not None and s.no_speech_probability > 0.6 for s in kept):
             reasons.append("possible_non_speech")
         if float(np.mean(np.abs(audio) >= 0.99)) > 0.01:
             reasons.append("clipping")

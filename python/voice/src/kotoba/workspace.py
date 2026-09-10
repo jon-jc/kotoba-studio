@@ -187,7 +187,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         status.addWidget(self.locale_scope)
         status.addSpacing(18)
-        status.addWidget(QLabel("Kotoba Studio  0.5.2"))
+        status.addWidget(QLabel("Kotoba Studio  0.6.0"))
         outer.addWidget(statusbar)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(self.selected_panel)
@@ -199,6 +199,9 @@ class Workspace(QMainWindow):
         self.selected_panel(0)
 
     def record_shortcut(self):
+        if self.voice.global_dictation.enabled:
+            self.voice.global_dictation.toggle()
+            return
         if self.voice.record_button.isEnabled():
             self.voice.show()
             self.voice.record_button.click()

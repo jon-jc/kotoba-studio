@@ -24,6 +24,9 @@ from .audio_sources import sources, LoopbackStream
 from .dictation import format_dictation
 from .snippets import load_snippets, save_snippets, expand_snippets
 from .branding import icon_path
+from .speech_models import MODEL_CHOICES, resolve_model
+from .global_dictation import GlobalDictation
+from .meetings import MeetingStore
 
 
 COPY = {
@@ -33,13 +36,13 @@ COPY = {
         "draft": "TRANSCRIPT · REVIEW BEFORE SENDING", "placeholder": "Speak in Japanese or English, import a recording, or type here…",
         "conversation": "Conversation", "activity": "Agent activity", "evaluation": "Accuracy lab",
         "ready": "Ready to listen", "recording": "Recording locally · 60 second limit", "working": "Working…",
-        "privacy": "Audio stays local. Reviewed text goes to your model provider and Kotoba Studio history.",
+        "privacy": "Local keeps audio on this device. Cloud uploads audio to your selected endpoint. Reviewed instructions go to your agent provider.",
         "settings": "Settings", "new": "+ New session", "export": "Export session", "speak": "Read reply aloud",
         "welcome": "Speak naturally. Act deliberately.", "intro": "Japanese and English voice input, with tools, code, and agent workflows in one place.\n\n1   Record or import audio\n2   Review names, numbers, and intent\n3   Send your instruction to Kotoba Studio",
         "model": "Speech model", "lang": "Input language", "speed": "INFERENCE", "duration": "AUDIO", "rtf": "REAL-TIME FACTOR",
         "review": "Review required", "clean": "Check names and numbers before sending.", "reference": "Human-checked reference",
         "compare": "Compare with transcript", "no_ref": "Enter a reference and transcript first.",
-        "configure": "Model weights download on first use. Large-v3 prioritizes quality; CPU inference can be slow.",
+        "configure": "Prepare your speech model once before recording. English recommends Parakeet; Japanese recommends Kotoba-Whisper. Local transcription then works offline.",
         "key": "API key (this session only)", "llm": "Kotoba Studio model", "folder": "Agent workspace", "browse": "Choose folder",
         "glossary": "Names and technical terms (optional)", "device": "Inference device", "save": "Apply", "error": "Action could not complete",
         "busy_close": "Wait for the current operation to finish before closing. No agent request will be replayed automatically.",
@@ -53,13 +56,13 @@ COPY = {
         "draft": "文字起こし · 送信前に確認", "placeholder": "日本語・英語で話す、音声を読み込む、または入力してください…",
         "conversation": "会話", "activity": "エージェントの動作", "evaluation": "精度ラボ",
         "ready": "録音できます", "recording": "ローカル録音中 · 最大60秒", "working": "処理中…",
-        "privacy": "音声は端末内で処理します。送信したテキストはモデル提供者と Kotoba Studio の履歴に渡ります。",
+        "privacy": "ローカルでは音声を端末内で処理します。クラウドでは選択した提供者へ音声を送信します。確認した指示はエージェントに送信します。",
         "settings": "設定", "new": "+ 新しい会話", "export": "会話をエクスポート", "speak": "返答を読み上げる",
         "welcome": "自然に話して、確かめて実行。", "intro": "日本語と英語の音声入力を、エージェント機能につなげます。\n\n1   録音する、または音声を読み込む\n2   名前・数字・意図を確認する\n3   Kotoba Studio に指示を送信する",
         "model": "音声モデル", "lang": "入力言語", "speed": "処理時間", "duration": "音声の長さ", "rtf": "実時間比",
         "review": "確認が必要です", "clean": "送信前に名前と数字を確認してください。", "reference": "人手で確認した正解文",
         "compare": "文字起こしと比較", "no_ref": "正解文と文字起こしを入力してください。",
-        "configure": "初回はモデルをダウンロードします。Large-v3 は精度重視の候補です。CPUでは時間がかかります。",
+        "configure": "録音前にモデルを準備してください。英語は Parakeet、日本語は Kotoba-Whisper が推奨です。準備後はオフラインで文字起こしできます。",
         "key": "APIキー（今回のみ）", "llm": "Kotoba Studio モデル", "folder": "作業フォルダー", "browse": "フォルダーを選ぶ",
         "glossary": "名前・専門用語（任意）", "device": "処理デバイス", "save": "適用", "error": "処理を完了できませんでした",
         "busy_close": "処理の完了後に終了してください。エージェントへの指示は自動で再送されません。",
@@ -127,6 +130,10 @@ class Window(QMainWindow):
         self.last_transcript = None
         self.last_reply = ""
         self.entries = []
+        self.meeting_active = False
+        self.meeting_store = MeetingStore(self.home / "meetings.sqlite3")
+        self.meeting_store.recover()
+        self.global_dictation = GlobalDictation(self)
         self.tts = QTextToSpeech(self)
         self.timer = QTimer(self)
         self.timer.setSingleShot(True)
@@ -180,11 +187,11 @@ class Window(QMainWindow):
         side.addWidget(self.language)
         side.addWidget(self.label(self.t("model"), "muted"))
         self.speech_model = QComboBox()
-        self.speech_model.addItem("Large-v3 · Quality", "large-v3")
-        self.speech_model.addItem("Turbo · Speed", "turbo")
+        self.populate_speech_models()
         side.addWidget(self.speech_model)
         self.prepare_button = self.button("prepare", self.prepare)
         side.addWidget(self.prepare_button)
+        side.addWidget(self.workflow_controls())
         side.addWidget(self.label(self.t("configure"), "muted"))
         side.addStretch()
         self.settings_button = self.button("settings", self.settings)
@@ -195,7 +202,7 @@ class Window(QMainWindow):
         self.locale_button = switch
         side.addWidget(switch)
         switch.setVisible(not self.embedded)
-        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.5.2", "muted"))
+        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.6.0", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
         content.setSpacing(12)
@@ -340,6 +347,7 @@ class Window(QMainWindow):
         capture.addWidget(self.record_button, 1)
         capture.addWidget(self.import_button)
         layout.addLayout(capture)
+        layout.addWidget(self.workflow_controls())
         options = QPushButton("Audio settings  ▾" if en else "音声設定  ▾")
         options.setObjectName("ghost")
         options.setCheckable(True)
@@ -348,8 +356,7 @@ class Window(QMainWindow):
         advanced_layout = QVBoxLayout(advanced)
         advanced_layout.setContentsMargins(0, 0, 0, 4)
         self.speech_model = QComboBox()
-        self.speech_model.addItem("Whisper large-v3 · Quality" if en else "Whisper large-v3 · 精度", "large-v3")
-        self.speech_model.addItem("Whisper turbo · Speed" if en else "Whisper turbo · 速度", "turbo")
+        self.populate_speech_models()
         self.speech_model.setAccessibleName(self.t("model"))
         advanced_layout.addWidget(self.speech_model)
         self.prepare_button = self.button("prepare", self.prepare)
@@ -448,6 +455,83 @@ class Window(QMainWindow):
     def selected_config(self):
         return replace(self.config, language=self.language.currentData(), model=self.speech_model.currentData())
 
+    def populate_speech_models(self):
+        for model, en, ja in MODEL_CHOICES:
+            self.speech_model.addItem(en if self.locale == "en" else ja, model)
+        chosen = self.preferences.value("speech/model", "auto")
+        self.speech_model.setCurrentIndex(max(0, self.speech_model.findData(chosen)))
+        self.speech_model.currentIndexChanged.connect(lambda _: self.preferences.setValue("speech/model", self.speech_model.currentData()))
+
+    def workflow_controls(self):
+        box = QWidget()
+        layout = QVBoxLayout(box)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.global_toggle = QCheckBox("Desktop dictation" if self.locale == "en" else "デスクトップ音声入力")
+        self.global_toggle.setChecked(self.global_dictation.enabled)
+        self.global_toggle.setToolTip("Uses the selected microphone. Paste replaces the clipboard; never sends Enter. / 選択したマイクを使用。クリップボードを置き換えます。Enter は送信しません。")
+        self.global_toggle.toggled.connect(self.toggle_global)
+        layout.addWidget(self.global_toggle)
+        shortcut = QLabel("Ctrl+Shift+Space · " + ("tap to start / finish" if self.locale == "en" else "押すと開始・終了"))
+        shortcut.setObjectName("micro")
+        layout.addWidget(shortcut)
+        self.meetings_button = QPushButton("Meetings & notes   ↗" if self.locale == "en" else "会議とメモ   ↗")
+        self.meetings_button.clicked.connect(self.open_meetings)
+        layout.addWidget(self.meetings_button)
+        self.processing_button = QPushButton("Processing: " + self.config.processing if self.locale == "en" else "処理方法: " + ("ローカル" if self.config.processing == "local" else "クラウド"))
+        self.processing_button.clicked.connect(self.processing_settings)
+        layout.addWidget(self.processing_button)
+        return box
+
+    def processing_settings(self):
+        from .cloud_speech import CloudSpeech
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Speech processing / 音声処理")
+        form = QFormLayout(dialog)
+        mode = QComboBox()
+        mode.addItem("Local · offline / ローカル · オフライン", "local")
+        mode.addItem("Cloud · audio upload / クラウド · 音声を送信", "cloud")
+        mode.setCurrentIndex(0 if self.config.processing == "local" else 1)
+        endpoint = QLineEdit(self.engine.cloud.endpoint if self.engine.cloud else "https://api.openai.com/v1/audio/transcriptions")
+        model = QLineEdit(self.engine.cloud.model if self.engine.cloud else "gpt-4o-transcribe")
+        key = QLineEdit(self.engine.cloud.key if self.engine.cloud else "")
+        key.setEchoMode(QLineEdit.Password)
+        form.addRow("Processing / 処理方法", mode)
+        form.addRow("Transcription URL / 文字起こし URL", endpoint)
+        form.addRow("Cloud model / クラウドモデル", model)
+        form.addRow("API key · this session / 今回のみ", key)
+        disclosure = QLabel("Cloud sends recorded audio and glossary to this endpoint. Provider fees and retention apply. Local never falls back to cloud. / クラウドでは録音音声と用語を送信します。提供者の料金・保存規定が適用されます。自動切替はありません。")
+        disclosure.setWordWrap(True)
+        form.addRow(disclosure)
+        buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        form.addRow(buttons)
+        if dialog.exec() == QDialog.Accepted:
+            try:
+                if mode.currentData() == "cloud":
+                    self.engine.cloud = CloudSpeech(endpoint.text().strip(), model.text().strip(), key.text().strip())
+                else:
+                    self.engine.cloud = None
+                self.config = replace(self.config, processing=mode.currentData())
+                self.processing_button.setText("Processing: " + self.config.processing if self.locale == "en" else "処理方法: " + ("ローカル" if self.config.processing == "local" else "クラウド"))
+            except ValueError as error:
+                self.failure(str(error))
+
+    def toggle_global(self, enabled):
+        try:
+            self.global_dictation.set_enabled(enabled)
+        except RuntimeError as error:
+            self.global_toggle.blockSignals(True)
+            self.global_toggle.setChecked(False)
+            self.global_toggle.blockSignals(False)
+            self.failure(str(error))
+
+    def open_meetings(self):
+        from .meetings_ui import MeetingsDialog
+        dialog = MeetingsDialog(self)
+        dialog.exec()
+        dialog.deleteLater()
+
     def load_sources(self):
         selected = self.audio_source.currentData()
         self.audio_source.clear()
@@ -460,7 +544,8 @@ class Window(QMainWindow):
         self.busy_changed.emit(value)
         for widget in (self.record_button, self.import_button, self.send_button, self.prepare_button,
                        self.settings_button, self.new_button, self.locale_button, self.language, self.speech_model,
-                       self.audio_source, self.refresh_sources, self.phrase_button, self.expand_button):
+                       self.audio_source, self.refresh_sources, self.phrase_button, self.expand_button,
+                       self.global_toggle, self.meetings_button, self.processing_button):
             widget.setEnabled(not value)
 
     def work(self, task, result):
@@ -485,10 +570,17 @@ class Window(QMainWindow):
         # Runtime diagnostics can contain provider details; never export them automatically.
         if self.api_key:
             message = message.replace(self.api_key, "[redacted]")
+        if self.engine.cloud:
+            message = message.replace(self.engine.cloud.key, "[redacted]")
         env_key = os.environ.get("DEEPSEEK_API_KEY")
         if env_key:
             message = message.replace(env_key, "[redacted]")
         self.status.setText(self.t("error"))
+        if self.global_dictation.target:
+            self.global_dictation.target = None
+            self.global_dictation.notice("Dictation failed · open Voice Studio", "音声入力に失敗 · 音声スタジオを確認")
+            self.activity.appendPlainText(message[:2000])
+            return
         QMessageBox.warning(self, self.t("error"), message[:2000])
 
     def prepare(self):
@@ -496,6 +588,8 @@ class Window(QMainWindow):
         self.work(lambda emit: self.engine.prepare(config), lambda _: self.status.setText(self.t("prepared")))
 
     def record(self):
+        if self.job is not None:
+            return
         if self.stream is not None:
             self.timer.stop()
             self.stream.stop()
@@ -518,7 +612,8 @@ class Window(QMainWindow):
         def capture(data, count, timing, status):
             if status:
                 self.record_error = str(status)
-            self.frames.append(data[:, 0].copy())
+            if sum(len(frame) for frame in self.frames) < 16000 * 60:
+                self.frames.append(data[:, 0].copy())
         try:
             import sounddevice as sd
             source = self.audio_source.currentData()
@@ -557,6 +652,7 @@ class Window(QMainWindow):
         self.review.setText(self.t("review") + " · " + ", ".join(result.review_reasons) if result.review_reasons else self.t("clean"))
         self.status.setText(self.t("ready") if result.text else self.t("empty"))
         self.entries.append({"kind": "transcription", "time": datetime.now(timezone.utc).isoformat(), **result.to_dict()})
+        self.global_dictation.deliver(result)
 
     def send(self):
         text = self.draft.toPlainText().strip()
@@ -817,6 +913,7 @@ class Window(QMainWindow):
             event.ignore()
             return
         self.tts.stop()
+        self.global_dictation.close()
         self.harness.close()
         event.accept()
 

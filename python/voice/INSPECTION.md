@@ -55,3 +55,7 @@ For an AWS service, deploy the speech provider separately from the desktop: auth
 - https://github.com/SYSTRAN/faster-whisper
 - https://huggingface.co/Systran/faster-whisper-large-v3
 - https://github.com/pyannote/pyannote-audio
+
+## OpenWhispr voice workflow integration
+
+The README was read before inspecting the pinned OpenWhispr checkout at `c6a871db1b8ada646eb728d3592431ecc8c17723`. The [voice guide](VOICE.md) describes the resulting product. Reused code and adapted logic include the Windows process-loopback capture helper, `windows-fast-paste.c` terminal/paste behavior, `modelRegistryData.json` Parakeet entries, `parakeetModelInfo.js` model-file layout, `whisperVadConfig.js` context-specific VAD, `meetingRecordingSession.ts` ownership, and `meetingTranscriptPersistence.ts` final-save ordering. The clipboard manager, hotkey manager, meeting routing, mic gate, and echo-leak detector were also inspected. Echo cancellation, speaker recognition, accounts, cloud sync, and calendar integrations are not claimed by this port. Original licenses remain in the integration checkout and installer notices.

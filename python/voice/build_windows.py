@@ -38,6 +38,7 @@ def main():
         "--version-file", str(voice / "assets" / "windows-version.txt"),
         "--specpath", str(voice), "--paths", str(voice / "src"),
         "--collect-all", "faster_whisper", "--collect-all", "ctranslate2", "--collect-all", "av", "--collect-all", "pygments",
+        "--collect-all", "sherpa_onnx",
         "--collect-submodules", "deepseek_harness", "--hidden-import", "uvicorn.logging",
         "--hidden-import", "uvicorn.loops.auto", "--hidden-import", "uvicorn.protocols.http.auto",
         "--hidden-import", "uvicorn.protocols.websockets.auto", "--hidden-import", "uvicorn.lifespan.on",

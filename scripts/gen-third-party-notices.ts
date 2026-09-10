@@ -88,6 +88,8 @@ const PYTHON_METADATA: Record<string, { license: string; repo: string; role: str
   pydantic: { license: 'MIT', repo: 'https://github.com/pydantic/pydantic', role: 'runtime dependency of `deepseek-harness-sdk`' },
   pygments: { license: 'BSD-2-Clause', repo: 'https://github.com/pygments/pygments', role: 'desktop source syntax highlighting' },
   hatchling: { license: 'MIT', repo: 'https://github.com/pypa/hatch', role: 'build backend' },
+  httpx: { license: 'BSD-3-Clause', repo: 'https://github.com/encode/httpx', role: 'explicit cloud speech uploads' },
+  'sherpa-onnx': { license: 'Apache-2.0', repo: 'https://github.com/k2-fsa/sherpa-onnx', role: 'local Parakeet speech inference' },
   pytest: { license: 'MIT', repo: 'https://github.com/pytest-dev/pytest', role: 'test-only' },
   setuptools: { license: 'MIT', repo: 'https://github.com/pypa/setuptools', role: 'voice build backend' },
   pyside6: { license: 'LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only', repo: 'https://code.qt.io/cgit/pyside/pyside-setup.git/', role: 'voice desktop runtime' },

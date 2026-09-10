@@ -21,11 +21,13 @@ def main():
         import av
         import ctranslate2
         import sounddevice
+        import sherpa_onnx
         from deepseek_harness import DeepSeekHarness
         from PySide6.QtCore import qVersion
         report["qt"] = qVersion()
         report["ctranslate2"] = ctranslate2.__version__
         report["av"] = av.__version__
+        report["sherpa_onnx"] = sherpa_onnx.__version__
         report["harness_runtime_exists"] = runtime_path().is_file()
         local = subprocess.run([str(llama_path()), "--version"], capture_output=True, text=True,
                                timeout=15, creationflags=subprocess.CREATE_NO_WINDOW, check=True)
@@ -34,7 +36,7 @@ def main():
                                 timeout=10, creationflags=subprocess.CREATE_NO_WINDOW, check=True)
         report["capture"] = json.loads(helper.stdout)
         with tempfile.TemporaryDirectory(prefix="kotoba-check-") as folder:
-            engine = SpeechEngine(Path(folder))
+            engine = SpeechEngine(Path(os.environ.get("KOTOBA_VERIFY_CACHE", folder)))
             model = os.environ.get("KOTOBA_VERIFY_MODEL")
             audio = os.environ.get("KOTOBA_VERIFY_AUDIO")
             config = SpeechConfig(model=model or "large-v3", language=os.environ.get("KOTOBA_VERIFY_LANGUAGE", "ja"))
