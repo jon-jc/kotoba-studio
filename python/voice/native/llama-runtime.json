@@ -1,0 +1,7 @@
+{
+  "repository": "https://github.com/ggml-org/llama.cpp",
+  "tag": "b10883",
+  "commit": "91f6a6cf361385700bbe15981f0f39909df77498",
+  "url": "https://github.com/ggml-org/llama.cpp/releases/download/b10883/llama-b10883-bin-win-cpu-x64.zip",
+  "sha256": "05865586d8cc235e7ed1e975e0df4c6d02ba81cab637845aed888ad5fe4ba061"
+}

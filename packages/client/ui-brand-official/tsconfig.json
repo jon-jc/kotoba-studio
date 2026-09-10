@@ -22,6 +22,15 @@
     },
     {
       "path": "../ui-slots"
+    },
+    {
+      "path": "../ui-conversation"
+    },
+    {
+      "path": "../locale"
+    },
+    {
+      "path": "../ui-theme"
     }
   ]
 }

@@ -10,6 +10,7 @@ import numpy as np
 
 from .audio_sources import helper_path
 from .harness import runtime_path
+from .local_models import llama_path
 from .speech import SpeechEngine, SpeechConfig, load_audio
 
 
@@ -26,6 +27,9 @@ def main():
         report["ctranslate2"] = ctranslate2.__version__
         report["av"] = av.__version__
         report["harness_runtime_exists"] = runtime_path().is_file()
+        local = subprocess.run([str(llama_path()), "--version"], capture_output=True, text=True,
+                               timeout=15, creationflags=subprocess.CREATE_NO_WINDOW, check=True)
+        report["local_engine"] = (local.stdout + local.stderr).strip()[:500]
         helper = subprocess.run([str(helper_path()), "probe"], capture_output=True, text=True,
                                 timeout=10, creationflags=subprocess.CREATE_NO_WINDOW, check=True)
         report["capture"] = json.loads(helper.stdout)

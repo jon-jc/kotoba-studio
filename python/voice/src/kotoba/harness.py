@@ -25,20 +25,23 @@ class HarnessSession:
         self.client = None
         self.identity = None
 
-    def run(self, text: str, workspace: str, model: str, api_key: str, notify):
+    def run(self, text: str, workspace: str, model: str, api_key: str, notify, provider="deepseek-official"):
         if not text.strip():
             raise ValueError("Review and enter a transcript first.")
         if not Path(workspace).is_dir():
             raise ValueError("Select an existing workspace directory.")
-        identity = (str(Path(workspace).resolve()), model, api_key)
+        if provider not in ("deepseek-official", "kotoba-local"):
+            raise ValueError("Select a configured cloud or local provider.")
+        identity = (str(Path(workspace).resolve()), model, api_key if provider == "deepseek-official" else "", provider)
         if identity != self.identity:
             self.close()
             from deepseek_harness import DeepSeekHarness
             self.client = DeepSeekHarness(
                 dsh_bin=str(runtime_path()), dsh_home=str(self.home), cwd=identity[0],
-                profile="sdk", provider="deepseek-official", model=model,
-                api_key=api_key or os.environ.get("DEEPSEEK_API_KEY"),
-                request_timeout_seconds=180, initialize_timeout_seconds=60,
+                profile="sdk", provider=provider, model=model,
+                api_key=(api_key or os.environ.get("DEEPSEEK_API_KEY")) if provider == "deepseek-official" else None,
+                max_tokens=1024 if provider == "kotoba-local" else None,
+                request_timeout_seconds=600 if provider == "kotoba-local" else 180, initialize_timeout_seconds=60,
                 env={"DSH_TELEMETRY_DISABLED": "1", "DSH_MAX_TOKENS_AS_SUCCESS": "false"},
             )
             self.identity = identity

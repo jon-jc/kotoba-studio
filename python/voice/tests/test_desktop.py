@@ -41,7 +41,7 @@ def test_language_switch_preserves_draft(window):
 
 def test_notification_adapter_and_completed_turn(window):
     class Harness:
-        def run(self, text, workspace, model, key, notify):
+        def run(self, text, workspace, model, key, notify, provider="deepseek-official"):
             notify(SimpleNamespace(payload={"event": {"type": "tool/call"}}, method="session.event"))
             return SimpleNamespace(session_id="test-session", final_response="確認しました", finish_reason="completed", events=[{}])
         def close(self):

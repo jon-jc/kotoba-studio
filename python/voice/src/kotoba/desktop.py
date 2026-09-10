@@ -10,7 +10,7 @@ from time import perf_counter
 
 import numpy as np
 from PySide6.QtCore import Qt, QThread, QTimer, Signal, QStandardPaths, QSettings
-from PySide6.QtGui import QFont, QTextCursor
+from PySide6.QtGui import QFont, QTextCursor, QIcon
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
     QFileDialog, QFormLayout, QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
     QMessageBox, QPlainTextEdit, QPushButton, QSplitter, QTabWidget, QTextBrowser,
@@ -23,23 +23,24 @@ from .evaluate import score
 from .audio_sources import sources, LoopbackStream
 from .dictation import format_dictation
 from .snippets import load_snippets, save_snippets, expand_snippets
+from .branding import icon_path
 
 
 COPY = {
     "en": {
-        "tagline": "Your voice. The full power of Harness.", "workspace": "VOICE WORKSPACE",
+        "tagline": "Your voice. The full power of Kotoba Studio.", "workspace": "VOICE WORKSPACE",
         "record": "●  Record", "stop": "■  Transcribe", "import": "Import audio", "send": "Send reviewed text  →",
         "draft": "TRANSCRIPT · REVIEW BEFORE SENDING", "placeholder": "Speak in Japanese or English, import a recording, or type here…",
-        "conversation": "Conversation", "activity": "Harness activity", "evaluation": "Accuracy lab",
+        "conversation": "Conversation", "activity": "Agent activity", "evaluation": "Accuracy lab",
         "ready": "Ready to listen", "recording": "Recording locally · 60 second limit", "working": "Working…",
-        "privacy": "Audio stays local. Reviewed text goes to your model provider and Harness history.",
+        "privacy": "Audio stays local. Reviewed text goes to your model provider and Kotoba Studio history.",
         "settings": "Settings", "new": "+ New session", "export": "Export session", "speak": "Read reply aloud",
-        "welcome": "Speak naturally. Act deliberately.", "intro": "Japanese and English voice input, with the complete DeepSeek agent runtime behind it.\n\n1   Record or import audio\n2   Review names, numbers, and intent\n3   Send your instruction to Harness",
+        "welcome": "Speak naturally. Act deliberately.", "intro": "Japanese and English voice input, with tools, code, and agent workflows in one place.\n\n1   Record or import audio\n2   Review names, numbers, and intent\n3   Send your instruction to Kotoba Studio",
         "model": "Speech model", "lang": "Input language", "speed": "INFERENCE", "duration": "AUDIO", "rtf": "REAL-TIME FACTOR",
         "review": "Review required", "clean": "Check names and numbers before sending.", "reference": "Human-checked reference",
         "compare": "Compare with transcript", "no_ref": "Enter a reference and transcript first.",
         "configure": "Model weights download on first use. Large-v3 prioritizes quality; CPU inference can be slow.",
-        "key": "API key (this session only)", "llm": "Harness model", "folder": "Agent workspace", "browse": "Choose folder",
+        "key": "API key (this session only)", "llm": "Kotoba Studio model", "folder": "Agent workspace", "browse": "Choose folder",
         "glossary": "Names and technical terms (optional)", "device": "Inference device", "save": "Apply", "error": "Action could not complete",
         "busy_close": "Wait for the current operation to finish before closing. No agent request will be replayed automatically.",
         "no_voice": "No installed voice matches the reply language. Install a Japanese/English Windows speech voice.",
@@ -47,19 +48,19 @@ COPY = {
         "result": "Reply", "you": "You", "events": "Events", "no_export": "There is no session data to export yet.",
     },
     "ja": {
-        "tagline": "声でつながる、Harness のすべての力。", "workspace": "音声ワークスペース",
+        "tagline": "声でつながる、Kotoba Studio のすべての力。", "workspace": "音声ワークスペース",
         "record": "●  録音", "stop": "■  文字起こし", "import": "音声を読み込む", "send": "確認した内容を送信  →",
         "draft": "文字起こし · 送信前に確認", "placeholder": "日本語・英語で話す、音声を読み込む、または入力してください…",
-        "conversation": "会話", "activity": "Harness の動作", "evaluation": "精度ラボ",
+        "conversation": "会話", "activity": "エージェントの動作", "evaluation": "精度ラボ",
         "ready": "録音できます", "recording": "ローカル録音中 · 最大60秒", "working": "処理中…",
-        "privacy": "音声は端末内で処理します。送信したテキストはモデル提供者と Harness の履歴に渡ります。",
+        "privacy": "音声は端末内で処理します。送信したテキストはモデル提供者と Kotoba Studio の履歴に渡ります。",
         "settings": "設定", "new": "+ 新しい会話", "export": "会話をエクスポート", "speak": "返答を読み上げる",
-        "welcome": "自然に話して、確かめて実行。", "intro": "日本語と英語の音声入力を、DeepSeek のエージェント機能につなげます。\n\n1   録音する、または音声を読み込む\n2   名前・数字・意図を確認する\n3   Harness に指示を送信する",
+        "welcome": "自然に話して、確かめて実行。", "intro": "日本語と英語の音声入力を、エージェント機能につなげます。\n\n1   録音する、または音声を読み込む\n2   名前・数字・意図を確認する\n3   Kotoba Studio に指示を送信する",
         "model": "音声モデル", "lang": "入力言語", "speed": "処理時間", "duration": "音声の長さ", "rtf": "実時間比",
         "review": "確認が必要です", "clean": "送信前に名前と数字を確認してください。", "reference": "人手で確認した正解文",
         "compare": "文字起こしと比較", "no_ref": "正解文と文字起こしを入力してください。",
         "configure": "初回はモデルをダウンロードします。Large-v3 は精度重視の候補です。CPUでは時間がかかります。",
-        "key": "APIキー（今回のみ）", "llm": "Harness モデル", "folder": "作業フォルダー", "browse": "フォルダーを選ぶ",
+        "key": "APIキー（今回のみ）", "llm": "Kotoba Studio モデル", "folder": "作業フォルダー", "browse": "フォルダーを選ぶ",
         "glossary": "名前・専門用語（任意）", "device": "処理デバイス", "save": "適用", "error": "処理を完了できませんでした",
         "busy_close": "処理の完了後に終了してください。エージェントへの指示は自動で再送されません。",
         "no_voice": "返答の言語に対応する音声がありません。Windowsの日本語・英語音声をインストールしてください。",
@@ -69,28 +70,47 @@ COPY = {
 }
 
 STYLE = """
-QMainWindow, QDialog { background:#101416; color:#e8eeeb; }
-QWidget { color:#e8eeeb; font-family:'Segoe UI','Yu Gothic UI'; font-size:14px; }
-QLabel#brand {font-size:29px; font-weight:700; color:#e3f3e9;}
-QLabel#muted {color:#91a69d; font-size:12px;}
+QMainWindow, QDialog { background:#111817; color:#e5eeea; }
+QWidget { color:#e5eeea; font-family:'Segoe UI','Yu Gothic UI'; font-size:13px; }
+QLabel#brand {font-size:24px; font-weight:650; color:#e3f3e9;}
+QLabel#muted {color:#9bafa5; font-size:12px;}
+QLabel#micro {color:#879c92; font-size:10px;}
+QLabel#eyebrow {color:#b8d3c5; font-size:11px; font-weight:600; letter-spacing:2px;}
 QLabel#hero {font-size:25px; font-weight:600;}
-QFrame#sidebar {background:#171e1d; border-radius:15px;}
-QFrame#metric {background:#1b2522; border:1px solid #2b3b34; border-radius:12px;}
-QLabel#value {font-size:24px; color:#b3e8ca; font-weight:600;}
-QPushButton {background:#24342d; border:1px solid #3a5145; border-radius:8px; padding:11px 16px;}
-QPushButton:hover {background:#314b3c; border-color:#8dccaa;}
-QPushButton:checked {background:#365044; border-color:#9bccad; color:#e9fff0;}
-QPushButton:disabled {color:#62736a; background:#1c2520; border-color:#26372e;}
-QPushButton#primary {background:#c8ecd5; color:#163826; font-weight:700; border:0;}
-QPushButton#record {background:#5b332e; border-color:#bd776c;}
-QPlainTextEdit, QTextBrowser, QLineEdit {background:#181f20; border:1px solid #34433b; border-radius:10px; padding:12px; selection-background-color:#436950;}
-QComboBox {background:#1d2b24; border:1px solid #3c5044; border-radius:7px; padding:9px;}
+QLabel#route {color:#abd3bd; font-size:11px; padding:7px; background:#192823; border-radius:5px;}
+QFrame#sidebar, QFrame#activity-rail {background:#101615; border-right:1px solid #26342f;}
+QFrame#titlebar, QFrame#statusbar {background:#131c19; border-bottom:1px solid #26342f;}
+QFrame#metric {background:#18231f; border:1px solid #2a3831; border-radius:6px;}
+QLabel#value {font-size:18px; color:#b3e8ca; font-weight:600;}
+QPushButton {background:#1e2b25; border:1px solid #33453b; border-radius:5px; padding:7px 10px;}
+QPushButton:hover {background:#2a3f34; border-color:#6d9f85;}
+QPushButton:focus {border-color:#b5e6c9;}
+QPushButton:checked {background:#2b4236; border-color:#79ae90; color:#e9fff0;}
+QPushButton:disabled {color:#6e8276; background:#18221d; border-color:#28352e;}
+QPushButton#activity {background:transparent; border:0; border-radius:7px; font-size:18px; padding:0; color:#849b8d;}
+QPushButton#activity:hover {background:#1e2c25; color:#e0f5e8;}
+QPushButton#activity:checked {background:#263f32; color:#c3f0d3; border-left:2px solid #b5e6c9;}
+QPushButton#primary {background:#bde6ce; color:#102e1e; font-weight:600; border:0; padding:10px;}
+QPushButton#record {background:#292322; border-color:#79574e; color:#f0c9bc;}
+QPushButton#command-center {background:#19231f; color:#a3b8aa; border-color:#2d4035; text-align:left;}
+QPlainTextEdit, QTextBrowser, QLineEdit {background:#141e19; border:1px solid #2e4035; border-radius:6px; padding:10px; selection-background-color:#436950;}
+QComboBox, QSpinBox {background:#192720; border:1px solid #334a3c; border-radius:5px; padding:6px;}
 QComboBox QAbstractItemView {background:#1d2b24; selection-background-color:#3c5044;}
 QTabWidget::pane {border:0;}
-QTabBar::tab {background:#101416; color:#879b91; padding:12px 18px; border-bottom:2px solid #26352e;}
-QTabBar::tab:selected {color:#d5ebdf; border-bottom:2px solid #c8ecd5;}
-QCheckBox {spacing:8px; color:#aebfb5;}
-QSplitter::handle {background:#26352e; width:1px;}
+QTabBar::tab {background:#111817; color:#91a69a; padding:9px 12px; border-bottom:1px solid #2c3a31;}
+QTabBar::tab:selected {color:#d5ebdf; border-bottom:2px solid #bde6ce;}
+QCheckBox {spacing:7px; color:#acbfb1; font-size:11px;}
+QSplitter::handle {background:#2a3a30; width:3px; height:3px;}
+QTreeView {background:#141c18; border:0; outline:none; alternate-background-color:#17221c;}
+QTreeView::item {padding:5px;}
+QTreeView::item:selected {background:#2a4234;}
+QHeaderView::section {background:#17251d; border:0; padding:6px; color:#9bb3a2;}
+QListWidget {background:#141e19; border:1px solid #33453b; border-radius:6px; padding:8px;}
+QListWidget::item {padding:12px; border-radius:5px;}
+QListWidget::item:selected {background:#2b4236;}
+QScrollBar:vertical {background:#131c17; width:8px; margin:0;}
+QScrollBar::handle:vertical {background:#354c3d; min-height:30px; border-radius:4px;}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {height:0;}
 """
 
 
@@ -135,7 +155,10 @@ class Window(QMainWindow):
         self.harness = HarnessSession(self.home / "harness")
         self.config = SpeechConfig()
         self.api_key = ""
-        self.model = "deepseek-v4-flash"
+        self.provider = self.preferences.value("voice/provider", "deepseek-official")
+        if self.provider not in ("deepseek-official", "kotoba-local"):
+            self.provider = "deepseek-official"
+        self.model = self.preferences.value("voice/model", "deepseek-v4-flash")
         self.workspace = str(self.home / "workspace")
         Path(self.workspace).mkdir(exist_ok=True)
         self.job = None
@@ -149,9 +172,10 @@ class Window(QMainWindow):
         self.timer = QTimer(self)
         self.timer.setSingleShot(True)
         self.timer.timeout.connect(self.record)
-        self.setWindowTitle("Kotoba · ことば — DeepSeek Harness")
+        self.setWindowTitle("Kotoba Studio · ことば")
+        self.setWindowIcon(QIcon(str(icon_path())))
         self.resize(1360, 890)
-        self.setMinimumSize(1080, 740)
+        self.setMinimumSize(360, 560) if embedded else self.setMinimumSize(1080, 740)
         self.setStyleSheet(STYLE)
         self.build()
 
@@ -171,6 +195,9 @@ class Window(QMainWindow):
         return label
 
     def build(self):
+        if self.embedded:
+            self.build_compact()
+            return
         root = QWidget()
         layout = QHBoxLayout(root)
         layout.setContentsMargins(24, 24, 24, 24)
@@ -209,7 +236,7 @@ class Window(QMainWindow):
         self.locale_button = switch
         side.addWidget(switch)
         switch.setVisible(not self.embedded)
-        side.addWidget(self.label("DEEPSEEK HARNESS\nFull SDK profile · v0.3.0", "muted"))
+        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.4.0", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
         content.setSpacing(12)
@@ -217,6 +244,8 @@ class Window(QMainWindow):
         content.addWidget(self.label(self.t("welcome"), "hero"))
         self.status = self.label(self.t("ready"), "muted")
         content.addWidget(self.status)
+        self.route_label = self.label(self.provider + " · " + self.model, "muted")
+        content.addWidget(self.route_label)
         metrics = QHBoxLayout()
         self.metrics = []
         for key in ("duration", "speed", "rtf"):
@@ -285,7 +314,7 @@ class Window(QMainWindow):
         phrases.addWidget(undo)
         content.addLayout(phrases)
         if self.embedded:
-            handoff = QPushButton("Copy and open Harness chat →" if self.locale == "en" else "コピーして Harness チャットを開く →")
+            handoff = QPushButton("Copy and open chat →" if self.locale == "en" else "コピーしてチャットを開く →")
             handoff.clicked.connect(self.handoff)
             copy_row.addWidget(handoff)
         controls = QHBoxLayout()
@@ -302,6 +331,136 @@ class Window(QMainWindow):
         content.addWidget(self.label(self.t("privacy"), "muted"))
         layout.addLayout(content, 1)
         self.setCentralWidget(root)
+
+    def build_compact(self):
+        """A dock-sized voice workbench; all controls use the existing capture and agent pipeline."""
+        from PySide6.QtWidgets import QScrollArea, QLayout, QSizePolicy
+        root = QWidget()
+        root.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        layout = QVBoxLayout(root)
+        layout.setSizeConstraint(QLayout.SetNoConstraint)
+        root.setMinimumHeight(880)
+        root.setObjectName("voice-dock")
+        root.setStyleSheet("#voice-dock { background: #111817; }")
+        layout.setContentsMargins(18, 18, 18, 14)
+        layout.setSpacing(10)
+        header = QHBoxLayout()
+        header.addWidget(self.label("VOICE STUDIO" if self.locale == "en" else "音声スタジオ", "eyebrow"), 1)
+        self.new_button = self.button("new", self.new_session)
+        self.new_button.setText("＋")
+        self.new_button.setToolTip(self.t("new"))
+        self.new_button.setAccessibleName(self.t("new"))
+        header.addWidget(self.new_button)
+        self.settings_button = self.button("settings", self.settings)
+        header.addWidget(self.settings_button)
+        layout.addLayout(header)
+        self.status = self.label(self.t("ready"), "muted")
+        layout.addWidget(self.status)
+        self.route_label = self.label(self.provider + " · " + self.model, "route")
+        layout.addWidget(self.route_label)
+        inputs = QHBoxLayout()
+        self.language = QComboBox()
+        for name, value in (("日本語", "ja"), ("English", "en"), ("Auto", "auto")):
+            self.language.addItem(name, value)
+        self.language.setAccessibleName(self.t("lang"))
+        self.speech_model = QComboBox()
+        self.speech_model.addItem("Whisper large-v3", "large-v3")
+        self.speech_model.addItem("Whisper turbo", "turbo")
+        self.speech_model.setAccessibleName(self.t("model"))
+        inputs.addWidget(self.language)
+        inputs.addWidget(self.speech_model, 1)
+        layout.addLayout(inputs)
+        source_row = QHBoxLayout()
+        self.audio_source = QComboBox()
+        self.audio_source.setMinimumWidth(0)
+        self.audio_source.setAccessibleName("Audio source / 録音元")
+        self.refresh_sources = QPushButton("↻")
+        self.refresh_sources.setToolTip("Refresh sources / 録音元を更新")
+        self.refresh_sources.clicked.connect(self.load_sources)
+        source_row.addWidget(self.audio_source, 1)
+        source_row.addWidget(self.refresh_sources)
+        layout.addLayout(source_row)
+        self.load_sources()
+        self.prepare_button = self.button("prepare", self.prepare)
+        self.prepare_button.setToolTip(self.t("configure"))
+        layout.addWidget(self.prepare_button)
+        layout.addWidget(self.label(self.t("draft"), "eyebrow"))
+        self.draft = QPlainTextEdit()
+        self.draft.setPlaceholderText(self.t("placeholder"))
+        self.draft.setMinimumHeight(110)
+        self.draft.setMaximumHeight(180)
+        layout.addWidget(self.draft, 1)
+        self.review = self.label(self.t("clean"), "muted")
+        layout.addWidget(self.review)
+        phrases = QHBoxLayout()
+        self.phrase_button = QPushButton("Phrases" if self.locale == "en" else "定型文")
+        self.phrase_button.clicked.connect(self.edit_snippets)
+        self.expand_button = QPushButton("Expand" if self.locale == "en" else "展開")
+        self.expand_button.clicked.connect(self.expand_phrases)
+        undo = QPushButton("Undo" if self.locale == "en" else "元に戻す")
+        undo.clicked.connect(self.draft.undo)
+        for button in (self.phrase_button, self.expand_button, undo):
+            phrases.addWidget(button)
+        layout.addLayout(phrases)
+        capture = QHBoxLayout()
+        self.record_button = self.button("record", self.record, "record")
+        self.import_button = self.button("import", self.import_audio)
+        capture.addWidget(self.record_button, 1)
+        capture.addWidget(self.import_button, 1)
+        layout.addLayout(capture)
+        self.send_button = self.button("send", self.send, "primary")
+        layout.addWidget(self.send_button)
+        handoff = QPushButton("Copy to workspace chat  ↗" if self.locale == "en" else "ワークスペースのチャットにコピー  ↗")
+        handoff.clicked.connect(self.handoff)
+        layout.addWidget(handoff)
+        metrics = QHBoxLayout()
+        self.metrics = []
+        for key in ("duration", "speed", "rtf"):
+            frame = QFrame()
+            frame.setObjectName("metric")
+            column = QVBoxLayout(frame)
+            column.setContentsMargins(10, 8, 10, 8)
+            column.addWidget(self.label(self.t(key), "micro"))
+            value = self.label("—", "value")
+            self.metrics.append(value)
+            column.addWidget(value)
+            metrics.addWidget(frame)
+        layout.addLayout(metrics)
+        self.tabs = QTabWidget()
+        self.conversation = QTextBrowser()
+        self.conversation.setPlainText(self.t("intro"))
+        self.activity = QPlainTextEdit()
+        self.activity.setReadOnly(True)
+        self.activity.setMaximumBlockCount(1000)
+        self.tabs.addTab(self.conversation, self.t("conversation"))
+        self.tabs.addTab(self.activity, self.t("activity"))
+        lab = QWidget()
+        lab_layout = QVBoxLayout(lab)
+        self.reference = QPlainTextEdit()
+        self.reference.setPlaceholderText(self.t("reference"))
+        lab_layout.addWidget(self.reference)
+        lab_layout.addWidget(self.button("compare", self.compare))
+        self.score_label = self.label("WER / CER · —", "muted")
+        lab_layout.addWidget(self.score_label)
+        self.tabs.addTab(lab, self.t("evaluation"))
+        self.tabs.setMinimumHeight(125)
+        layout.addWidget(self.tabs, 1)
+        footer = QHBoxLayout()
+        self.speak = QCheckBox(self.t("speak"))
+        footer.addWidget(self.speak, 1)
+        export = self.button("export", self.export)
+        export.setText("Export" if self.locale == "en" else "書き出し")
+        footer.addWidget(export)
+        layout.addLayout(footer)
+        layout.addWidget(self.label(self.t("privacy"), "micro"))
+        self.locale_button = QPushButton(root)
+        self.locale_button.hide()
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setWidget(root)
+        self.setCentralWidget(scroll)
 
     def selected_config(self):
         return replace(self.config, language=self.language.currentData(), model=self.speech_model.currentData())
@@ -421,14 +580,14 @@ class Window(QMainWindow):
         if not text:
             return
         self.tts.stop()
-        workspace, model, key = self.workspace, self.model, self.api_key
+        workspace, model, key, provider = self.workspace, self.model, self.api_key, self.provider
         def run(emit):
             started = perf_counter()
             def notify(notification):
                 params = notification.payload
                 event = params.get("event", {})
                 emit(str(event.get("type", notification.method)))
-            result = self.harness.run(text, workspace, model, key, notify)
+            result = self.harness.run(text, workspace, model, key, notify, provider=provider)
             return text, result, perf_counter() - started
         self.work(run, self.responded)
 
@@ -643,6 +802,11 @@ class Window(QMainWindow):
         key = QLineEdit(self.api_key)
         key.setEchoMode(QLineEdit.Password)
         model = QLineEdit(self.model)
+        provider = QComboBox()
+        provider.addItem("DeepSeek API", "deepseek-official")
+        provider.addItem("Kotoba Local", "kotoba-local")
+        provider.setCurrentIndex(provider.findData(self.provider))
+        form.addRow("Provider" if self.locale == "en" else "接続先", provider)
         workspace = QLineEdit(self.workspace)
         browse = self.button("browse", lambda: workspace.setText(QFileDialog.getExistingDirectory(dialog, self.t("folder"), workspace.text()) or workspace.text()))
         glossary = QLineEdit(self.config.glossary)
@@ -658,6 +822,10 @@ class Window(QMainWindow):
         form.addRow(buttons)
         if dialog.exec() == QDialog.Accepted:
             self.api_key, self.model, self.workspace = key.text().strip(), model.text().strip(), workspace.text()
+            self.provider = provider.currentData()
+            self.preferences.setValue("voice/provider", self.provider)
+            self.preferences.setValue("voice/model", self.model)
+            self.route_label.setText(self.provider + " · " + self.model)
             self.config = replace(self.config, glossary=glossary.text(), device=device.currentText(), compute_type="float16" if device.currentText() == "cuda" else "int8")
 
     def closeEvent(self, event):

@@ -1,19 +1,19 @@
-import { BrandWordmark, FishLogo } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { SidebarBrandMarkOwnerProps } from '@deepseek-ai/dsh-client-ui-sidebar/client'
+import { en } from './locales.ts'
 
 /**
- * Render the official mark with the presentation requested by its host surface.
+ * Render the Kotoba speech mark at the host's requested size.
  * @param props - Host-supplied mark presentation.
- * @returns the official whale mark.
+ * @returns the decorative speech mark.
  */
-export function OfficialBrandMark({ size }: SidebarBrandMarkOwnerProps) {
-  return <FishLogo size={size} />
+export function OfficialBrandMark({ size, className }: SidebarBrandMarkOwnerProps & { className?: string | undefined }) {
+  return <img src="/favicon.svg" width={size} height={size} className={className} alt="" aria-hidden="true" />
 }
 
 /**
- * Render the official name artwork without its independently slotted mark.
- * @returns the official name wordmark.
+ * Render the invariant product name without its independently slotted mark.
+ * @returns the Kotoba Studio wordmark.
  */
 export function OfficialBrandName() {
-  return <BrandWordmark includeMark={false} />
+  return <span>{en.productName}</span>
 }
