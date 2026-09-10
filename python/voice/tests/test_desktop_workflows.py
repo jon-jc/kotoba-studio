@@ -14,7 +14,9 @@ def workspace(tmp_path, monkeypatch):
     monkeypatch.setattr(desktop, "sources", lambda: [])
     monkeypatch.setattr(Workspace, "start_backend", lambda self: None)
     window = Workspace()
+    original_clipboard = app.clipboard().text()
     yield window
+    app.clipboard().setText(original_clipboard)
     window.close()
     from PySide6.QtCore import QCoreApplication, QEvent
     window.web.page().deleteLater()
@@ -138,3 +140,84 @@ def test_phrase_editor_saves_local_data_and_cancel_preserves_it(workspace):
     QTimer.singleShot(0, cancel)
     voice.edit_snippets()
     assert load_snippets(voice.home / "snippets.json") == expected
+
+
+def test_source_tabs_search_preserve_files_and_reject_binary(workspace, tmp_path):
+    first = tmp_path / "日本語.py"
+    first.write_text("name = 'ことば'\nprint(name)\n", encoding="utf-8")
+    second = tmp_path / "readme.md"
+    second.write_text("Kotoba Studio", encoding="utf-8")
+    tabs = workspace.source_tabs
+    workspace.view_file(workspace.files.index(str(first)))
+    editor = tabs.tabs.currentWidget()
+    assert editor.isReadOnly()
+    assert editor.blockCount() == 3
+    assert editor.font().family() == "Consolas"
+    assert editor.highlighter.lines
+    tabs.query.setText("name")
+    assert editor.textCursor().selectedText() == "name"
+    tabs.find_text()
+    assert editor.textCursor().blockNumber() == 1
+    tabs.find_text()
+    assert editor.textCursor().blockNumber() == 0
+    tabs.find_text(backward=True)
+    assert editor.textCursor().blockNumber() == 1
+    workspace.view_file(workspace.files.index(str(second)))
+    assert tabs.tabs.count() == 2
+    workspace.view_file(workspace.files.index(str(first)))
+    assert tabs.tabs.count() == 2 and tabs.tabs.currentWidget() is editor
+    workspace.voice.set_locale("ja")
+    assert "読み取り専用" in tabs.position.text()
+    binary = tmp_path / "binary.bin"
+    binary.write_bytes(b"\x00binary")
+    workspace.view_file(workspace.files.index(str(binary)))
+    assert tabs.tabs.currentWidget() is editor
+    assert editor.toPlainText() == first.read_text(encoding="utf-8")
+    tabs.close_tab(tabs.tabs.currentIndex())
+    assert tabs.tabs.count() == 1
+
+
+def test_reviewed_handoff_pastes_without_submitting(workspace):
+    from time import monotonic
+    from PySide6.QtTest import QTest
+    from PySide6.QtWidgets import QApplication
+    from PySide6.QtCore import QUrl
+    from PySide6.QtWebEngineCore import QWebEnginePage
+    original = workspace.web.page()
+    page = QWebEnginePage(workspace.browser_profile, workspace.web)
+    workspace.web.setPage(page)
+    original.deleteLater()
+    workspace.show()
+    loaded = []
+    page.loadFinished.connect(loaded.append)
+    page.setHtml('<div data-composer-input contenteditable="true">Existing draft</div><button onclick="document.body.dataset.sent=1">Send</button>', QUrl("about:blank"))
+    def until(predicate):
+        deadline = monotonic() + 10
+        while not predicate() and monotonic() < deadline:
+            QTest.qWait(10)
+        assert predicate()
+    until(lambda: bool(loaded))
+    workspace.handoff_draft("日本語 and English")
+    observed = []
+    def read():
+        observed.clear()
+        page.runJavaScript("document.querySelector('[data-composer-input]').innerText", observed.append)
+        until(lambda: bool(observed))
+        return observed[0]
+    deadline = monotonic() + 10
+    while "日本語" not in read() and monotonic() < deadline:
+        QTest.qWait(10)
+    # Chromium's plain contenteditable inserts paragraph blocks; Lexical owns its own paste formatting.
+    assert [line for line in read().splitlines() if line] == ["Existing draft", "日本語 and English"]
+    sent = []
+    page.runJavaScript("document.body.dataset.sent || 'no'", sent.append)
+    until(lambda: bool(sent))
+    assert sent == ["no"]
+    workspace.voice.set_locale("ja")
+    assert "チャットに追加しました" in workspace.health.text()
+    page.setHtml('<p>No composer</p>', QUrl("about:blank"))
+    loaded.clear()
+    until(lambda: bool(loaded))
+    workspace.handoff_draft("Copied fallback")
+    until(lambda: workspace.health_key == "paste")
+    assert QApplication.clipboard().text() == "Copied fallback"

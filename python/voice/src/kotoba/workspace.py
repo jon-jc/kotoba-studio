@@ -7,11 +7,11 @@ from pathlib import Path
 import re
 import sys
 
-from PySide6.QtCore import QProcess, QProcessEnvironment, QTimer, QUrl, Qt
-from PySide6.QtGui import QFont, QTextCursor, QIcon, QShortcut, QKeySequence
+from PySide6.QtCore import QProcess, QProcessEnvironment, QTimer, QUrl, Qt, QSize, QEvent
+from PySide6.QtGui import QFont, QTextCursor, QIcon, QShortcut, QKeySequence, QKeyEvent
 from PySide6.QtWidgets import (QApplication, QFileSystemModel, QFileDialog, QFrame, QHBoxLayout, QLabel,
     QLineEdit, QMainWindow, QPlainTextEdit, QPushButton, QSplitter, QStackedWidget,
-    QTreeView, QVBoxLayout, QWidget, QComboBox, QDialog, QListWidget, QListWidgetItem)
+    QTreeView, QVBoxLayout, QWidget, QComboBox, QDialog, QListWidget, QListWidgetItem, QMenu)
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile, QWebEngineScript
 from .desktop import Window as VoiceWindow, STYLE
@@ -20,6 +20,8 @@ from .terminal import powershell_arguments
 from .workspace_copy import COPY as SHELL_COPY, translate
 from .branding import icon_path
 from .local_models_ui import LocalModelsPage
+from .design import outline_icon
+from .code_view import SourceTabs
 
 
 class LocalPage(QWebEnginePage):
@@ -74,43 +76,37 @@ class Workspace(QMainWindow):
         logo.setPixmap(self.windowIcon().pixmap(26, 26))
         top.addWidget(logo)
         title = QLabel("Kotoba Studio")
-        title.setStyleSheet("font-weight:600;font-size:14px;color:#d9ecdf")
+        title.setStyleSheet("font-weight:600;font-size:15px;color:#e8e8ec")
         top.addWidget(title)
         top.addSpacing(28)
         self.command_center = QPushButton()
         self.command_center.setObjectName("command-center")
-        self.command_center.setMaximumWidth(560)
+        self.command_center.setMaximumWidth(360)
         self.command_center.setMinimumWidth(220)
         self.command_center.clicked.connect(self.command_palette)
         top.addWidget(self.command_center, 1)
         top.addStretch()
         self.voice_toggle = QPushButton()
         self.voice_toggle.clicked.connect(lambda: self.show_panel(1))
-        top.addWidget(self.voice_toggle)
+        self.voice_toggle.hide()
         self.locale_toggle = QComboBox()
         self.locale_toggle.setObjectName("interface-language")
         self.locale_toggle.setAccessibleName("Interface language / 表示言語")
         self.locale_toggle.addItem("English", "en")
         self.locale_toggle.addItem("日本語", "ja")
         self.locale_toggle.currentIndexChanged.connect(self.change_locale)
-        top.addWidget(self.locale_toggle)
         outer.addWidget(titlebar)
         main = QHBoxLayout()
         main.setContentsMargins(0, 0, 0, 0)
         main.setSpacing(0)
-        rail = QFrame()
-        rail.setObjectName("activity-rail")
-        rail.setFixedWidth(58)
-        side = QVBoxLayout(rail)
-        side.setContentsMargins(7, 12, 7, 12)
-        side.setSpacing(10)
+        side = top
         self.stack = QStackedWidget()
         self.web = QWebEngineView()
         self.browser_profile = QWebEngineProfile("KotobaHarness", self.web)
         self.browser_profile.setPersistentStoragePath(str(self.voice.home / "browser"))
         self.browser_profile.setCachePath(str(self.voice.home / "browser-cache"))
         self.web.setPage(LocalPage(self.browser_profile, self.web))
-        self.web.setStyleSheet("background:#111817")
+        self.web.setStyleSheet("background:#191a1e")
         self.stack.addWidget(self.web)
         self.stack.addWidget(QWidget())  # Legacy voice navigation index; voice now lives in the dock.
         self.stack.addWidget(self.files_page())
@@ -122,22 +118,40 @@ class Workspace(QMainWindow):
         self.stack.addWidget(self.local_models)
         self.nav_keys = ["◈  Workspace / 会話", "◉  Voice / 音声", "⌘  Code / コード", "›_  Terminal", "⇄  Routing / 接続", "⊞  Plugins", "▣  Local models"]
         self.nav = []
-        for index, icon in enumerate(("◈", "◉", "⌘", "›_", "⇄", "⊞", "▣")):
-            button = QPushButton(icon)
+        for index, icon in enumerate(("chat", "mic", "code", "terminal", "routing", "plugins", "models")):
+            button = QPushButton()
+            button.setIcon(outline_icon(icon))
+            button.setIconSize(QSize(17, 17))
             button.setObjectName("activity")
-            button.setFixedSize(43, 43)
+            button.setMinimumSize(86, 34)
             button.setCheckable(True)
             button.clicked.connect(lambda checked=False, i=index: self.show_panel(i))
-            side.addWidget(button)
+            if index < 4:
+                side.addWidget(button)
+            else:
+                button.setParent(titlebar)
+                button.hide()
             self.nav.append(button)
-        side.addStretch()
-        folder = QPushButton("＋")
-        folder.setObjectName("activity")
-        folder.setFixedSize(43, 43)
+        self.workspace_menu = QMenu(self)
+        self.workspace_actions = []
+        for index in (4, 5, 6):
+            action = self.workspace_menu.addAction(outline_icon(("routing", "plugins", "models")[index - 4]), "")
+            action.triggered.connect(lambda checked=False, i=index: self.show_panel(i))
+            self.workspace_actions.append(action)
+        self.more_button = QPushButton("···")
+        self.more_button.setObjectName("ghost")
+        self.more_button.setFixedSize(38, 34)
+        self.more_button.setMenu(self.workspace_menu)
+        side.addWidget(self.more_button)
+        folder = QPushButton()
+        folder.setIcon(outline_icon("folder"))
+        folder.setIconSize(QSize(18, 18))
+        folder.setObjectName("ghost")
+        folder.setFixedSize(38, 34)
         folder.setToolTip("Open folder / フォルダーを開く")
         folder.clicked.connect(self.choose_workspace)
         side.addWidget(folder)
-        main.addWidget(rail)
+        side.addWidget(self.locale_toggle)
         self.workbench = QSplitter(Qt.Horizontal)
         self.workbench.setChildrenCollapsible(False)
         self.editor_area = QSplitter(Qt.Vertical)
@@ -162,22 +176,29 @@ class Workspace(QMainWindow):
         status.setContentsMargins(14, 5, 16, 5)
         self.health_key = "starting"
         self.health = QLabel()
-        self.health.setStyleSheet("color:#a5c0af;font-size:11px")
+        self.health.setStyleSheet("color:#a4b7ad;font-size:11px")
         status.addWidget(self.health)
         status.addStretch()
         self.locale_scope = QLabel()
-        self.locale_scope.setStyleSheet("color:#7e9b89;font-size:11px")
+        self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         status.addWidget(self.locale_scope)
         status.addSpacing(18)
-        status.addWidget(QLabel("Kotoba Studio  0.4.0"))
+        status.addWidget(QLabel("Kotoba Studio  0.5.0"))
         outer.addWidget(statusbar)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(self.selected_panel)
         for sequence, callback in (("Ctrl+K", self.command_palette), ("Ctrl+Shift+V", lambda: self.show_panel(1)),
-                                   ("Ctrl+J", lambda: self.show_panel(3)), ("Ctrl+Shift+E", lambda: self.show_panel(2))):
+                                   ("Ctrl+J", lambda: self.show_panel(3)), ("Ctrl+Shift+E", lambda: self.show_panel(2)),
+                                   ("Ctrl+Shift+Space", self.record_shortcut), ("Ctrl+F", self.find_in_file)):
             shortcut = QShortcut(QKeySequence(sequence), self)
             shortcut.activated.connect(callback)
         self.selected_panel(0)
+
+    def record_shortcut(self):
+        if self.voice.record_button.isEnabled():
+            self.voice.show()
+            self.voice.record_button.click()
+            self.selected_panel(self.stack.currentIndex())
 
     def show_panel(self, index):
         if index == 1:
@@ -256,11 +277,19 @@ class Workspace(QMainWindow):
         self.locale_toggle.blockSignals(False)
         self.locale_scope.setText(translate("scope", locale))
         self.local_models.set_locale(locale)
+        self.source_tabs.set_locale(locale)
         self.command_center.setText("⌕   Search commands…     Ctrl K" if locale == "en" else "⌕   コマンドを検索…     Ctrl K")
         self.voice_toggle.setText("◉ Voice studio" if locale == "en" else "◉ 音声スタジオ")
         for button, key in zip(self.nav, self.nav_keys):
             button.setToolTip(translate(key, locale))
             button.setAccessibleName(translate(key, locale))
+        names = ("Chat", "Voice", "Code", "Terminal", "Routing", "Plugins", "Local AI") if locale == "en" else ("会話", "音声", "コード", "ターミナル", "接続", "プラグイン", "ローカル AI")
+        for button, name in zip(self.nav, names):
+            button.setText(name)
+        self.more_button.setToolTip("Models, routing & plugins" if locale == "en" else "モデル・接続・プラグイン")
+        self.more_button.setAccessibleName(self.more_button.toolTip())
+        for action, name in zip(self.workspace_actions, names[4:]):
+            action.setText(name)
         self.sync_chat_locale(locale)
         for widget in self.centralWidget().findChildren(QWidget):
             if widget == self.voice or self.voice.isAncestorOf(widget):
@@ -287,7 +316,34 @@ class Workspace(QMainWindow):
         QApplication.clipboard().setText(text)
         self.stack.setCurrentIndex(0)
         self.web.setFocus()
-        self.set_health("paste")
+        self.pending_handoff = object()
+        request = self.pending_handoff
+        self.web.page().runJavaScript("""(() => {
+            const input = document.querySelector('[data-composer-input][contenteditable="true"]');
+            if (!input || !input.getClientRects().length) return '';
+            input.focus();
+            return input.innerText.trim() ? 'append' : 'empty';
+        })()""", lambda state: self.paste_reviewed_draft(state, text, request))
+
+    def paste_reviewed_draft(self, state, text, request):
+        if self.pending_handoff is not request:
+            return
+        if state in ("append", "empty") and self.stack.currentIndex() == 0:
+            QApplication.clipboard().setText(("\n" if state == "append" else "") + text)
+            # Native navigation lets the editor update its own selection before paste.
+            for kind in (QEvent.KeyPress, QEvent.KeyRelease):
+                QApplication.sendEvent(self.web.focusProxy(), QKeyEvent(kind, Qt.Key_End, Qt.ControlModifier))
+            self.web.page().triggerAction(QWebEnginePage.Paste)
+            self.set_health("draft_added")
+        else:
+            self.set_health("paste")
+
+    def find_in_file(self):
+        if self.stack.currentIndex() == 2:
+            self.source_tabs.query.setFocus()
+            self.source_tabs.query.selectAll()
+        else:
+            self.web.setFocus()
 
     def panel(self, title, description):
         widget = QWidget()
@@ -298,7 +354,7 @@ class Workspace(QMainWindow):
         layout.addWidget(header)
         label = QLabel(description)
         label.setWordWrap(True)
-        label.setStyleSheet("color:#8ca795;font-size:11px;padding-bottom:4px")
+        label.setStyleSheet("color:#999daa;font-size:12px;padding-bottom:8px")
         layout.addWidget(label)
         return widget, layout
 
@@ -315,14 +371,13 @@ class Workspace(QMainWindow):
         self.tree.setRootIndex(self.files.index(self.voice.workspace))
         for column in (1, 2, 3):
             self.tree.hideColumn(column)
-        self.tree.setMinimumWidth(240)
+        self.tree.setMinimumWidth(180)
+        self.tree.setHeaderHidden(True)
+        self.tree.setIndentation(16)
         self.tree.clicked.connect(self.view_file)
-        self.code = QPlainTextEdit()
-        self.code.setReadOnly(True)
-        self.code.setFont(QFont("Consolas", 12))
-        self.code.setPlaceholderText("Select a source file · ファイルを選択")
+        self.source_tabs = SourceTabs()
         splitter.addWidget(self.tree)
-        splitter.addWidget(self.code)
+        splitter.addWidget(self.source_tabs)
         splitter.setStretchFactor(1, 4)
         layout.addWidget(splitter, 1)
         return widget
@@ -333,21 +388,24 @@ class Workspace(QMainWindow):
             return
         try:
             if path.stat().st_size > 1024 * 1024:
-                self.code.setPlainText(translate("file_large", self.voice.locale))
+                self.health_key = None
+                self.health.setText(translate("file_large", self.voice.locale))
                 return
             content = path.read_text(encoding="utf-8")
             if "\x00" in content:
                 raise UnicodeError("Binary file")
-            self.code.setPlainText(content)
+            self.source_tabs.open_file(path, content)
             self.path_label.setText(str(path))
         except (OSError, UnicodeError):
-            self.code.setPlainText(translate("file_invalid", self.voice.locale))
+            self.health_key = None
+            self.health.setText(translate("file_invalid", self.voice.locale))
 
     def terminal_page(self):
         widget, layout = self.panel("Terminal / ターミナル", "Local PowerShell command console. For interactive PTY sessions, use the terminal tools in the Kotoba Studio workspace.")
         self.console = QPlainTextEdit()
         self.console.setReadOnly(True)
         self.console.setFont(QFont("Consolas", 11))
+        self.console.setStyleSheet('font-family:"Consolas";font-size:13px;')
         self.console.setMaximumBlockCount(5000)
         layout.addWidget(self.console, 1)
         self.command = QLineEdit()
@@ -392,7 +450,7 @@ class Workspace(QMainWindow):
             box.addWidget(QLabel(title))
             description = QLabel(text)
             description.setWordWrap(True)
-            description.setStyleSheet("color:#a4b7ac;padding:8px")
+            description.setStyleSheet("color:#a5a8b5;padding:8px")
             box.addWidget(description)
             layout.addWidget(frame)
         open_workspace = QPushButton("Open full Kotoba Studio settings  →")
@@ -526,10 +584,23 @@ def main():
                 if locale is None:
                     window.locale_toggle.setCurrentIndex(window.locale_toggle.findData(original_locale))
                     window.grab().save(str(screenshot))
+                    source = window.voice.home / "smoke-source.py"
+                    content = "message = '日本語 / English'\nprint(message)\n"
+                    source.write_text(content, encoding="utf-8")
+                    window.source_tabs.open_file(source, content)
+                    editor = window.source_tabs.tabs.currentWidget()
+                    highlighted = bool(editor.highlighter.lines)
+                    if not highlighted:
+                        window.close()
+                        app.exit(1)
+                        return
+                    window.stack.setCurrentIndex(2)
+                    app.processEvents()
+                    window.grab().save(str(screenshot.with_name(screenshot.stem + "-source.png")))
                     window.stack.setCurrentIndex(6)
                     app.processEvents()
                     window.grab().save(str(screenshot.with_name(screenshot.stem + "-local-models.png")))
-                    screenshot.with_suffix(".json").write_text(json.dumps({"runtime_ready": True, "locale_toggle": True,
+                    screenshot.with_suffix(".json").write_text(json.dumps({"runtime_ready": True, "locale_toggle": True, "source_highlighting": highlighted,
                         "chat_locales": evidence, **state}), encoding="utf-8")
                     window.close()
                     return

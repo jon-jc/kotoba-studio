@@ -1,16 +1,16 @@
 [Setup]
 AppId={{62638D33-46D2-498E-A5D7-DC3434020298}
 AppName=Kotoba Studio
-AppVersion=0.4.0
+AppVersion=0.5.0
 AppPublisher=Kotoba Studio
-AppPublisherURL=https://github.com/jon-jc/japan-ai-harness
+AppPublisherURL=https://github.com/jon-jc/kotoba-studio
 DefaultDirName={localappdata}\Programs\Kotoba Studio
 DefaultGroupName=Kotoba Studio
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=dist
-OutputBaseFilename=Kotoba-Studio-0.4.0-Setup
+OutputBaseFilename=Kotoba-Studio-0.5.0-Setup
 Compression=lzma2/fast
 SolidCompression=yes
 WizardStyle=modern

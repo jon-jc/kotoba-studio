@@ -1,6 +1,21 @@
 # Kotoba Studio / ことば
 
-Japanese and English voice input for the full DeepSeek Harness, built directly in this fork. The original runtime, plugins, tools, web application, and Electron desktop remain available. See [the inspection](INSPECTION.md) for integration decisions and qualification limits.
+A desktop workspace for turning Japanese and English speech into reviewed instructions, conversations, and code. Kotoba Studio brings local transcription, agent chat, source tabs, a terminal, and model connections into one application. Start with [installation and testing](WINDOWS.md).
+
+## Your workspace
+
+The compact top bar keeps Chat, Voice, Code, and Terminal within reach. The overflow menu opens Routing, Plugins, and Local AI. Voice Studio sits beside your active task; the terminal opens below it. Hide either panel without losing its content. The English / 日本語 selector changes the interface while preserving your work.
+
+| Shortcut | Action |
+| --- | --- |
+| Ctrl+K | Search navigation commands |
+| Ctrl+Shift+Space | Start or stop recording when ready |
+| Ctrl+Shift+V | Toggle Voice Studio |
+| Ctrl+J | Toggle the terminal |
+| Ctrl+Shift+E | Open source files |
+| Ctrl+F | Search the selected source tab |
+
+Open multiple UTF-8 files in Code, switch or close tabs, and move between search matches. Syntax colors, line numbers, and cursor position help locate an instruction or error. Files remain read-only here; agent edits and diffs are available in Chat. Binary files and files larger than 1 MiB are refused without replacing an open source tab. Syntax coloring uses Pygments for recognized filenames up to 200,000 characters; larger and unrecognized files remain readable as plain text. Reopen a file to refresh its contents after an external edit.
 
 ## Development
 
@@ -32,13 +47,13 @@ See [installation and testing](WINDOWS.md) for the installer, source build, and 
 
 The top-right **English / 日本語** selector changes the native desktop and voice panels and remembers the choice on this device. It preserves the current chat, terminal, code view, transcript, speech settings, and evaluation reference. Language changes are disabled during recording or inference. The same toggle updates the embedded chat language without a reload. Core chat and model settings have Japanese translations; extension strings without Japanese entries fall back to English. Conversation content is not translated.
 
-OpenWhispr's saved-phrase matcher is ported into the voice workflow. Open **Saved phrases**, choose **New**, enter a spoken trigger and its expansion, choose **Apply phrase**, then **Save**. Record or type the trigger and choose **Expand phrases**; the expansion is one undoable draft edit, and original ASR evidence remains in the session. Triggers match case-insensitively, longest-first, at spaces or Unicode punctuation/symbol boundaries. Japanese triggers need a pause represented by punctuation or a space: `署名。` expands, while `電子署名` does not. Replacements never recursively trigger other phrases. Phrase content is stored unencrypted in the local application-data `snippets.json`; audio and transcripts are not added to that file. Cancelling the editor discards its edits. **Copy and open chat** copies reviewed text and opens the full workspace; paste it into the chosen provider's chat and send explicitly.
+OpenWhispr's saved-phrase matcher is ported into the voice workflow. Open **Saved phrases**, choose **New**, enter a spoken trigger and its expansion, choose **Apply phrase**, then **Save**. Record or type the trigger and choose **Expand phrases**; the expansion is one undoable draft edit, and original ASR evidence remains in the session. Triggers match case-insensitively, longest-first, at spaces or Unicode punctuation/symbol boundaries. Japanese triggers need a pause represented by punctuation or a space: `署名。` expands, while `電子署名` does not. Replacements never recursively trigger other phrases. Phrase content is stored unencrypted in the local application-data `snippets.json`; audio and transcripts are not added to that file. Cancelling the editor discards its edits. **Add to chat** appends reviewed text to the available chat draft with a line break, without sending it. If no editable chat is ready, the transcript is copied instead; choose a workspace and paste it. **Agent → Ask voice agent** runs the separate voice agent session using its displayed model. Expand **Audio settings** to select or prepare a speech model.
 
 ## 日本語
 
 右上の **English / 日本語** でデスクトップと音声パネルの表示言語を切り替えます。選択は端末に保存され、会話やターミナルの状態は維持されます。録音・処理中は切り替えできません。埋め込みのチャットも同時に切り替わります。日本語未対応の拡張機能の文言は英語で表示されます。会話本文は翻訳しません。
 
-**定型文を管理 → 新規** で合図と展開文を入力し、**定型文を反映 → 保存** で確定します。文字起こし後に **定型文を展開** を押し、内容を確認してください。日本語の合図は句読点や空白で区切ります。展開は **元に戻す** で取り消せます。定型文は端末内に平文で保存されます。**コピーしてチャットを開く** を押すと、選択したモデルの会話に貼り付けて送信できます。自動送信はしません。
+**定型文を管理 → 新規** で合図と展開文を入力し、**定型文を反映 → 保存** で確定します。文字起こし後に **定型文を展開** を押し、内容を確認してください。日本語の合図は句読点や空白で区切ります。展開は **元に戻す** で取り消せます。定型文は端末内に平文で保存されます。**チャットに追加** を押すと、編集可能な会話の下書きに改行で区切って追加します。入力欄が準備できていない場合はコピーします。確認してから送信してください。自動送信はしません。
 
 ことばは、DeepSeek Harness の機能を維持した日本語・英語対応の音声ワークスペースです。音声はローカルで文字起こしし、送信前に内容を確認・修正できます。初回は音声モデルのダウンロードが必要です。送信したテキストは設定済みのモデルプロバイダーへ送られ、Harness の会話履歴に保存されます。
 
@@ -46,9 +61,9 @@ OpenWhispr's saved-phrase matcher is ported into the voice workflow. Open **Save
 
 ## Product branding
 
-Kotoba Studio uses a generated speech-bubble and waveform mark across the native window, seven-size Windows icon, installer, browser favicon, sidebar, and conversation hero. The master artwork and README banner live in [assets/brand](../../assets/brand); [build_icon.py](build_icon.py) packages the shared mark as SVG and ICO assets. An evergreen and jade palette joins the native shell and embedded chat. Windows file properties identify Kotoba Studio. Product-facing copy uses Kotoba Studio while API provider names, runtime package identities, licenses, and upstream notices remain intact. Existing installation and application-data identifiers are preserved for upgrades.
+Kotoba Studio uses a generated speech-bubble and waveform mark across the native window, seven-size Windows icon, installer, browser favicon, sidebar, and conversation hero. The master artwork and README banner live in [assets/brand](../../assets/brand); [build_icon.py](build_icon.py) packages the shared mark as SVG and ICO assets. A charcoal and muted jade palette joins the native shell and embedded chat. Windows file properties identify Kotoba Studio. Product-facing copy uses Kotoba Studio while API provider names, runtime package identities, licenses, and upstream notices remain intact. Existing installation and application-data identifiers are preserved for upgrades.
 
-The desktop has a compact activity rail, resizable voice dock, bottom terminal, and searchable command palette. Ctrl+K opens commands, Ctrl+Shift+V toggles voice, Ctrl+J toggles the terminal, and Ctrl+Shift+E opens files. Hiding a dock preserves its draft and output. The English / 日本語 toggle updates both shell and core chat controls.
+The desktop has a compact top navigation bar, resizable voice dock, bottom terminal, and searchable command palette. Ctrl+K opens commands, Ctrl+Shift+V toggles voice, Ctrl+J toggles the terminal, and Ctrl+Shift+E opens files. Hiding a dock preserves its draft and output. The English / 日本語 toggle updates both shell and core chat controls.
 
 Kotoba Studio の音声波形付き吹き出しアイコンを、アプリ、インストーラー、ブラウザー、会話画面で統一しています。表示上の製品名は Kotoba Studio です。API 提供方名、パッケージ識別子、ライセンス、上流の署名は保持します。更新時も既存の設定とデータを引き継ぎます。
 

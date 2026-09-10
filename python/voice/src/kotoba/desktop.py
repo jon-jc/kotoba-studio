@@ -69,49 +69,8 @@ COPY = {
     },
 }
 
-STYLE = """
-QMainWindow, QDialog { background:#111817; color:#e5eeea; }
-QWidget { color:#e5eeea; font-family:'Segoe UI','Yu Gothic UI'; font-size:13px; }
-QLabel#brand {font-size:24px; font-weight:650; color:#e3f3e9;}
-QLabel#muted {color:#9bafa5; font-size:12px;}
-QLabel#micro {color:#879c92; font-size:10px;}
-QLabel#eyebrow {color:#b8d3c5; font-size:11px; font-weight:600; letter-spacing:2px;}
-QLabel#hero {font-size:25px; font-weight:600;}
-QLabel#route {color:#abd3bd; font-size:11px; padding:7px; background:#192823; border-radius:5px;}
-QFrame#sidebar, QFrame#activity-rail {background:#101615; border-right:1px solid #26342f;}
-QFrame#titlebar, QFrame#statusbar {background:#131c19; border-bottom:1px solid #26342f;}
-QFrame#metric {background:#18231f; border:1px solid #2a3831; border-radius:6px;}
-QLabel#value {font-size:18px; color:#b3e8ca; font-weight:600;}
-QPushButton {background:#1e2b25; border:1px solid #33453b; border-radius:5px; padding:7px 10px;}
-QPushButton:hover {background:#2a3f34; border-color:#6d9f85;}
-QPushButton:focus {border-color:#b5e6c9;}
-QPushButton:checked {background:#2b4236; border-color:#79ae90; color:#e9fff0;}
-QPushButton:disabled {color:#6e8276; background:#18221d; border-color:#28352e;}
-QPushButton#activity {background:transparent; border:0; border-radius:7px; font-size:18px; padding:0; color:#849b8d;}
-QPushButton#activity:hover {background:#1e2c25; color:#e0f5e8;}
-QPushButton#activity:checked {background:#263f32; color:#c3f0d3; border-left:2px solid #b5e6c9;}
-QPushButton#primary {background:#bde6ce; color:#102e1e; font-weight:600; border:0; padding:10px;}
-QPushButton#record {background:#292322; border-color:#79574e; color:#f0c9bc;}
-QPushButton#command-center {background:#19231f; color:#a3b8aa; border-color:#2d4035; text-align:left;}
-QPlainTextEdit, QTextBrowser, QLineEdit {background:#141e19; border:1px solid #2e4035; border-radius:6px; padding:10px; selection-background-color:#436950;}
-QComboBox, QSpinBox {background:#192720; border:1px solid #334a3c; border-radius:5px; padding:6px;}
-QComboBox QAbstractItemView {background:#1d2b24; selection-background-color:#3c5044;}
-QTabWidget::pane {border:0;}
-QTabBar::tab {background:#111817; color:#91a69a; padding:9px 12px; border-bottom:1px solid #2c3a31;}
-QTabBar::tab:selected {color:#d5ebdf; border-bottom:2px solid #bde6ce;}
-QCheckBox {spacing:7px; color:#acbfb1; font-size:11px;}
-QSplitter::handle {background:#2a3a30; width:3px; height:3px;}
-QTreeView {background:#141c18; border:0; outline:none; alternate-background-color:#17221c;}
-QTreeView::item {padding:5px;}
-QTreeView::item:selected {background:#2a4234;}
-QHeaderView::section {background:#17251d; border:0; padding:6px; color:#9bb3a2;}
-QListWidget {background:#141e19; border:1px solid #33453b; border-radius:6px; padding:8px;}
-QListWidget::item {padding:12px; border-radius:5px;}
-QListWidget::item:selected {background:#2b4236;}
-QScrollBar:vertical {background:#131c17; width:8px; margin:0;}
-QScrollBar::handle:vertical {background:#354c3d; min-height:30px; border-radius:4px;}
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {height:0;}
-"""
+from .design import STYLE
+
 
 
 class Job(QThread):
@@ -236,7 +195,7 @@ class Window(QMainWindow):
         self.locale_button = switch
         side.addWidget(switch)
         switch.setVisible(not self.embedded)
-        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.4.0", "muted"))
+        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.5.0", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
         content.setSpacing(12)
@@ -333,126 +292,149 @@ class Window(QMainWindow):
         self.setCentralWidget(root)
 
     def build_compact(self):
-        """A dock-sized voice workbench; all controls use the existing capture and agent pipeline."""
+        """Capture first, review second; advanced configuration stays out of the draft."""
         from PySide6.QtWidgets import QScrollArea, QLayout, QSizePolicy
         root = QWidget()
         root.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        root.setMinimumHeight(680)
+        root.setObjectName("voice-dock")
+        root.setStyleSheet("#voice-dock { background: #191a1e; }")
         layout = QVBoxLayout(root)
         layout.setSizeConstraint(QLayout.SetNoConstraint)
-        root.setMinimumHeight(880)
-        root.setObjectName("voice-dock")
-        root.setStyleSheet("#voice-dock { background: #111817; }")
-        layout.setContentsMargins(18, 18, 18, 14)
-        layout.setSpacing(10)
+        layout.setContentsMargins(20, 20, 20, 16)
+        layout.setSpacing(12)
+        en = self.locale == "en"
         header = QHBoxLayout()
-        header.addWidget(self.label("VOICE STUDIO" if self.locale == "en" else "音声スタジオ", "eyebrow"), 1)
-        self.new_button = self.button("new", self.new_session)
+        header.addWidget(self.label("Voice Studio" if en else "音声スタジオ", "hero"), 1)
+        self.new_button = self.button("new", self.new_session, "ghost")
         self.new_button.setText("＋")
         self.new_button.setToolTip(self.t("new"))
         self.new_button.setAccessibleName(self.t("new"))
         header.addWidget(self.new_button)
-        self.settings_button = self.button("settings", self.settings)
-        header.addWidget(self.settings_button)
         layout.addLayout(header)
         self.status = self.label(self.t("ready"), "muted")
         layout.addWidget(self.status)
-        self.route_label = self.label(self.provider + " · " + self.model, "route")
-        layout.addWidget(self.route_label)
-        inputs = QHBoxLayout()
+        source = QHBoxLayout()
         self.language = QComboBox()
         for name, value in (("日本語", "ja"), ("English", "en"), ("Auto", "auto")):
             self.language.addItem(name, value)
         self.language.setAccessibleName(self.t("lang"))
-        self.speech_model = QComboBox()
-        self.speech_model.addItem("Whisper large-v3", "large-v3")
-        self.speech_model.addItem("Whisper turbo", "turbo")
-        self.speech_model.setAccessibleName(self.t("model"))
-        inputs.addWidget(self.language)
-        inputs.addWidget(self.speech_model, 1)
-        layout.addLayout(inputs)
-        source_row = QHBoxLayout()
         self.audio_source = QComboBox()
         self.audio_source.setMinimumWidth(0)
+        self.audio_source.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
+        self.audio_source.setMinimumContentsLength(12)
         self.audio_source.setAccessibleName("Audio source / 録音元")
         self.refresh_sources = QPushButton("↻")
-        self.refresh_sources.setToolTip("Refresh sources / 録音元を更新")
+        self.refresh_sources.setObjectName("ghost")
+        self.refresh_sources.setToolTip("Refresh audio sources / 録音元を更新")
         self.refresh_sources.clicked.connect(self.load_sources)
-        source_row.addWidget(self.audio_source, 1)
-        source_row.addWidget(self.refresh_sources)
-        layout.addLayout(source_row)
+        source.addWidget(self.language)
+        source.addWidget(self.audio_source, 1)
+        source.addWidget(self.refresh_sources)
+        layout.addLayout(source)
         self.load_sources()
-        self.prepare_button = self.button("prepare", self.prepare)
-        self.prepare_button.setToolTip(self.t("configure"))
-        layout.addWidget(self.prepare_button)
-        layout.addWidget(self.label(self.t("draft"), "eyebrow"))
-        self.draft = QPlainTextEdit()
-        self.draft.setPlaceholderText(self.t("placeholder"))
-        self.draft.setMinimumHeight(110)
-        self.draft.setMaximumHeight(180)
-        layout.addWidget(self.draft, 1)
-        self.review = self.label(self.t("clean"), "muted")
-        layout.addWidget(self.review)
-        phrases = QHBoxLayout()
-        self.phrase_button = QPushButton("Phrases" if self.locale == "en" else "定型文")
-        self.phrase_button.clicked.connect(self.edit_snippets)
-        self.expand_button = QPushButton("Expand" if self.locale == "en" else "展開")
-        self.expand_button.clicked.connect(self.expand_phrases)
-        undo = QPushButton("Undo" if self.locale == "en" else "元に戻す")
-        undo.clicked.connect(self.draft.undo)
-        for button in (self.phrase_button, self.expand_button, undo):
-            phrases.addWidget(button)
-        layout.addLayout(phrases)
         capture = QHBoxLayout()
         self.record_button = self.button("record", self.record, "record")
+        self.record_button.setToolTip("Ctrl+Shift+Space")
         self.import_button = self.button("import", self.import_audio)
         capture.addWidget(self.record_button, 1)
-        capture.addWidget(self.import_button, 1)
+        capture.addWidget(self.import_button)
         layout.addLayout(capture)
-        self.send_button = self.button("send", self.send, "primary")
-        layout.addWidget(self.send_button)
-        handoff = QPushButton("Copy to workspace chat  ↗" if self.locale == "en" else "ワークスペースのチャットにコピー  ↗")
-        handoff.clicked.connect(self.handoff)
-        layout.addWidget(handoff)
-        metrics = QHBoxLayout()
-        self.metrics = []
-        for key in ("duration", "speed", "rtf"):
-            frame = QFrame()
-            frame.setObjectName("metric")
-            column = QVBoxLayout(frame)
-            column.setContentsMargins(10, 8, 10, 8)
-            column.addWidget(self.label(self.t(key), "micro"))
-            value = self.label("—", "value")
-            self.metrics.append(value)
-            column.addWidget(value)
-            metrics.addWidget(frame)
-        layout.addLayout(metrics)
+        options = QPushButton("Audio settings  ▾" if en else "音声設定  ▾")
+        options.setObjectName("ghost")
+        options.setCheckable(True)
+        layout.addWidget(options, 0, Qt.AlignLeft)
+        advanced = QWidget()
+        advanced_layout = QVBoxLayout(advanced)
+        advanced_layout.setContentsMargins(0, 0, 0, 4)
+        self.speech_model = QComboBox()
+        self.speech_model.addItem("Whisper large-v3 · Quality" if en else "Whisper large-v3 · 精度", "large-v3")
+        self.speech_model.addItem("Whisper turbo · Speed" if en else "Whisper turbo · 速度", "turbo")
+        self.speech_model.setAccessibleName(self.t("model"))
+        advanced_layout.addWidget(self.speech_model)
+        self.prepare_button = self.button("prepare", self.prepare)
+        advanced_layout.addWidget(self.prepare_button)
+        advanced_layout.addWidget(self.label(self.t("privacy"), "micro"))
+        advanced.hide()
+        options.toggled.connect(advanced.setVisible)
+        layout.addWidget(advanced)
+        review_header = QHBoxLayout()
+        review_header.addWidget(self.label("Review transcript" if en else "文字起こしを確認", "eyebrow"), 1)
+        undo = QPushButton("Undo" if en else "元に戻す")
+        undo.setObjectName("ghost")
+        review_header.addWidget(undo)
+        layout.addLayout(review_header)
+        self.draft = QPlainTextEdit()
+        self.draft.setPlaceholderText("Speak an idea, or type here.\nYou decide what gets sent." if en else "話すか、ここに入力してください。\n送信する内容は自分で確認できます。")
+        self.draft.setMinimumHeight(130)
+        self.draft.setMaximumHeight(170)
+        layout.addWidget(self.draft, 2)
+        undo.clicked.connect(self.draft.undo)
+        self.review = self.label(self.t("clean"), "micro")
+        layout.addWidget(self.review)
+        phrases = QHBoxLayout()
+        self.phrase_button = QPushButton("Saved phrases" if en else "定型文")
+        self.phrase_button.setObjectName("ghost")
+        self.phrase_button.clicked.connect(self.edit_snippets)
+        self.expand_button = QPushButton("Expand" if en else "展開")
+        self.expand_button.setObjectName("ghost")
+        self.expand_button.clicked.connect(self.expand_phrases)
+        phrases.addWidget(self.phrase_button)
+        phrases.addWidget(self.expand_button)
+        phrases.addStretch()
+        layout.addLayout(phrases)
+        self.handoff_button = QPushButton("Add to chat   ↗" if en else "チャットに追加   ↗")
+        self.handoff_button.setObjectName("primary")
+        self.handoff_button.clicked.connect(self.handoff)
+        layout.addWidget(self.handoff_button)
         self.tabs = QTabWidget()
         self.conversation = QTextBrowser()
-        self.conversation.setPlainText(self.t("intro"))
+        self.conversation.setPlainText("Ask the voice agent to work on your reviewed instruction." if en else "確認した指示を音声エージェントに送信できます。")
+        agent_page = QWidget()
+        agent_layout = QVBoxLayout(agent_page)
+        agent_layout.setContentsMargins(0, 8, 0, 0)
+        self.route_label = self.label(self.provider + " · " + self.model, "route")
+        agent_layout.addWidget(self.route_label)
+        agent_layout.addWidget(self.conversation, 1)
+        agent_controls = QHBoxLayout()
+        self.send_button = self.button("send", self.send)
+        self.send_button.setText("Ask voice agent" if en else "音声エージェントに送信")
+        agent_controls.addWidget(self.send_button, 1)
+        self.settings_button = self.button("settings", self.settings, "ghost")
+        agent_controls.addWidget(self.settings_button)
+        agent_layout.addLayout(agent_controls)
+        self.tabs.addTab(agent_page, "Agent" if en else "エージェント")
         self.activity = QPlainTextEdit()
         self.activity.setReadOnly(True)
         self.activity.setMaximumBlockCount(1000)
-        self.tabs.addTab(self.conversation, self.t("conversation"))
-        self.tabs.addTab(self.activity, self.t("activity"))
+        self.tabs.addTab(self.activity, "Activity" if en else "実行ログ")
         lab = QWidget()
         lab_layout = QVBoxLayout(lab)
+        lab_layout.setContentsMargins(0, 8, 0, 0)
         self.reference = QPlainTextEdit()
         self.reference.setPlaceholderText(self.t("reference"))
         lab_layout.addWidget(self.reference)
         lab_layout.addWidget(self.button("compare", self.compare))
         self.score_label = self.label("WER / CER · —", "muted")
         lab_layout.addWidget(self.score_label)
-        self.tabs.addTab(lab, self.t("evaluation"))
-        self.tabs.setMinimumHeight(125)
-        layout.addWidget(self.tabs, 1)
+        self.tabs.addTab(lab, "Quality" if en else "精度")
+        self.tabs.setMinimumHeight(180)
+        layout.addWidget(self.tabs, 2)
+        metrics = QHBoxLayout()
+        self.metrics = []
+        for key in ("duration", "speed", "rtf"):
+            metrics.addWidget(self.label(self.t(key), "micro"))
+            value = self.label("—", "micro")
+            self.metrics.append(value)
+            metrics.addWidget(value)
+        layout.addLayout(metrics)
         footer = QHBoxLayout()
         self.speak = QCheckBox(self.t("speak"))
         footer.addWidget(self.speak, 1)
-        export = self.button("export", self.export)
-        export.setText("Export" if self.locale == "en" else "書き出し")
+        export = self.button("export", self.export, "ghost")
+        export.setText("Export" if en else "書き出し")
         footer.addWidget(export)
         layout.addLayout(footer)
-        layout.addWidget(self.label(self.t("privacy"), "micro"))
         self.locale_button = QPushButton(root)
         self.locale_button.hide()
         scroll = QScrollArea()
@@ -461,6 +443,7 @@ class Window(QMainWindow):
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         scroll.setWidget(root)
         self.setCentralWidget(scroll)
+
 
     def selected_config(self):
         return replace(self.config, language=self.language.currentData(), model=self.speech_model.currentData())

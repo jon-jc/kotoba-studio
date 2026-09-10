@@ -1,78 +1,87 @@
-# Kotoba Studio
-
 ![Kotoba Studio — Voice. Code. 日本語 / English.](assets/brand/kotoba-banner.png)
 
-**A Japanese and English voice workspace for building with AI.**
+# Kotoba Studio · ことば
+
+**Speak naturally. Review clearly. Build with AI.**
 
 English | [中文](README.zh.md)
 
-[Windows setup](python/voice/WINDOWS.md) · [Local models](python/voice/README.md#local-language-models) · [Architecture](docs/architecture.md)
+A Windows desktop workspace for Japanese and English voice input, AI conversations, and development. Capture an idea from your microphone or an application, turn it into an editable instruction, and work with an agent using local models or cloud APIs.
 
-Kotoba Studio brings voice, conversations, code, terminal commands, and model routing into one Windows desktop application. Speak in Japanese or English, review the transcript, then choose a local model or an API provider to carry out the task. The complete DeepSeek Harness runtime powers the agent beneath the interface.
+[Get started](#run) · [Voice and local models](python/voice/README.md) · [Windows packaging](python/voice/WINDOWS.md) · [日本語](#japanese)
 
-## The workspace
+## One workspace, from voice to action
 
-A compact activity rail opens chat, files, routing, plugins, and local models. A resizable voice studio sits beside your work, and the terminal opens below it. The top-right English / 日本語 selector updates the native interface and core chat controls without reloading the conversation.
+Speak a task, import a recording, or listen to an application. Kotoba transcribes locally and gives you the text to review before anything is sent to an agent. Keep names, numbers, and intent under your control, then bring the reviewed instruction into your chosen conversation.
 
-| Workflow | Available now |
+The desktop combines persistent chat, a voice dock, a file explorer, a code viewer, and a PowerShell console. Model connections and plugins live alongside the work. You can hide a panel or change the interface language without losing a transcript or terminal output.
+
+| Work with | What Kotoba provides |
 | --- | --- |
-| Voice input | Local Whisper transcription; microphone, system audio, application process capture, and imported recordings |
-| Japanese + English | Explicit or automatic speech-language selection; 507 Japanese interface translations; terminology hints and transcript review |
-| Native local models | Bundled llama.cpp CPU engine for GGUF files, plus connections to Ollama and LM Studio |
-| Full agent harness | Persistent conversations, tool execution, skills, subagents, workflows, agent presets, and Cordis plugins |
-| Model routing | Provider endpoints, credential management, model discovery, and per-conversation selection |
-| Developer workspace | File browsing, code preview, persistent PowerShell console, and the original agent tool interfaces |
-| Dictation workflow | OpenWhispr-derived audio capture and saved phrases; Unicode-aware expansion, undo, and reviewed-text handoff |
-| Measurable quality | Transcription latency, real-time factor, Japanese CER / English WER against a supplied reference, and agent usage statistics |
+| Japanese and English | Local multilingual Whisper transcription, language selection, terminology hints, and bilingual core interface controls |
+| Your audio sources | Microphone, system audio, application process capture, and imported recordings |
+| Local AI | GGUF models through the bundled llama.cpp CPU engine; connections to Ollama and LM Studio |
+| Cloud AI | Provider settings for endpoints, credentials, models, and per-conversation selection |
+| An agent workspace | Persistent sessions, file and terminal tools, skills, workflows, subagents, and Cordis plugins |
+| Repeatable dictation | Saved phrases, Unicode-aware expansion, undo, transcript review, and clipboard handoff to chat |
+| Measurable results | Transcription latency, real-time factor, Japanese character error rate, and English word error rate against a supplied reference |
 
-**Ctrl+K** opens the command palette. **Ctrl+Shift+V** toggles Voice Studio. **Ctrl+J** toggles the terminal. **Ctrl+Shift+E** opens the code explorer.
+![Kotoba Studio desktop with chat and Voice Studio](assets/brand/kotoba-workspace.png)
 
 <a id="run"></a>
 
-## Run on Windows
+## Start on Windows
 
-Build or install `Kotoba-Studio-0.4.0-Setup.exe`. The installer includes Python, Qt WebEngine, the matching agent runtime, capture helper, and CPU inference engine. Model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) for build commands and verification.
+The desktop build is **Kotoba Studio 0.5.0**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.5.0-Setup.exe` from your build output. The installer includes the desktop application, agent runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
 
-1. Open a working folder.
-2. Configure a provider in **Routing**, or choose **Configure later** and open **Local models**.
-3. For native inference, choose a compatible GGUF model, start it, and register it. Select **Kotoba Local** in the chat composer.
-4. In **Voice Studio**, choose a recording source, input language, and speech model.
-5. Record or import audio, check names and numbers, then send the reviewed instruction.
+1. **Choose a folder.** Give the agent a working directory for the task.
+2. **Connect a model.** Open **··· → Routing** to configure an API provider, or choose Configure later and open Local models. Register a local model, then select Kotoba Local in the chat composer.
+3. **Choose what to hear.** Open Voice Studio and select the audio source, speech language, and transcription model.
+4. **Review, then act.** Record or import audio, correct the transcript, and use **Add to chat** to append it to the available conversation draft. Send when you are ready.
 
-Local-model requests stay on loopback. An unavailable local server produces an error; there is no automatic cloud fallback or turn replay. Agent tools can still access the network when used. Audio capture stays in memory, while submitted text and agent sessions are stored locally by the harness. API providers receive text you explicitly send to them.
+Voice Studio also offers a separate agent session through **Agent → Ask voice agent**. Its model selection is independent of the main chat composer. See the [desktop guide](python/voice/README.md) for both workflows.
+
+| Shortcut | Action |
+| --- | --- |
+| `Ctrl+K` | Search workspace commands |
+| `Ctrl+Shift+V` | Show or hide Voice Studio |
+| `Ctrl+J` | Show or hide the terminal |
+| `Ctrl+Shift+E` | Open the code explorer |
+| `Ctrl+F` | Search the selected source file |
+| `Ctrl+Shift+Space` | Start or stop recording |
+
+<a id="japanese"></a>
 
 ## 日本語で使う
 
-右上の **English / 日本語** で表示言語を切り替えます。音声スタジオで録音元・言語・音声モデルを選択し、文字起こしの名前と数字を確認してから送信してください。会話本文やコードそのものは翻訳しません。日本語未対応の拡張機能の文言は英語で表示します。
+Kotoba Studio は、日本語・英語の音声入力から AI との作業へつなぐ Windows アプリです。右上の **English / 日本語** で、デスクトップと主要なチャット操作の表示言語を切り替えられます。会話本文やコードは翻訳しません。
 
-**ローカルモデル** で GGUF を選択すると、同梱の CPU エンジンで実行できます。Ollama / LM Studio への接続も可能です。登録後、チャットでは **Kotoba Local** を選びます。アプリを再起動した後は推論エンジンを再度起動してください。モデルの重みはインストーラーに含まれません。
+音声スタジオで録音元と言語を選び、録音または音声ファイルの読み込みを行います。文字起こしの名前・数字・意図を確認し、必要に応じて修正してください。**チャットに追加** で会話の下書きに追加します。入力欄が未準備の場合はコピーします。確認してから送信してください。
+
+**ローカルモデル** では GGUF ファイルを同梱の CPU エンジンで実行できます。Ollama / LM Studio への接続も可能です。モデルの重みは別途必要です。登録後、チャットのモデル選択で **Kotoba Local** を選びます。再起動後はローカルエンジンを起動し直してください。
+
+## Choose where inference runs
+
+Speech recognition runs locally. A native GGUF model also runs on your computer; Ollama and LM Studio connections accept loopback endpoints only. A failed local connection does not silently fall back to a cloud provider or replay a turn. Agent tools can still access the network when used.
+
+Cloud providers receive the text you submit to them. The agent runtime stores submitted text and session history locally; capture audio stays in memory. Saved phrases are stored locally as unencrypted text. Local transcription may download speech weights on first use. See the [desktop guide](python/voice/README.md#local-language-models) for model lifecycle and connection details.
+
+## Evaluate before relying on it
+
+Model quality depends on the recording, selected model, hardware, and task. Use human-reviewed references to measure Japanese CER and English WER; agreement with automatic captions is not a ground-truth accuracy score. Small GGUF smoke tests establish integration, not dependable agent tool use.
+
+Speaker diarization, streaming interruption, managed GPU inference, automatic GGUF downloads, and system-wide paste-at-cursor are not implemented. Extensions without Japanese translations fall back to English. Review [SAFETY.md](SAFETY.md) before giving an agent workspace access.
 
 <a id="run-from-source"></a>
 
-## Develop
+## Build and contribute
 
-```powershell
-git clone https://github.com/jon-jc/japan-ai-harness.git
-cd japan-ai-harness
-pnpm install --frozen-lockfile
-pnpm run build:official
-python -m venv .venv
-.venv/Scripts/python -m pip install -e "python/voice[test]"
-.venv/Scripts/python -m pip install --no-deps -e python/sdk
-.venv/Scripts/python python/voice/prepare_local_runtime.py
-.venv/Scripts/python -m kotoba.workspace
-```
+Start with the [desktop development guide](python/voice/README.md#development). It covers the Python application, matching agent SDK, local speech evaluation, and native model behavior. The [Windows packaging guide](python/voice/WINDOWS.md) covers the installable executable.
 
-The development application uses the built checkout CLI when a packaged runtime is absent. A Windows installer requires the matching native runtime and capture helper; follow [the packaging guide](python/voice/WINDOWS.md). Run `python -m pytest python/voice/tests` for the voice application and `pnpm run test:gui` for the client interfaces. See [development](docs/development.md), [contributing](CONTRIBUTING.md), and the [integration inspection](python/voice/INSPECTION.md).
+For the underlying agent system, see [architecture](docs/architecture.md), [development](docs/development.md), and [contributing](CONTRIBUTING.md). The [integration inspection](python/voice/INSPECTION.md) explains how the upstream components fit together.
 
-## Engineering boundaries
+## Open-source foundations
 
-This is an unsigned developer preview, not a production-qualified release. Speech and agent quality depend on the model, recording, hardware, and task. Small GGUF integration tests do not establish Japanese accuracy or reliable tool use. Caption agreement is not a substitute for human-reviewed evaluation references.
+Kotoba Studio builds on the actual [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) runtime and plugin architecture. Audio capture and saved-phrase integration draw from [OpenWhispr](https://github.com/OpenWhispr/openwhispr); native local inference uses [llama.cpp](https://github.com/ggml-org/llama.cpp). Upstream identifiers remain where needed for compatibility, provider selection, and attribution.
 
-Speaker diarization, streaming interruption, managed GPU inference, automatic model downloads for GGUF, and system-wide paste-at-cursor are not implemented. Existing local speech weights may require an initial network download. Extension interfaces without Japanese entries use English fallback. Review [SAFETY.md](SAFETY.md) before giving an agent access to a workspace.
-
-## Built on open source
-
-Kotoba Studio is a fork of [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), retaining its actual runtime and Cordis plugin architecture. The voice workflow integrates code from [OpenWhispr](https://github.com/OpenWhispr/openwhispr). Native local inference uses [llama.cpp](https://github.com/ggml-org/llama.cpp). Upstream package identifiers and API provider names remain intact for compatibility and attribution.
-
-[MIT license](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md) · [Bundled runtime licenses](python/voice/THIRD_PARTY_LICENSES)
+[MIT license](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md) · [Bundled licenses](python/voice/THIRD_PARTY_LICENSES)

@@ -28,7 +28,7 @@ Japanese covers chat, composer, workspaces, model selection, model settings, and
 
 ## Understand the implementation
 
-The theme service owns the user's light/dark preference. This plugin registers paired evergreen and jade tokens, a Japanese language pack, and a desktop language listener; each registration is disposed with the plugin.
+The theme service owns the user's light/dark preference. This plugin registers paired neutral charcoal and muted jade tokens, a Japanese language pack, and a desktop language listener; each registration is disposed with the plugin.
 
 The sidebar mark and name register together after both sidebar declarations exist. The hero registers independently when its conversation declaration exists. Each set withdraws with its declaration or plugin fiber. This supports either activation order without coupling sidebar availability to conversation loading. The [browser entry](src/client/index.ts) registers the [artwork](src/client/Brand.tsx); the node entry has no effects.
 

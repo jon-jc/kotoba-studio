@@ -38,8 +38,9 @@
   row-gap: 12px;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
-  line-height: 32px;
+  font-size: clamp(24px, 2.2vw, 32px);
+  line-height: 1.35;
+  letter-spacing: -0.025em;
   font-weight: 500;
   color: var(--dsw-alias-label-primary);
 }
@@ -60,6 +61,7 @@
 }
 
 .previewBadge {
+  display: none;
   align-self: flex-start;
   margin-top: 2px;
   padding: 1px 7px 0;
