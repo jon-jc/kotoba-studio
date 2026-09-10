@@ -45,6 +45,14 @@ def resolve_model(model, language):
     return model
 
 
+class ModelDownloadRequired(RuntimeError):
+    """Local inference cannot start until the selected model is installed."""
+
+    def __init__(self, model):
+        self.model = model
+        super().__init__(f"Download speech model: {model}. / 音声モデルを準備してください: {model}")
+
+
 def prepare_parakeet(cache: Path, model: str, allow_download: bool):
     directory, digest = PARAKEET_MODELS[model]
     target = cache / directory
@@ -52,7 +60,7 @@ def prepare_parakeet(cache: Path, model: str, allow_download: bool):
     if all((target / name).is_file() for name in required):
         return target
     if not allow_download:
-        raise RuntimeError("Download this speech model in Audio settings first. / 音声設定でモデルを準備してください。")
+        raise ModelDownloadRequired(model)
     cache.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="speech-download-", dir=cache) as temporary:
         stage = Path(temporary)

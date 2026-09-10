@@ -16,6 +16,10 @@ Short application recordings and in-window shortcuts did not support dictation i
 
 [Meeting capture](../../../../python/voice/src/kotoba/meetings.py) adapts OpenWhispr's session ownership and final-transcript persistence patterns. Capture callbacks feed bounded chunks; inference commits timestamped segments before reporting completion. Stop quiesces capture, drains queued chunks, and saves the tail. Overflow and source loss produce explicit incomplete records. Local SQLite provides notes, literal bilingual search, reviewed highlights, Markdown export, deletion, and interrupted-session recovery. Agent handoff creates a draft rather than executing transcript-derived actions.
 
+Recording, imported audio, and meeting capture perform offline model preparation before opening inputs. A typed missing-model result opens explicit setup after the worker has finished. Downloads do not automatically start capture or retain a desktop paste target. Input language persists independently from interface locale. Startup shows Chat alone.
+
+The native voice agent and its Settings read the live Harness model catalog and provider configuration. This avoids a separate model list drifting away from Chat. Session-only keys use the selected route's credential reference; changing provider clears the previous key and model choice. Unconfigured routes remain discoverable with a setup instruction, while configured routes allow custom model IDs.
+
 ## Alternatives considered
 
 Embedding Electron's whole renderer inside the Qt desktop would duplicate application ownership, storage, and update infrastructure. The integration instead reuses native capture code, model definitions, and adapted lifecycle logic while preserving attribution. Automatic paste into a replacement foreground window and automatic cloud fallback would violate the selected destination and processing mode.

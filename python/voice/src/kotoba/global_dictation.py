@@ -133,8 +133,10 @@ class GlobalDictation(QAbstractNativeEventFilter):
         voice.record()
         if voice.stream is not None:
             self.notice("Listening · Ctrl+Shift+Space to finish", "録音中 · Ctrl+Shift+Space で終了", True)
-        else:
+        elif voice.job is None:
             self.target = None
+        else:
+            self.notice("Preparing speech model…", "音声モデルを準備中…", True)
 
     def deliver(self, transcript):
         target, self.target = self.target, None

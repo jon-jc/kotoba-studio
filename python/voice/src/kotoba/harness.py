@@ -1,7 +1,6 @@
 """Same-checkout SDK adapter; no replacement agent loop or automatic turn retry."""
 
 from pathlib import Path
-import os
 import sys
 import uuid
 
@@ -25,24 +24,31 @@ class HarnessSession:
         self.client = None
         self.identity = None
 
-    def run(self, text: str, workspace: str, model: str, api_key: str, notify, provider="deepseek-official"):
+    def run(self, text: str, workspace: str, model: str, api_key: str, notify, provider="deepseek-official", key_ref=""):
         if not text.strip():
             raise ValueError("Review and enter a transcript first.")
         if not Path(workspace).is_dir():
             raise ValueError("Select an existing workspace directory.")
-        if provider not in ("deepseek-official", "kotoba-local"):
+        if not provider or not model.strip():
             raise ValueError("Select a configured cloud or local provider.")
-        identity = (str(Path(workspace).resolve()), model, api_key if provider == "deepseek-official" else "", provider)
+        if provider == "kotoba-local" and not key_ref:
+            api_key = ""
+        if api_key and not key_ref and provider != "deepseek-official":
+            raise ValueError("Configure this provider's API key in Chat Settings → Models. / チャット設定のモデル画面で API キーを設定してください。")
+        identity = (str(Path(workspace).resolve()), model, api_key, provider, key_ref)
         if identity != self.identity:
             self.close()
             from deepseek_harness import DeepSeekHarness
+            env = {"DSH_TELEMETRY_DISABLED": "1", "DSH_MAX_TOKENS_AS_SUCCESS": "false"}
+            if api_key:
+                env[key_ref or "DEEPSEEK_API_KEY"] = api_key
             self.client = DeepSeekHarness(
                 dsh_bin=str(runtime_path()), dsh_home=str(self.home), cwd=identity[0],
                 profile="sdk", provider=provider, model=model,
-                api_key=(api_key or os.environ.get("DEEPSEEK_API_KEY")) if provider == "deepseek-official" else None,
+                api_key=None,
                 max_tokens=1024 if provider == "kotoba-local" else None,
                 request_timeout_seconds=600 if provider == "kotoba-local" else 180, initialize_timeout_seconds=60,
-                env={"DSH_TELEMETRY_DISABLED": "1", "DSH_MAX_TOKENS_AS_SUCCESS": "false"},
+                env=env,
             )
             self.identity = identity
             self.session_id = "kotoba-" + uuid.uuid4().hex

@@ -80,7 +80,7 @@ def test_docks_preserve_work_and_do_not_replace_editor(workspace):
     workspace.console.setPlainText("terminal history")
     workspace.show_panel(2)
     workspace.show_panel(1)
-    assert workspace.voice.isHidden()
+    assert not workspace.voice.isHidden()
     workspace.show_panel(3)
     assert not workspace.terminal_dock.isHidden()
     assert workspace.stack.currentIndex() == 2
@@ -271,3 +271,9 @@ def test_tray_cannot_hide_active_capture_and_falls_back_without_tray(workspace, 
     monkeypatch.setattr(QSystemTrayIcon, "isSystemTrayAvailable", lambda: False)
     workspace.close()
     assert workspace.shutdown_complete and not workspace.tray.isVisible()
+
+
+def test_launch_opens_chat_with_both_docks_hidden(workspace):
+    assert workspace.stack.currentIndex() == 0
+    assert workspace.voice.isHidden()
+    assert workspace.terminal_dock.isHidden()

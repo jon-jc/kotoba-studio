@@ -18,6 +18,14 @@ The [Japanese model evaluation](https://huggingface.co/kotoba-tech/kotoba-whispe
 
 Use a modern x64 CPU and start with 16 GB RAM for the recommended models. These are practical starting points, not a tested minimum hardware specification. Model memory competes with your coding agent and other applications. Smaller Whisper models trade accuracy for lower resource use. Parakeet runs on CPU; CUDA for Whisper requires a compatible separately installed NVIDIA runtime. The installer includes both speech engines, without a Python setup step.
 
+## Voice setup and agent selection
+
+Kotoba opens Chat with Voice Studio and the terminal hidden. Open Voice Studio when needed. Input language is saved separately from interface language. Recording, audio import, and meeting start check the selected model before capturing audio. Missing weights open a **Download model** / **Cancel** prompt. Download transfers model files, not your audio. After preparation, start recording again; the setup dialog clears any pending desktop paste target. Local inference never enables network downloads or cloud fallback by itself.
+
+The Agent tab and voice Settings share the live Harness provider catalog with Chat. Choose a provider and model, or type a custom model ID for a configured provider. Add providers and saved API keys in **Chat Settings → Models**, then **Refresh models**. Unconfigured providers have no selectable model until configured. Changing providers clears the session-only key and selects that provider's model; a DeepSeek model is not carried into a local route. Voice uses the same full SDK agent runtime and saved provider credentials. A session-only key overrides only the selected route's credential reference.
+
+音声入力・音声ファイルの読み込み・会議録音の前に、選択したモデルを確認します。未準備の場合は **モデルをダウンロード** / **キャンセル** を表示します。ダウンロードするのはモデルのファイルであり、音声は送信しません。完了後に録音を開始してください。入力言語は表示言語とは別に保存されます。起動時はチャットのみ表示します。エージェントの接続先・モデルはチャットと同じ一覧を使用します。チャット設定で接続先と API キーを追加し、音声画面で一覧を更新してください。
+
 ## Dictate at your cursor
 
 1. Prepare the selected local model and select a microphone.
