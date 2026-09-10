@@ -4,7 +4,7 @@
 
 **Speak naturally. Review clearly. Build with AI.**
 
-English | [中文](README.zh.md)
+English |　日本語
 
 日本語 / English
 
