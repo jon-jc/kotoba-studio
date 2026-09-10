@@ -6,7 +6,39 @@
 }
 
 .editor {
-  margin-top: 24px;
+  margin-top: 18px;
+}
+
+.provider {
+  display: grid;
+  gap: 8px;
+  margin-top: 22px;
+  font-size: 12px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.provider select {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 32px 8px 12px;
+  border: 1px solid var(--dsw-alias-border-l3);
+  border-radius: 10px;
+  background-color: var(--dsw-alias-bg-layer-1);
+  color: var(--dsw-alias-label-primary);
+  font: inherit;
+  font-size: 14px;
+}
+
+.provider select:focus-visible {
+  outline: 2px solid var(--dsw-alias-label-primary);
+  outline-offset: 3px;
+}
+
+.hint {
+  margin: 16px 0 0;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 12px;
+  line-height: 1.6;
 }
 
 @media (max-width: 560px) {

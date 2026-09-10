@@ -4,7 +4,7 @@ import type { GlobalStandardProps } from '@deepseek-ai/dsh-client-ui-slots'
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import Schema from '@deepseek-ai/schemastery'
-import type { SettingsNamespaceView } from '@deepseek-ai/dsh-api-remotes/client'
+import type { SettingsNamespaceView, SettingsPathOpView } from '@deepseek-ai/dsh-api-remotes/client'
 import type { JsonValue } from '@deepseek-ai/dsh-util-values'
 import { bindSnapshotSelector, RemoteError } from '@deepseek-ai/dsh-client-test-runtime'
 import { DeepSeekOnboardingDialog } from '../src/client/DeepSeekOnboardingDialog.tsx'
@@ -63,6 +63,7 @@ function deepSeekNamespace(apiKeyEnv: string | null): SettingsNamespaceView {
 }
 
 function harness(options: {
+  nativeProviders?: string[]
   provider?: boolean
   providerSettingsNs?: string
   providerActive?: boolean
@@ -83,16 +84,36 @@ function harness(options: {
   let fileConfigured = false
   const configured = options.configured ?? (() => fileConfigured)
   const apiKeyEnv = options.apiKeyEnv === undefined ? 'DEEPSEEK_API_KEY' : options.apiKeyEnv
-  const mutate = vi.fn(() => Promise.resolve(remoteOk(deepSeekNamespace(apiKeyEnv))))
+  const nativeSchema = Schema.object({ providers: Schema.dict(Schema.object({ apiKeyEnv: Schema.string() })) })
+  let nativeNamespace: SettingsNamespaceView = {
+    ns: 'llm-pi-ai', schema: JSON.parse(JSON.stringify(nativeSchema.toJSON())) as JsonValue,
+    value: {}, base: {}, user: {}, applies: 'live', secrets: [], revision: 0,
+  }
+  const storedKeys = new Set<string>()
+  const mutate = vi.fn((_ns: string, ops: SettingsPathOpView[]) => {
+    if (options.nativeProviders === undefined) return Promise.resolve(remoteOk(deepSeekNamespace(apiKeyEnv)))
+    let user = nativeNamespace.user as Record<string, unknown>
+    for (const op of ops) {
+      if (op.op === 'set') user = settingsSchema.setPath(user, op.path, op.value)
+    }
+    nativeNamespace = { ...nativeNamespace, user: user as JsonValue, value: user as JsonValue, revision: nativeNamespace.revision + 1 }
+    return Promise.resolve(remoteOk(nativeNamespace))
+  })
   const set = vi.fn((_ref: string, _value: string) => {
     if (options.setFailure !== undefined) return Promise.resolve(remoteFail(options.setFailure))
     fileConfigured = true
+    storedKeys.add(_ref)
     return Promise.resolve(remoteOk(undefined))
   })
   const face = {
     llm: {
       listProviders: () => {
         if (options.providersFailure !== undefined) return Promise.resolve(remoteFail(options.providersFailure))
+        if (options.nativeProviders !== undefined) {
+          return Promise.resolve(remoteOk(options.nativeProviders
+            .filter(id => settingsSchema.getPath(nativeNamespace.value, ['providers', id]) !== undefined)
+            .map(id => ({ id, name: id }))))
+        }
         return Promise.resolve(remoteOk(
           options.provider === false || options.providerActive === false
             ? []
@@ -100,14 +121,17 @@ function harness(options: {
         ))
       },
       listConfigurableProviders: () => Promise.resolve(remoteOk(
-        options.provider === false
-          ? []
-          : [{
-            provider: 'deepseek-official',
-            displayName: 'DeepSeek',
-            settingsNs: options.providerSettingsNs ?? 'llm-deepseek',
-            settingsPath: [],
-          }],
+        options.nativeProviders !== undefined
+          ? options.nativeProviders.map(provider => ({ provider, displayName: provider,
+            settingsNs: 'llm-pi-ai', settingsPath: ['providers', provider], declared: false }))
+          : options.provider === false
+            ? []
+            : [{
+              provider: 'deepseek-official',
+              displayName: 'DeepSeek',
+              settingsNs: options.providerSettingsNs ?? 'llm-deepseek',
+              settingsPath: [],
+            }],
       )),
       discoverModels: () => Promise.resolve(remoteOk([])),
     },
@@ -115,13 +139,18 @@ function harness(options: {
       describe: () => Promise.resolve(remoteOk({
         writable: options.settingsWritable ?? true,
         hasDocument: false,
-        namespaces: options.settingsNamespace === false ? [] : [deepSeekNamespace(apiKeyEnv)],
+        namespaces: options.nativeProviders !== undefined ? [nativeNamespace]
+          : options.settingsNamespace === false ? [] : [deepSeekNamespace(apiKeyEnv)],
       })),
       mutate,
     },
     credentials: {
       describe: () => options.describeFailure === undefined
         ? Promise.resolve(remoteOk({
+          ...Object.fromEntries((options.nativeProviders ?? []).map((id) => {
+            const ref = `${id.toUpperCase()}_API_KEY`
+            return [ref, { configured: storedKeys.has(ref), writable: true }]
+          })),
           DEEPSEEK_API_KEY: {
             configured: configured(),
             ...configured() && options.credential?.source !== undefined
@@ -136,8 +165,9 @@ function harness(options: {
   }
   // The page plugin's context, scripted down to the namespaces it reaches.
   const ctx = { remote: face } as never
-  const operations = createModelsOperations(ctx)
-  const controller = new ModelsSettingsStore(ctx, settingsSchema, new SettingsDescribeMirror(ctx))
+  const mirror = new SettingsDescribeMirror(ctx)
+  const operations = createModelsOperations(ctx, (view) => { mirror.acceptView(view) })
+  const controller = new ModelsSettingsStore(ctx, settingsSchema, mirror)
   const openSection = vi.fn()
   const complete = vi.fn()
   const unusedHook = (() => { throw new Error('unused standard hook') }) as never
@@ -162,6 +192,55 @@ function harness(options: {
 }
 
 describe('DeepSeekOnboardingDialog', () => {
+  it.each(['openai', 'anthropic', 'moonshotai'])('activates %s and stores its own credential without DeepSeek', async (provider) => {
+    const h = harness({ nativeProviders: ['openai', 'anthropic', 'moonshotai'] })
+    render(<DeepSeekOnboardingDialog {...h.props} />)
+    const selector = await screen.findByRole('combobox', { name: en.provider })
+    fireEvent.change(selector, { target: { value: provider } })
+    expect(screen.getByLabelText<HTMLInputElement>(en.keyInput).placeholder).toBe(en.keyPlaceholder)
+    fireEvent.change(screen.getByLabelText(en.keyInput), { target: { value: 'sk-fixture-only' } })
+    fireEvent.click(screen.getByRole('button', { name: en.onboardingSave }))
+    await waitFor(() => { expect(h.complete).toHaveBeenCalledOnce() })
+    const ref = `${provider.toUpperCase()}_API_KEY`
+    expect(h.set).toHaveBeenCalledExactlyOnceWith(ref, 'sk-fixture-only')
+    expect(h.mutate).toHaveBeenCalledExactlyOnceWith('llm-pi-ai', [
+      { op: 'set', path: ['providers', provider, 'apiKeyEnv'], value: ref },
+    ], 0)
+    expect(h.controller.store.getSnapshot().rows.find(row => row.entry.provider === provider))
+      .toMatchObject({ entry: { active: true }, apiKeyEnv: ref, credential: { configured: true } })
+  })
+
+  it('discards an unsaved key when switching providers', async () => {
+    const h = harness({ nativeProviders: ['openai', 'anthropic', 'moonshotai'] })
+    render(<DeepSeekOnboardingDialog {...h.props} />)
+    const selector = await screen.findByRole('combobox', { name: en.provider })
+    expect({ title: screen.getByRole('heading').textContent,
+      providers: [...selector.querySelectorAll('option')].map(option => option.textContent),
+      description: screen.getByText(en.onboardingDescription).textContent }).toMatchSnapshot()
+    fireEvent.change(screen.getByLabelText(en.keyInput), { target: { value: 'openai-fixture-key' } })
+    fireEvent.change(selector, { target: { value: 'anthropic' } })
+    expect(screen.getByLabelText<HTMLInputElement>(en.keyInput).value).toBe('')
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: en.onboardingSave }).disabled).toBe(true)
+    expect(h.set).not.toHaveBeenCalled()
+  })
+
+  it('locks provider selection during a credential write and allows retry after rejection', async () => {
+    const h = harness({ nativeProviders: ['openai', 'anthropic'] })
+    const pending = Promise.withResolvers<string | undefined>()
+    const storeCredential = vi.fn(() => pending.promise)
+    h.props.operations.storeCredential = storeCredential
+    render(<DeepSeekOnboardingDialog {...h.props} />)
+    const selector = await screen.findByRole<HTMLSelectElement>('combobox', { name: en.provider })
+    fireEvent.change(screen.getByLabelText(en.keyInput), { target: { value: 'sk-fixture-only' } })
+    fireEvent.click(screen.getByRole('button', { name: en.onboardingSave }))
+    await waitFor(() => { expect(storeCredential).toHaveBeenCalledOnce() })
+    expect(selector.disabled).toBe(true)
+    await act(async () => { pending.resolve('Unable to store credential') })
+    expect(await screen.findByText('Unable to store credential')).toBeTruthy()
+    expect(selector.disabled).toBe(false)
+    expect(h.complete).not.toHaveBeenCalled()
+  })
+
   it('renders when the shell root is absent', async () => {
     const h = harness()
     document.getElementById('root')!.remove()

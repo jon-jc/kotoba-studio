@@ -187,7 +187,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         status.addWidget(self.locale_scope)
         status.addSpacing(18)
-        status.addWidget(QLabel("Kotoba Studio  0.5.1"))
+        status.addWidget(QLabel("Kotoba Studio  0.5.2"))
         outer.addWidget(statusbar)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(self.selected_panel)
@@ -703,11 +703,15 @@ def main():
                         window.request_quit()
                         app.exit(1)
                         return
+                    if value["providers"] and not {"openai", "anthropic", "moonshotai"}.issubset(value["providers"]):
+                        window.request_quit()
+                        app.exit(1)
+                        return
                     evidence[locale] = value["lang"]
                     window.grab().save(str(screenshot.with_name(screenshot.stem + "-" + locale + ".png")))
                     switch_next()
                 QTimer.singleShot(1000, lambda: window.web.page().runJavaScript(
-                    "JSON.stringify({lang:document.documentElement.lang,notice:!![...document.querySelectorAll('[role=dialog]')].find(x=>/Internal Testing Notice|内测声明/.test(x.textContent))})", inspected))
+                    "JSON.stringify({lang:document.documentElement.lang,notice:!![...document.querySelectorAll('[role=dialog]')].find(x=>/Internal Testing Notice|内测声明/.test(x.textContent)),providers:[...document.querySelectorAll('[role=dialog] select option')].map(x=>x.value)})", inspected))
             switch_next()
         timer = QTimer(window)
         timer.timeout.connect(check)

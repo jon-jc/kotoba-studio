@@ -1,0 +1,49 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`streams bilingual tool calls using the native 'anthropic' API 1`] = `
+{
+  "content": [
+    {
+      "arguments": "{"word":"ことば"}",
+      "id": "call_fixture",
+      "name": "lookup",
+      "type": "tool-call",
+    },
+  ],
+  "finish": {
+    "kind": "tool-calls",
+  },
+}
+`;
+
+exports[`streams bilingual tool calls using the native 'moonshotai' API 1`] = `
+{
+  "content": [
+    {
+      "arguments": "{"word":"ことば"}",
+      "id": "call_fixture",
+      "name": "lookup",
+      "type": "tool-call",
+    },
+  ],
+  "finish": {
+    "kind": "tool-calls",
+  },
+}
+`;
+
+exports[`streams bilingual tool calls using the native 'openai' API 1`] = `
+{
+  "content": [
+    {
+      "arguments": "{"word":"ことば"}",
+      "id": "call_fixture|fc_fixture",
+      "name": "lookup",
+      "type": "tool-call",
+    },
+  ],
+  "finish": {
+    "kind": "tool-calls",
+  },
+}
+`;

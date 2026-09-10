@@ -1,23 +1,21 @@
 /**
- * Official-DeepSeek first-run step. Readiness comes from the same
- * provider/settings/credential join as the Models page: any provider the user
- * can already talk to ends the step, and only a user with none is offered the
- * official DeepSeek route. The step reuses that page's credential editor in
- * the onboarding plugin's shared modal, so the key is entered once.
+ * Provider-neutral first-run setup using the Models page's live directory,
+ * settings, and credential editor. Catalog adapters own endpoints and models.
  */
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { SnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { InjectFace, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ModelsSettingsState, ModelsSettingsStore } from './store.ts'
-import { onboardingReadiness } from './store.ts'
+import { onboardingProviders, onboardingReadiness } from './store.ts'
 import type { ModelsOperations } from './operations.ts'
 import type { SettingsSchemaOperations } from './schema-operations.ts'
 import { ProviderEditor } from './ProviderEditor.tsx'
 import type { en } from './locales.ts'
 import { OnboardingModal } from './OnboardingModal.tsx'
 import styles from './DeepSeekOnboardingDialog.module.css'
+import fieldStyles from './ModelsSection.module.css'
 
 /** Registration-side dependencies of {@link DeepSeekOnboardingDialog}. */
 export interface DeepSeekOnboardingInjected {
@@ -45,8 +43,7 @@ function assertNever(_value: never): never {
 }
 
 /**
- * Prompt a first-run user for the official DeepSeek credential while no
- * provider can serve requests and that credential is writable.
+ * Offer a provider and credential while no configured route can serve requests.
  * @param props - settings-shell owner state and Models feature dependencies.
  * @returns the onboarding modal or null when onboarding needs no intervention.
  */
@@ -54,6 +51,8 @@ export function DeepSeekOnboardingDialog(props: DeepSeekOnboardingDialogProps): 
   const { complete, controller, useModels, operations, schema, t } = props
   const state = useModels(snapshot => snapshot)
   const readiness = onboardingReadiness(state)
+  const [selected, setSelected] = useState('openai')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (state.status === 'idle') void controller.load()
@@ -80,12 +79,10 @@ export function DeepSeekOnboardingDialog(props: DeepSeekOnboardingDialogProps): 
       return assertNever(readiness)
   }
 
-  const row = state.rows.find(candidate =>
-    candidate.entry.provider === 'deepseek-official'
-    && candidate.entry.settingsNs === 'llm-deepseek'
-    && candidate.entry.settingsPath.length === 0)
-  const namespace = state.namespaces.get('llm-deepseek')
-  /* v8 ignore next 2 -- credential-missing is derived only from this exact joined row. */
+  const choices = onboardingProviders(state)
+  const row = choices.find(candidate => candidate.entry.provider === selected) ?? choices[0]
+  const namespace = row === undefined ? undefined : state.namespaces.get(row.entry.settingsNs)
+  /* v8 ignore next 2 -- a disappearing namespace is handled by the shared join refresh. */
   if (row === undefined || namespace === undefined) return null
 
   const finishCredential = (changed: boolean): void => {
@@ -99,8 +96,27 @@ export function DeepSeekOnboardingDialog(props: DeepSeekOnboardingDialogProps): 
   return (
     <OnboardingModal title={t('onboardingTitle')}>
       <p className={styles.description}>{t('onboardingDescription')}</p>
+      <label className={styles.provider}>
+        <span>{t('provider')}</span>
+        <select
+          className={fieldStyles.selectInput}
+          value={row.entry.provider}
+          disabled={saving}
+          onChange={(event) => { setSelected(event.target.value) }}
+        >
+          {choices.map(candidate => (
+            <option key={candidate.entry.provider} value={candidate.entry.provider}>
+              {candidate.entry.provider === 'openai' ? t('providerOpenAI')
+                : candidate.entry.provider === 'anthropic' ? t('providerClaude')
+                  : candidate.entry.provider === 'moonshotai' ? t('providerKimi')
+                    : candidate.entry.displayName}
+            </option>
+          ))}
+        </select>
+      </label>
       <div className={styles.editor}>
         <ProviderEditor
+          key={row.entry.provider}
           provider={row.entry.provider}
           displayName={row.entry.displayName}
           namespace={namespace}
@@ -113,12 +129,14 @@ export function DeepSeekOnboardingDialog(props: DeepSeekOnboardingDialogProps): 
           credentialOnly
           credentialRequired
           autoFocusCredential
+          onBusyChange={setSaving}
           cancelLabelKey="onboardingLater"
           submitLabelKey="onboardingSave"
           submitBusyLabelKey="onboardingSaving"
           onClose={finishCredential}
         />
       </div>
+      <p className={styles.hint}>{t('onboardingHint')}</p>
     </OnboardingModal>
   )
 }

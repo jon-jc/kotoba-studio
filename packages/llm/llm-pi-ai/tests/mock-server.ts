@@ -29,6 +29,7 @@ export const textEvents = [
 export async function mockServer(script: {
   status?: number
   events?: string[]
+  eventNames?: string[]
   body?: string
   delayMs?: number
   headers?: Record<string, string>
@@ -65,7 +66,8 @@ export async function mockServer(script: {
       const writeNext = (): void => {
         const event = behavior.events?.[index++]
         if (event === undefined) { response.end(); return }
-        response.write(`data: ${event}\n\n`)
+        const name = behavior.eventNames?.[index - 1]
+        response.write(`${name === undefined ? '' : `event: ${name}\n`}data: ${event}\n\n`)
         if (behavior.delayMs === undefined) writeNext()
         else setTimeout(writeNext, behavior.delayMs)
       }

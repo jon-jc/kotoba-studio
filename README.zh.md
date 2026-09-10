@@ -21,7 +21,7 @@
 | 日语与英语 | 本地多语言 Whisper 转录、语言选择、术语提示和双语核心界面控件 |
 | 音频来源 | 麦克风、系统音频、应用程序进程捕获和录音文件导入 |
 | 本地 AI | 通过内置 llama.cpp CPU 引擎运行 GGUF；连接 Ollama 和 LM Studio |
-| 云端 AI | 设置提供方端点、凭据、模型，以及逐对话选择模型 |
+| 云端 AI | 原生 OpenAI、Anthropic Claude、Kimi 和 DeepSeek API；自定义提供方与按会话选择模型 |
 | 智能体工作空间 | 持久会话、文件与终端工具、技能、工作流、子智能体和 Cordis 插件 |
 | 可重复的听写流程 | 保存短语、Unicode 感知展开、撤销、转录审阅和剪贴板交接 |
 | 可测量的结果 | 转录延迟、实时因子，以及针对所提供参考文本计算日语字符错误率和英语词错误率 |
@@ -32,7 +32,7 @@
 
 ## 在 Windows 上开始
 
-桌面版本为 **Kotoba Studio 0.5.1**，是面向 Windows x64 的未签名开发预览版。从构建输出安装 `Kotoba-Studio-0.5.1-Setup.exe`。安装包包含桌面应用、智能体运行时、音频捕获助手和 CPU 推理引擎。语音与语言模型权重单独提供。构建和验证安装包的方法见 [Windows 指南](python/voice/WINDOWS.md)。
+桌面版本为 **Kotoba Studio 0.5.2**，是面向 Windows x64 的未签名开发预览版。从构建输出安装 `Kotoba-Studio-0.5.2-Setup.exe`。安装包包含桌面应用、智能体运行时、音频捕获助手和 CPU 推理引擎。语音与语言模型权重单独提供。构建和验证安装包的方法见 [Windows 指南](python/voice/WINDOWS.md)。
 
 1. **选择文件夹。** 为任务指定智能体的工作目录。
 2. **连接模型。** 在 **··· → Routing** 中配置 API 提供方，或选择 Configure later 后打开 Local models。注册本地模型后，在聊天输入框中选择 Kotoba Local。
