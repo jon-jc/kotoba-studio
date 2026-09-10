@@ -4,7 +4,7 @@
 
 **Speak naturally. Review clearly. Build with AI.**
 
-English | [中文](README.zh.md)
+English | 日本語
 
 A Windows desktop workspace for Japanese and English voice input, AI conversations, and development. Capture an idea from your microphone or an application, turn it into an editable instruction, and work with an agent using local models or cloud APIs.
 
