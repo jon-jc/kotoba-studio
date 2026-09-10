@@ -36,6 +36,8 @@ class AccessDialog(QDialog):
         layout.addWidget(heading)
         self.scope = QComboBox()
         self.scope.setAccessibleName(self.tr("Apply to", "適用先"))
+        self.scope.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
+        self.scope.setMinimumContentsLength(32)
         layout.addWidget(self.scope)
         self.group = QButtonGroup(self)
         self.choices = []
@@ -63,7 +65,11 @@ class AccessDialog(QDialog):
         self.status.setWordWrap(True)
         layout.addWidget(self.status)
         buttons = QDialogButtonBox(QDialogButtonBox.Close)
-        buttons.button(QDialogButtonBox.Close).setText(self.tr("Close", "閉じる"))
+        self.close_button = buttons.button(QDialogButtonBox.Close)
+        self.reload_button = QPushButton(self.tr("Reload", "再読み込み"))
+        buttons.addButton(self.reload_button, QDialogButtonBox.ActionRole)
+        self.reload_button.clicked.connect(lambda: self.work(self.service.describe, self.loaded))
+        self.close_button.setText(self.tr("Close", "閉じる"))
         self.apply_button = QPushButton(self.tr("Apply access level", "アクセス設定を適用"))
         buttons.addButton(self.apply_button, QDialogButtonBox.ActionRole)
         self.apply_button.clicked.connect(self.save)
@@ -78,6 +84,8 @@ class AccessDialog(QDialog):
     def work(self, task, result):
         if self.job is not None:
             return
+        self.close_button.setEnabled(False)
+        self.reload_button.setEnabled(False)
         self.scope.setEnabled(False)
         for button in self.choices:
             button.setEnabled(False)
@@ -92,6 +100,8 @@ class AccessDialog(QDialog):
     def settled(self):
         job, self.job = self.job, None
         job.deleteLater()
+        self.close_button.setEnabled(True)
+        self.reload_button.setEnabled(True)
         self.scope.setEnabled(self.view is not None)
         for button in self.choices:
             button.setEnabled(self.current is not None)

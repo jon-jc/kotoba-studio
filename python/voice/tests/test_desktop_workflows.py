@@ -277,3 +277,36 @@ def test_launch_opens_chat_with_both_docks_hidden(workspace):
     assert workspace.stack.currentIndex() == 0
     assert workspace.voice.isHidden()
     assert workspace.terminal_dock.isHidden()
+
+
+def test_reduced_motion_persists_and_updates_embedded_chat(workspace):
+    from PySide6.QtCore import QEventLoop, QTimer
+    window = workspace
+    from PySide6.QtWebEngineCore import QWebEnginePage
+    previous = window.web.page()
+    window.web.setPage(QWebEnginePage(previous.profile(), window.web))
+    previous.deleteLater()
+    window.web.setHtml('<html><head></head><body><button>Action</button></body></html>')
+    loop = QEventLoop()
+    timer = QTimer()
+    timer.setSingleShot(True)
+    timer.timeout.connect(loop.quit)
+    window.web.loadFinished.connect(loop.quit)
+    timer.start(5000)
+    loop.exec()
+    timer.stop()
+    window.web.loadFinished.disconnect(loop.quit)
+    window.reduce_motion.setChecked(True)
+    assert window.voice.preferences.value("ui/reduced_motion", type=bool)
+    values = []
+    window.web.page().runJavaScript("JSON.stringify({mode:document.documentElement.dataset.kotobaMotion, styles:document.querySelectorAll('#kotoba-motion').length, transition:getComputedStyle(document.querySelector('button')).transitionDuration})", lambda value: (values.append(value), loop.quit()))
+    timer.start(5000)
+    loop.exec()
+    timer.stop()
+    import json
+    assert values and json.loads(values[0]) == {"mode":"off", "styles":1, "transition":"0s"}
+    assert all(reveal.animation is None for reveal in window.reveals)
+
+
+def test_chat_loading_background_matches_dark_shell(workspace):
+    assert workspace.web.page().backgroundColor().name() == "#191a1e"

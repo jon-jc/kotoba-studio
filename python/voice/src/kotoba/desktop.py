@@ -179,7 +179,8 @@ class Window(QMainWindow):
         return box
 
     def refresh_routes(self):
-        if self.runtime_url and self.job is None:
+        if (self.runtime_url and self.job is None and self.stream is None
+                and not self.meeting_active and not getattr(self, "permission_dialog_active", False)):
             self.work(lambda emit: load_routes(self.runtime_url), self.apply_routes)
 
     def apply_routes(self, routes):
@@ -192,6 +193,13 @@ class Window(QMainWindow):
         self.agent_provider.blockSignals(False)
         if self.agent_provider.currentIndex() >= 0:
             self.select_provider()
+        else:
+            self.agent_model.blockSignals(True)
+            self.agent_model.clear()
+            self.agent_model.blockSignals(False)
+            self.agent_model.setEnabled(False)
+            self.route_label.clear()
+            self.route_hint.setText("Choose an available provider to continue." if self.locale == "en" else "利用可能な接続先を選択してください。")
 
     def select_provider(self, *_):
         selected = self.agent_provider.currentData()
@@ -285,7 +293,7 @@ class Window(QMainWindow):
         self.locale_button = switch
         side.addWidget(switch)
         switch.setVisible(not self.embedded)
-        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.6.2", "muted"))
+        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.6.3", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
         content.setSpacing(12)
@@ -730,6 +738,10 @@ class Window(QMainWindow):
                 return
             audio = np.concatenate(self.frames) if self.frames else np.array([], dtype=np.float32)
             self.frames = []
+            if audio.size == 0:
+                self.busy(False)
+                self.failure("No audio was captured. Check your input and try again." if self.locale == "en" else "音声を取得できませんでした。入力を確認して、もう一度お試しください。")
+                return
             self.transcribe(audio)
             return
         self.ensure_speech(self.start_recording)
@@ -746,6 +758,8 @@ class Window(QMainWindow):
         try:
             import sounddevice as sd
             source = self.audio_source.currentData()
+            if source is None:
+                raise ValueError("Choose an audio input before recording." if self.locale == "en" else "録音する前に音声入力を選択してください。")
             if source.kind == "microphone":
                 self.stream = sd.InputStream(device=source.device, samplerate=16000, channels=1, dtype="float32", callback=capture)
             else:

@@ -112,3 +112,21 @@ def test_failed_default_save_keeps_current_access_and_voice_session(dialog, monk
     assert window.current == "workspace-write"
     assert "reload" in window.status.text()
     assert "reset-voice" not in calls
+
+
+def test_reload_recovers_failed_load_and_disables_close_during_work(dialog, monkeypatch):
+    window, _ = dialog
+    describe = window.service.describe
+    def offline(): raise RuntimeError("Connection lost")
+    monkeypatch.setattr(window.service, "describe", offline)
+    window.reload_button.click()
+    assert not window.close_button.isEnabled()
+    assert not window.reload_button.isEnabled()
+    settle(window)
+    assert "Connection lost" in window.status.text()
+    assert window.close_button.isEnabled() and window.reload_button.isEnabled()
+    monkeypatch.setattr(window.service, "describe", describe)
+    window.reload_button.click()
+    settle(window)
+    assert window.current == "workspace-write"
+    assert "Current" in window.status.text()
