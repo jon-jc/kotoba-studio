@@ -50,10 +50,15 @@ def verify(window):
         if view["alerts"]:
             finish("Folder browser reported an error: " + str(view["alerts"]))
             return
+        if view["onboarding"]:
+            window.web.page().runJavaScript("[...document.querySelectorAll('button')].find(b=>['Configure later','後で設定','稍后配置'].includes(b.textContent.trim()))?.click()")
+            return
         phase = state["phase"]
         click = "[...document.querySelectorAll('button')].find(b=>b.getAttribute('aria-label')===%s)?.click()"
         if phase == "boot":
-            window.web.page().runJavaScript("[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='Configure later')?.click()")
+            if view["rail"]:
+                window.web.page().runJavaScript(click % json.dumps("Open sidebar"))
+                return
             if view["add"] and not view["dialog"]:
                 advance("wide", click % json.dumps("Add workspace"))
         elif phase == "wide" and "Select Workspace Directory" in view["dialog"]:
@@ -98,7 +103,9 @@ def verify(window):
           const find=label=>buttons.find(b=>b.getAttribute('aria-label')===label);
           const rail=find('Open sidebar');
           const icons=rail ? [rail,find('New session'),find('Add workspace'),find('Search sessions')] : [];
-          return {text:document.body.innerText,dialog:document.querySelector('[role=dialog]')?.textContent||'',
+          return {text:document.body.innerText,
+            onboarding:buttons.some(b=>['Configure later','後で設定','稍后配置'].includes(b.textContent.trim())),
+            dialog:[...document.querySelectorAll('[role=dialog]')].find(d=>['Select Workspace Directory','作業フォルダーを選択'].includes(d.getAttribute('aria-label')))?.textContent||'',
             alerts:[...document.querySelectorAll('[role=dialog] [role=alert]')].map(x=>x.textContent).filter(Boolean),
             add:!!find('Add workspace'),jaAdd:!!find('ワークスペースを追加'),rail:!!rail,
             centers:icons.map(b=>[...b?.querySelectorAll('svg,img')||[]].map(x=>x.getBoundingClientRect()).find(r=>r.width>0)).filter(Boolean).map(r=>r.x+r.width/2),
