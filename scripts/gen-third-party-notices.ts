@@ -86,6 +86,7 @@ const OVERRIDES: Record<string, { license?: string; repo?: string }> = {
  */
 const PYTHON_METADATA: Record<string, { license: string; repo: string; role: string }> = {
   pydantic: { license: 'MIT', repo: 'https://github.com/pydantic/pydantic', role: 'runtime dependency of `deepseek-harness-sdk`' },
+  pygments: { license: 'BSD-2-Clause', repo: 'https://github.com/pygments/pygments', role: 'desktop source syntax highlighting' },
   hatchling: { license: 'MIT', repo: 'https://github.com/pypa/hatch', role: 'build backend' },
   pytest: { license: 'MIT', repo: 'https://github.com/pytest-dev/pytest', role: 'test-only' },
   setuptools: { license: 'MIT', repo: 'https://github.com/pypa/setuptools', role: 'voice build backend' },

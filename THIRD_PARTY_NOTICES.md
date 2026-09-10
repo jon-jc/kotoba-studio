@@ -220,6 +220,7 @@ Direct dependencies of the `pyproject.toml` manifests, plus `uv` as the developm
 | [`hatchling`](https://github.com/pypa/hatch) | MIT | build backend |
 | [`numpy`](https://github.com/numpy/numpy) | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 | voice signal processing |
 | [`pydantic`](https://github.com/pydantic/pydantic) | MIT | runtime dependency of `deepseek-harness-sdk` |
+| [`pygments`](https://github.com/pygments/pygments) | BSD-2-Clause | desktop source syntax highlighting |
 | [`pyinstaller`](https://github.com/pyinstaller/pyinstaller) | GPL-2.0-or-later WITH Bootloader-exception | voice desktop packaging only |
 | [`pyside6`](https://code.qt.io/cgit/pyside/pyside-setup.git/) | LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only | voice desktop runtime |
 | [`pytest`](https://github.com/pytest-dev/pytest) | MIT | test-only |

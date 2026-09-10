@@ -42,6 +42,7 @@ COPY = {
     "terminal_failed": ("PowerShell could not start.", "PowerShell を起動できませんでした。"),
     "scope": ("Interface language · desktop and chat", "表示言語 · デスクトップとチャット"),
     "paste": ("Text copied. Paste into your chosen chat and review before sending.", "コピーしました。チャットに貼り付け、確認してから送信してください。"),
+    "draft_added": ("Draft added to chat · Review before sending", "チャットに追加しました · 確認してから送信"),
 }
 
 
