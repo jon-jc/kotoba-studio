@@ -57,6 +57,7 @@ describe('providerUsable', () => {
   it('requires a registered route and a stored key for every named reference', () => {
     expect(providerUsable(otherRow())).toBe(true)
     expect(providerUsable(otherRow({ entry: { ...otherRow().entry, active: false } }))).toBe(false)
+    expect(providerUsable(otherRow({ configured: false, apiKeyEnv: undefined, credential: undefined }))).toBe(false)
     expect(providerUsable(otherRow({ credential: missingCredential }))).toBe(false)
     expect(providerUsable(otherRow({ credential: undefined }))).toBe(false)
   })

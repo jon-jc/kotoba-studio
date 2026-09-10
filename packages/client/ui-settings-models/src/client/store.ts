@@ -262,6 +262,9 @@ export class ModelsSettingsStore {
  */
 export function providerUsable(row: ProviderRow): boolean {
   if (!row.entry.active) return false
+  // Adapter registration can arrive before its settings descriptor. Until the
+  // profile is joined, an absent key reference does not imply keyless auth.
+  if (row.entry.settingsNs !== '' && !row.configured) return false
   if (row.apiKeyEnv === undefined) return true
   return row.credential?.configured === true
 }
