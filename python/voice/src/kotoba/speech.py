@@ -8,7 +8,7 @@ from typing import Callable, Protocol
 
 import numpy as np
 from .dictation import dictionary_echo
-from .speech_models import resolve_model, PARAKEET_MODELS, JAPANESE_MODEL, prepare_parakeet, ParakeetRecognizer
+from .speech_models import resolve_model, PARAKEET_MODELS, JAPANESE_MODEL, prepare_parakeet, ParakeetRecognizer, ModelDownloadRequired
 
 
 @dataclass(frozen=True)
@@ -101,12 +101,16 @@ class SpeechEngine:
                 from faster_whisper import WhisperModel
                 from faster_whisper.utils import download_model
                 factory = WhisperModel
-                model_path = Path(config.model) if Path(config.model).is_dir() else Path(download_model(
-                    config.model, cache_dir=str(self.cache), local_files_only=not allow_download))
+                from huggingface_hub.errors import LocalEntryNotFoundError
+                try:
+                    model_path = Path(config.model) if Path(config.model).is_dir() else Path(download_model(
+                        config.model, cache_dir=str(self.cache), local_files_only=not allow_download))
+                except LocalEntryNotFoundError as error:
+                    raise ModelDownloadRequired(config.model) from error
                 # faster-whisper otherwise fetches a fallback tokenizer even in
                 # local_files_only mode; incomplete local models must fail offline.
                 if not (model_path / "tokenizer.json").is_file():
-                    raise RuntimeError("Speech model tokenizer is missing. Download the complete model first.")
+                    raise ModelDownloadRequired(config.model)
                 model_name = str(model_path)
             else:
                 model_name = config.model

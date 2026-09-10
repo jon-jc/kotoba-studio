@@ -24,7 +24,8 @@ from .audio_sources import sources, LoopbackStream
 from .dictation import format_dictation
 from .snippets import load_snippets, save_snippets, expand_snippets
 from .branding import icon_path
-from .speech_models import MODEL_CHOICES, resolve_model
+from .speech_models import MODEL_CHOICES, resolve_model, ModelDownloadRequired
+from .voice_routes import load_routes
 from .global_dictation import GlobalDictation
 from .meetings import MeetingStore
 
@@ -118,9 +119,10 @@ class Window(QMainWindow):
         self.config = SpeechConfig()
         self.api_key = ""
         self.provider = self.preferences.value("voice/provider", "deepseek-official")
-        if self.provider not in ("deepseek-official", "kotoba-local"):
-            self.provider = "deepseek-official"
         self.model = self.preferences.value("voice/model", "deepseek-v4-flash")
+        self.routes = []
+        self.runtime_url = None
+        self.after_job = None
         self.workspace = str(self.home / "workspace")
         Path(self.workspace).mkdir(exist_ok=True)
         self.job = None
@@ -144,6 +146,86 @@ class Window(QMainWindow):
         self.setMinimumSize(360, 560) if embedded else self.setMinimumSize(1080, 740)
         self.setStyleSheet(STYLE)
         self.build()
+
+    def route_controls(self):
+        box = QWidget()
+        layout = QVBoxLayout(box)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.agent_provider = QComboBox()
+        self.agent_provider.setAccessibleName("Agent provider / エージェント接続先")
+        self.agent_model = QComboBox()
+        self.agent_model.setEditable(True)
+        self.agent_model.setAccessibleName("Agent model / エージェントモデル")
+        self.agent_model.setInsertPolicy(QComboBox.NoInsert)
+        self.agent_model.lineEdit().setMaxLength(512)
+        row = QHBoxLayout()
+        for widget in (self.agent_provider, self.agent_model):
+            widget.setMinimumWidth(0)
+            widget.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
+            widget.setMinimumContentsLength(8)
+            row.addWidget(widget, 1)
+        layout.addLayout(row)
+        self.refresh_routes_button = QPushButton("Refresh models" if self.locale == "en" else "モデル一覧を更新")
+        self.refresh_routes_button.setObjectName("ghost")
+        self.refresh_routes_button.clicked.connect(self.refresh_routes)
+        self.route_hint = QLabel("Configure providers in Chat Settings → Models." if self.locale == "en" else "チャット設定のモデル画面で接続先を追加できます。")
+        self.route_hint.setWordWrap(True)
+        self.route_hint.setObjectName("micro")
+        for widget in (self.refresh_routes_button, self.route_hint):
+            layout.addWidget(widget)
+        self.agent_provider.currentIndexChanged.connect(self.select_provider)
+        self.agent_model.currentTextChanged.connect(self.select_model)
+        self.apply_routes(self.routes)
+        return box
+
+    def refresh_routes(self):
+        if self.runtime_url and self.job is None:
+            self.work(lambda emit: load_routes(self.runtime_url), self.apply_routes)
+
+    def apply_routes(self, routes):
+        self.routes = routes
+        self.agent_provider.blockSignals(True)
+        self.agent_provider.clear()
+        for route in routes:
+            self.agent_provider.addItem(route["name"], route["id"])
+        self.agent_provider.setCurrentIndex(self.agent_provider.findData(self.provider))
+        self.agent_provider.blockSignals(False)
+        if self.agent_provider.currentIndex() >= 0:
+            self.select_provider()
+
+    def select_provider(self, *_):
+        selected = self.agent_provider.currentData()
+        route = next((r for r in self.routes if r["id"] == selected), None)
+        if route is None:
+            return
+        previous = self.model if selected == self.provider else ""
+        if previous and self.preferences.value("voice/model_provider", "") != selected:
+            previous = previous if any(m["id"] == previous for m in route["models"]) else ""
+        if selected != self.provider:
+            self.api_key = ""
+        self.provider = selected
+        self.agent_model.blockSignals(True)
+        self.agent_model.clear()
+        for model in route["models"]:
+            self.agent_model.addItem(model["id"])
+        # Restore an explicit custom model only for its owning provider.
+        self.agent_model.setCurrentText(previous or (route["models"][0]["id"] if route["models"] else ""))
+        self.agent_model.setEnabled(route["configured"])
+        self.route_hint.setText(("Uses your saved provider credentials. Custom model IDs are supported." if self.locale == "en" else "保存済みの認証情報を使用します。モデル ID の直接入力も可能です。") if route["configured"] else ("Set up this provider in Chat Settings → Models, then refresh." if self.locale == "en" else "チャット設定でこの接続先を設定し、一覧を更新してください。"))
+        self.agent_model.blockSignals(False)
+        self.select_model(self.agent_model.currentText())
+
+    def select_model(self, model):
+        self.model = model.strip()
+        self.preferences.setValue("voice/provider", self.provider)
+        self.preferences.setValue("voice/model", self.model)
+        self.preferences.setValue("voice/model_provider", self.provider)
+        self.route_label.setText(self.provider + " · " + self.model)
+
+    def setup_language(self):
+        chosen = self.preferences.value("speech/language", self.locale)
+        self.language.setCurrentIndex(max(0, self.language.findData(chosen)))
+        self.language.currentIndexChanged.connect(lambda _: self.preferences.setValue("speech/language", self.language.currentData()))
 
     def t(self, key):
         return COPY[self.locale][key]
@@ -184,6 +266,7 @@ class Window(QMainWindow):
         self.language.addItem("日本語", "ja")
         self.language.addItem("English", "en")
         self.language.addItem("Auto · 日本語 / English", "auto")
+        self.setup_language()
         side.addWidget(self.language)
         side.addWidget(self.label(self.t("model"), "muted"))
         self.speech_model = QComboBox()
@@ -202,7 +285,7 @@ class Window(QMainWindow):
         self.locale_button = switch
         side.addWidget(switch)
         switch.setVisible(not self.embedded)
-        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.6.0", "muted"))
+        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.6.1", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
         content.setSpacing(12)
@@ -212,6 +295,7 @@ class Window(QMainWindow):
         content.addWidget(self.status)
         self.route_label = self.label(self.provider + " · " + self.model, "muted")
         content.addWidget(self.route_label)
+        content.addWidget(self.route_controls())
         metrics = QHBoxLayout()
         self.metrics = []
         for key in ("duration", "speed", "rtf"):
@@ -325,6 +409,7 @@ class Window(QMainWindow):
         self.language = QComboBox()
         for name, value in (("日本語", "ja"), ("English", "en"), ("Auto", "auto")):
             self.language.addItem(name, value)
+        self.setup_language()
         self.language.setAccessibleName(self.t("lang"))
         self.audio_source = QComboBox()
         self.audio_source.setMinimumWidth(0)
@@ -401,7 +486,9 @@ class Window(QMainWindow):
         agent_layout = QVBoxLayout(agent_page)
         agent_layout.setContentsMargins(0, 8, 0, 0)
         self.route_label = self.label(self.provider + " · " + self.model, "route")
+        self.route_label.hide()
         agent_layout.addWidget(self.route_label)
+        agent_layout.addWidget(self.route_controls())
         agent_layout.addWidget(self.conversation, 1)
         agent_controls = QHBoxLayout()
         self.send_button = self.button("send", self.send)
@@ -545,8 +632,12 @@ class Window(QMainWindow):
         for widget in (self.record_button, self.import_button, self.send_button, self.prepare_button,
                        self.settings_button, self.new_button, self.locale_button, self.language, self.speech_model,
                        self.audio_source, self.refresh_sources, self.phrase_button, self.expand_button,
-                       self.global_toggle, self.meetings_button, self.processing_button):
+                       self.global_toggle, self.meetings_button, self.processing_button,
+                       self.agent_provider, self.agent_model, self.refresh_routes_button):
             widget.setEnabled(not value)
+        if not value:
+            route = next((r for r in self.routes if r["id"] == self.provider), None)
+            self.agent_model.setEnabled(bool(route and route["configured"]))
 
     def work(self, task, result):
         if self.job is not None:
@@ -565,6 +656,9 @@ class Window(QMainWindow):
         self.job = None
         job.deleteLater()
         self.busy(False)
+        continuation, self.after_job = self.after_job, None
+        if continuation is not None:
+            continuation()
 
     def failure(self, message):
         # Runtime diagnostics can contain provider details; never export them automatically.
@@ -587,6 +681,38 @@ class Window(QMainWindow):
         config = self.selected_config()
         self.work(lambda emit: self.engine.prepare(config), lambda _: self.status.setText(self.t("prepared")))
 
+    def ensure_speech(self, ready):
+        """Check local files on the worker before opening any audio stream."""
+        config = self.selected_config()
+        def check(emit):
+            try:
+                self.engine.prepare(config, allow_download=False)
+            except ModelDownloadRequired as missing:
+                return missing
+            return None
+        def checked(missing):
+            self.after_job = (lambda: self.offer_model_download(config, missing.model)) if missing else ready
+        self.work(check, checked)
+
+    def offer_model_download(self, config, model):
+        # Setup may change foreground focus; a later hotkey must capture a new target.
+        self.global_dictation.target = None
+        self.global_dictation.overlay.hide()
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle("Set up voice" if self.locale == "en" else "音声機能を準備")
+        dialog.setText("Download your speech model first" if self.locale == "en" else "最初に音声モデルをダウンロードしてください")
+        dialog.setInformativeText((f"{model}\n\nModel files will be downloaded to this computer. Your audio is not uploaded. The download may be large and take several minutes. After setup, press Record again; local transcription works offline.\n\nChange Input language or Speech model in Audio settings to choose a different model."
+            if self.locale == "en" else f"{model}\n\nモデルをこの端末にダウンロードします。音声は送信されません。大きなファイルのため数分かかる場合があります。完了後に再度録音を押してください。文字起こしはオフラインで動作します。\n\n音声設定の入力言語・音声モデルで別のモデルを選べます。"))
+        download = dialog.addButton("Download model" if self.locale == "en" else "モデルをダウンロード", QMessageBox.AcceptRole)
+        dialog.addButton(QMessageBox.Cancel)
+        dialog.exec()
+        if dialog.clickedButton() == download:
+            self.work(lambda emit: self.engine.prepare(config, allow_download=True),
+                      lambda _: self.status.setText("Model ready · press Record to start" if self.locale == "en" else "準備完了 · 録音を押してください"))
+            self.status.setText("Downloading and preparing model…" if self.locale == "en" else "モデルをダウンロード・準備中…")
+        else:
+            self.status.setText(self.t("configure"))
+
     def record(self):
         if self.job is not None:
             return
@@ -606,6 +732,9 @@ class Window(QMainWindow):
             self.frames = []
             self.transcribe(audio)
             return
+        self.ensure_speech(self.start_recording)
+
+    def start_recording(self):
         self.tts.stop()
         self.frames = []
         self.record_error = ""
@@ -632,13 +761,15 @@ class Window(QMainWindow):
         self.record_button.setEnabled(True)
         self.record_button.setText(self.t("stop"))
         self.status.setText(self.t("recording"))
+        if self.global_dictation.target:
+            self.global_dictation.notice("Listening · Ctrl+Shift+Space to finish", "録音中 · Ctrl+Shift+Space で終了", True)
         self.timer.start(60000)
 
     def import_audio(self):
         path, _ = QFileDialog.getOpenFileName(self, self.t("import"), "", "Audio (*.wav *.mp3 *.m4a *.flac *.ogg *.webm)")
         if path:
             config = self.selected_config()
-            self.work(lambda emit: self.engine.transcribe(load_audio(path, config.max_seconds), config), self.transcribed)
+            self.ensure_speech(lambda: self.work(lambda emit: self.engine.transcribe(load_audio(path, config.max_seconds), config), self.transcribed))
 
     def transcribe(self, audio):
         config = self.selected_config()
@@ -659,14 +790,19 @@ class Window(QMainWindow):
         if not text:
             return
         self.tts.stop()
+        route = next((r for r in self.routes if r["id"] == self.provider and r["configured"]), None)
+        if route is None or not self.model:
+            self.failure("Select a configured provider and model. Refresh models after configuring Chat Settings → Models. / チャット設定で接続先を設定し、モデル一覧を更新してください。")
+            return
         workspace, model, key, provider = self.workspace, self.model, self.api_key, self.provider
+        key_ref = route["key_ref"]
         def run(emit):
             started = perf_counter()
             def notify(notification):
                 params = notification.payload
                 event = params.get("event", {})
                 emit(str(event.get("type", notification.method)))
-            result = self.harness.run(text, workspace, model, key, notify, provider=provider)
+            result = self.harness.run(text, workspace, model, key, notify, provider=provider, key_ref=key_ref)
             return text, result, perf_counter() - started
         self.work(run, self.responded)
 
@@ -874,17 +1010,46 @@ class Window(QMainWindow):
         dialog.exec()
 
     def settings(self):
+        if self.runtime_url:
+            def loaded(routes):
+                self.apply_routes(routes)
+                self.after_job = self.settings_dialog
+            self.work(lambda emit: load_routes(self.runtime_url), loaded)
+        else:
+            self.settings_dialog()
+
+    def settings_dialog(self):
         dialog = QDialog(self)
         dialog.setWindowTitle(self.t("settings"))
         dialog.setMinimumWidth(560)
         form = QFormLayout(dialog)
         key = QLineEdit(self.api_key)
         key.setEchoMode(QLineEdit.Password)
-        model = QLineEdit(self.model)
+        key.setPlaceholderText("Uses saved provider credentials / 保存済みの認証情報を使用")
+        model = QComboBox()
+        model.setEditable(True)
+        model.setInsertPolicy(QComboBox.NoInsert)
+        model.lineEdit().setMaxLength(512)
         provider = QComboBox()
-        provider.addItem("DeepSeek API", "deepseek-official")
-        provider.addItem("Kotoba Local", "kotoba-local")
+        for route in self.routes:
+            provider.addItem(route["name"], route["id"])
         provider.setCurrentIndex(provider.findData(self.provider))
+        def changed(*_):
+            route = next((r for r in self.routes if r["id"] == provider.currentData()), None)
+            model.clear()
+            key.clear()
+            if route:
+                model.addItems([m["id"] for m in route["models"]])
+                model.setEnabled(route["configured"])
+                key.setEnabled(bool(route["key_ref"]))
+        provider.currentIndexChanged.connect(changed)
+        changed()
+        if provider.currentData() == self.provider:
+            model.setCurrentText(self.model)
+            key.setText(self.api_key)
+        hint = QLabel("Add providers and API keys in Chat Settings → Models, then reopen these settings." if self.locale == "en" else "チャット設定のモデル画面で接続先と API キーを追加し、この設定を開き直してください。")
+        hint.setWordWrap(True)
+        form.addRow(hint)
         form.addRow("Provider" if self.locale == "en" else "接続先", provider)
         workspace = QLineEdit(self.workspace)
         browse = self.button("browse", lambda: workspace.setText(QFileDialog.getExistingDirectory(dialog, self.t("folder"), workspace.text()) or workspace.text()))
@@ -900,8 +1065,10 @@ class Window(QMainWindow):
         buttons.rejected.connect(dialog.reject)
         form.addRow(buttons)
         if dialog.exec() == QDialog.Accepted:
-            self.api_key, self.model, self.workspace = key.text().strip(), model.text().strip(), workspace.text()
-            self.provider = provider.currentData()
+            self.api_key, self.model, self.workspace = key.text().strip(), model.currentText().strip(), workspace.text()
+            self.provider = provider.currentData() or ""
+            self.preferences.setValue("voice/model_provider", self.provider)
+            self.apply_routes(self.routes)
             self.preferences.setValue("voice/provider", self.provider)
             self.preferences.setValue("voice/model", self.model)
             self.route_label.setText(self.provider + " · " + self.model)

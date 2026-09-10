@@ -63,3 +63,57 @@ def test_cloud_never_redirects_retries_or_falls_back(tmp_path, status):
         engine.transcribe(np.full(16000, .1), SpeechConfig(processing="cloud"))
     assert "fixture-key" not in str(error.value)
     assert len(calls) == 1
+
+
+def test_missing_whisper_cache_has_actionable_setup_error(tmp_path, monkeypatch):
+    from huggingface_hub.errors import LocalEntryNotFoundError
+    from kotoba.speech_models import ModelDownloadRequired
+    def absent(*args, **kwargs):
+        assert kwargs["local_files_only"] is True
+        raise LocalEntryNotFoundError("fixture missing snapshot")
+    monkeypatch.setattr("faster_whisper.utils.download_model", absent)
+    with pytest.raises(ModelDownloadRequired) as error:
+        SpeechEngine(tmp_path).prepare(SpeechConfig(model="turbo", language="en"), allow_download=False)
+    assert error.value.model == "turbo"
+
+
+def test_catalog_joins_configured_custom_and_unconfigured_routes(monkeypatch):
+    from kotoba.voice_routes import load_routes
+    responses = {
+        "llm/listProviders": [{"id":"custom", "name":"Private Gateway"}],
+        "session/modelCatalog": {"groups":[{"id":"custom", "models":[{"id":"voice-agent"}]}]},
+        "llm/listConfigurableProviders": [
+            {"provider":"custom", "settingsNs":"llm-pi-ai", "settingsPath":["providers", "custom"]},
+            {"provider":"openai", "displayName":"OpenAI"}],
+        "settings/describe": {"namespaces":[{"ns":"llm-pi-ai", "value":{"providers":{"custom":{"apiKeyEnv":"CUSTOM_KEY"}}}}]},
+    }
+    class Remote:
+        def __init__(self, url): pass
+        def call(self, method, args): return responses[method]
+    monkeypatch.setattr("kotoba.voice_routes.HarnessRemote", Remote)
+    routes = load_routes("fixture")
+    assert routes[0]["id"] == "openai" and routes[0]["configured"] is False
+    assert routes[1]["models"] == [{"id":"voice-agent"}]
+    assert routes[1]["key_ref"] == "CUSTOM_KEY"
+
+
+@pytest.mark.parametrize("provider,ref", [("openai","OPENAI_API_KEY"), ("anthropic","ANTHROPIC_API_KEY"), ("moonshotai","MOONSHOT_API_KEY"), ("custom","GATEWAY_KEY")])
+def test_voice_session_routes_keys_to_selected_provider(tmp_path, monkeypatch, provider, ref):
+    from types import SimpleNamespace
+    from kotoba.harness import HarnessSession
+    configs = []
+    class Client:
+        def __init__(self, **kwargs): configs.append(kwargs)
+        def run(self, *args, **kwargs): return SimpleNamespace(finish_reason="completed")
+        def close(self): pass
+    monkeypatch.setattr("deepseek_harness.DeepSeekHarness", Client)
+    monkeypatch.setattr("kotoba.harness.runtime_path", lambda: tmp_path / "runtime")
+    session = HarnessSession(tmp_path)
+    try:
+        session.run("hello", str(tmp_path), "selected-model", "fixture-key", lambda _:None, provider=provider, key_ref=ref)
+        assert configs[0]["provider"] == provider
+        assert configs[0]["env"][ref] == "fixture-key"
+        assert "DEEPSEEK_API_KEY" not in configs[0]["env"]
+        assert configs[0]["api_key"] is None
+    finally:
+        session.close()

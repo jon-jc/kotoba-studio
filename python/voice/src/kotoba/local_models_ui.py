@@ -256,9 +256,12 @@ class LocalModelsPage(QWidget):
         self.owner.voice.harness.close()
         self.owner.voice.provider = provider
         self.owner.voice.model = model
+        self.owner.voice.api_key = ""
         self.owner.voice.route_label.setText(provider + " · " + model)
         self.owner.voice.preferences.setValue("voice/provider", provider)
         self.owner.voice.preferences.setValue("voice/model", model)
+        self.owner.voice.preferences.setValue("voice/model_provider", provider)
+        self.owner.voice.refresh_routes()
         self.status.setText(self.tr("Voice uses this local model. In chat, choose Kotoba Local in the model selector. No cloud fallback is enabled.",
             "音声はこのローカルモデルを使用します。チャットのモデル選択で Kotoba Local を選んでください。クラウドへの自動切り替えは行いません。"))
 

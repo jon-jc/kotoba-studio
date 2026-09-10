@@ -40,3 +40,21 @@ def test_uncertain_transcript_keeps_review_boundary():
     controller.deliver(Transcript("uncertain", "en", 1, (), 1, .1, "fixture", ("low_decoder_score",)))
     assert controller.target is None
     assert messages[0][0] == "Review the transcript in Voice Studio"
+
+
+def test_async_model_preparation_retains_original_dictation_target():
+    from PySide6.QtCore import QAbstractNativeEventFilter
+    control = GlobalDictation.__new__(GlobalDictation)
+    QAbstractNativeEventFilter.__init__(control)
+    control.enabled = True
+    control.target = None
+    voice = SimpleNamespace(job=None, stream=None, meeting_active=False,
+                            audio_source=SimpleNamespace(currentData=lambda: SimpleNamespace(kind="microphone")))
+    voice.record = lambda: setattr(voice, "job", object())
+    control.voice = voice
+    control.native = SimpleNamespace(target=lambda: (101, 2))
+    notices = []
+    control.notice = lambda *args: notices.append(args)
+    control.toggle()
+    assert control.target == (101, 2)
+    assert notices[-1][0] == "Preparing speech model…"

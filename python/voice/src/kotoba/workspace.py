@@ -171,7 +171,7 @@ class Workspace(QMainWindow):
         self.workbench.setStretchFactor(0, 1)
         self.workbench.setStretchFactor(1, 0)
         self.workbench.setSizes([1040, 420])
-        self.voice.setVisible(self.voice.preferences.value("ui/voice_dock", True, type=bool))
+        self.voice.hide()
         main.addWidget(self.workbench, 1)
         outer.addLayout(main, 1)
         statusbar = QFrame()
@@ -187,7 +187,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         status.addWidget(self.locale_scope)
         status.addSpacing(18)
-        status.addWidget(QLabel("Kotoba Studio  0.6.0"))
+        status.addWidget(QLabel("Kotoba Studio  0.6.1"))
         outer.addWidget(statusbar)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(self.selected_panel)
@@ -213,6 +213,7 @@ class Workspace(QMainWindow):
             self.voice.preferences.setValue("ui/voice_dock", not self.voice.isHidden())
             if not self.voice.isHidden():
                 self.workbench.setSizes([max(500, self.width() - 490), 420])
+                self.voice.refresh_routes()
         elif index == 3:
             self.terminal_dock.setVisible(self.terminal_dock.isHidden())
             if not self.terminal_dock.isHidden():
@@ -541,6 +542,8 @@ class Workspace(QMainWindow):
             self.url = QUrl(match.group())
             self.web.page().origin = self.url
             self.web.load(self.url)
+            self.voice.runtime_url = self.url.toString()
+            self.voice.refresh_routes()
             self.set_health("connected")
 
     def enable_tray(self):

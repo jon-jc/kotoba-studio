@@ -127,6 +127,9 @@ class MeetingsDialog(QDialog):
         if self.voice.job is not None or self.voice.stream is not None:
             self.state.setText(self.tr("Finish the current voice task first", "先に音声処理を終了してください"))
             return
+        self.voice.ensure_speech(self.start_capture)
+
+    def start_capture(self):
         selected = self.source.currentData()
         if selected is None:
             self.state.setText(self.tr("Select an available audio source", "利用可能な録音元を選択してください"))
@@ -237,7 +240,7 @@ class MeetingsDialog(QDialog):
             self.refresh()
 
     def reject(self):
-        if self.capture:
+        if self.capture or self.voice.job is not None:
             self.state.setText(self.tr("Stop and save the meeting before closing", "会議を停止して保存してから閉じてください"))
             return
         super().reject()
