@@ -8,7 +8,7 @@ import re
 import sys
 
 from PySide6.QtCore import QProcess, QProcessEnvironment, QTimer, QUrl, Qt, QSize, QEvent
-from PySide6.QtGui import QFont, QTextCursor, QIcon, QShortcut, QKeySequence, QKeyEvent
+from PySide6.QtGui import QColor, QFont, QTextCursor, QIcon, QShortcut, QKeySequence, QKeyEvent
 from PySide6.QtWidgets import (QApplication, QFileSystemModel, QFileDialog, QFrame, QHBoxLayout, QLabel,
     QLineEdit, QMainWindow, QPlainTextEdit, QPushButton, QSplitter, QStackedWidget,
     QTreeView, QVBoxLayout, QWidget, QComboBox, QDialog, QListWidget, QListWidgetItem, QMenu, QSystemTrayIcon)
@@ -22,6 +22,7 @@ from .branding import icon_path, configure_windows_identity
 from .local_models_ui import LocalModelsPage
 from .design import outline_icon
 from .code_view import SourceTabs
+from .motion import Reveal, web_script, system_reduced_motion
 
 
 class LocalPage(QWebEnginePage):
@@ -29,6 +30,7 @@ class LocalPage(QWebEnginePage):
     def __init__(self, profile, parent):
         super().__init__(profile, parent)
         self.origin = None
+        self.setBackgroundColor(QColor("#191a1e"))
 
     def acceptNavigationRequest(self, url, navigation_type, is_main_frame):
         if not is_main_frame or url.scheme() == "about":
@@ -61,6 +63,9 @@ class Workspace(QMainWindow):
         self.console_process.setProcessChannelMode(QProcess.MergedChannels)
         self.console_process.readyReadStandardOutput.connect(self.console_output)
         self.build()
+        self.reveals = [Reveal(widget, lambda: not (self.reduce_motion.isChecked() or system_reduced_motion()))
+                        for widget in (self.voice, self.terminal_dock)]
+        self.sync_motion()
         self.voice.locale_changed.connect(self.apply_locale)
         self.voice.draft_handoff.connect(self.handoff_draft)
         self.voice.busy_changed.connect(lambda busy: self.locale_toggle.setEnabled(not busy))
@@ -148,6 +153,11 @@ class Workspace(QMainWindow):
             action = self.workspace_menu.addAction(outline_icon(("routing", "plugins", "models")[index - 4]), "")
             action.triggered.connect(lambda checked=False, i=index: self.show_panel(i))
             self.workspace_actions.append(action)
+        self.workspace_menu.addSeparator()
+        self.reduce_motion = self.workspace_menu.addAction("Reduce motion / 動きを減らす")
+        self.reduce_motion.setCheckable(True)
+        self.reduce_motion.setChecked(self.voice.preferences.value("ui/reduced_motion", False, type=bool))
+        self.reduce_motion.toggled.connect(self.sync_motion)
         self.more_button = QPushButton("···")
         self.more_button.setObjectName("ghost")
         self.more_button.setFixedSize(38, 34)
@@ -193,7 +203,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         status.addWidget(self.locale_scope)
         status.addSpacing(18)
-        status.addWidget(QLabel("Kotoba Studio  0.6.2"))
+        status.addWidget(QLabel("Kotoba Studio  0.6.3"))
         outer.addWidget(statusbar)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(self.selected_panel)
@@ -270,6 +280,25 @@ class Workspace(QMainWindow):
         self.voice.set_locale(self.locale_toggle.currentData())
         self.apply_locale(self.voice.locale)
 
+    def sync_motion(self, *_):
+        reduced = self.reduce_motion.isChecked()
+        self.voice.preferences.setValue("ui/reduced_motion", reduced)
+        if reduced:
+            for reveal in getattr(self, "reveals", []):
+                reveal.stop()
+        script = QWebEngineScript()
+        script.setName("kotoba-motion")
+        script.setInjectionPoint(QWebEngineScript.DocumentReady)
+        script.setWorldId(QWebEngineScript.MainWorld)
+        script.setRunsOnSubFrames(False)
+        source = web_script(reduced or system_reduced_motion())
+        script.setSourceCode(source)
+        scripts = self.web.page().scripts()
+        for previous in scripts.find("kotoba-motion"):
+            scripts.remove(previous)
+        scripts.insert(script)
+        self.web.page().runJavaScript(source)
+
     def sync_chat_locale(self, locale):
         script = QWebEngineScript()
         script.setName("kotoba-language")
@@ -286,6 +315,7 @@ class Workspace(QMainWindow):
 
     def apply_locale(self, locale):
         """Update shell labels without rebuilding web, terminal, or file state."""
+        self.reduce_motion.setText("Reduce motion" if locale == "en" else "動きを減らす")
         self.locale_toggle.blockSignals(True)
         self.access_button.setText("Access ▾" if locale == "en" else "アクセス ▾")
         self.locale_toggle.setCurrentIndex(self.locale_toggle.findData(locale))

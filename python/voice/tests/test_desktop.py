@@ -161,3 +161,49 @@ def test_settings_uses_provider_models_and_applies_selected_route(window):
     window.settings_dialog()
     assert window.provider == "openai" and window.model == "custom-openai-model"
     assert window.agent_model.currentText() == "custom-openai-model"
+
+
+def test_route_refresh_does_not_interrupt_recording(window, monkeypatch):
+    window.runtime_url = "http://127.0.0.1:1"
+    marker = object()
+    window.stream = marker
+    monkeypatch.setattr(window, "work", lambda *args: pytest.fail("Recording must keep Stop available"))
+    try:
+        window.refresh_routes()
+        assert window.record_button.isEnabled()
+    finally:
+        window.stream = None
+
+
+def test_removed_provider_clears_model_without_changing_saved_choice(window):
+    provider = window.provider
+    window.apply_routes([])
+    assert window.agent_provider.currentIndex() == -1
+    assert window.agent_model.currentText() == ""
+    assert not window.agent_model.isEnabled()
+    assert window.route_label.text() == ""
+    assert window.provider == provider
+    window.apply_routes([{"id":"new", "name":"New", "models":[{"id":"model"}], "configured":True}])
+    window.agent_provider.setCurrentIndex(0)
+    assert window.provider == "new" and window.model == "model"
+
+
+def test_missing_audio_source_has_actionable_message(window, monkeypatch):
+    errors = []
+    monkeypatch.setattr(window, "failure", errors.append)
+    window.audio_source.clear()
+    window.start_recording()
+    assert window.stream is None
+    assert errors and "NoneType" not in errors[0]
+
+
+def test_empty_recording_never_starts_inference(window, monkeypatch):
+    errors = []
+    monkeypatch.setattr(window, "failure", errors.append)
+    monkeypatch.setattr(window, "transcribe", lambda *_: pytest.fail("Empty audio must not reach inference"))
+    window.stream = SimpleNamespace(stop=lambda:None, close=lambda:None)
+    window.frames = []
+    window.record_error = ""
+    window.record()
+    assert window.stream is None and window.record_button.isEnabled()
+    assert errors
