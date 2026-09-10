@@ -195,7 +195,7 @@ class Window(QMainWindow):
         self.locale_button = switch
         side.addWidget(switch)
         switch.setVisible(not self.embedded)
-        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.5.0", "muted"))
+        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.5.1", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
         content.setSpacing(12)
@@ -822,9 +822,13 @@ class Window(QMainWindow):
 
 
 def main():
+    from .branding import configure_windows_identity
+    configure_windows_identity()
     app = QApplication(sys.argv)
     app.setApplicationName("Kotoba")
     app.setOrganizationName("Kotoba")
+    app.setApplicationDisplayName("Kotoba Studio")
+    app.setWindowIcon(QIcon(str(icon_path())))
     app.setFont(QFont("Yu Gothic UI", 10))
     window = Window()
     window.show()

@@ -11,14 +11,14 @@ from PySide6.QtCore import QProcess, QProcessEnvironment, QTimer, QUrl, Qt, QSiz
 from PySide6.QtGui import QFont, QTextCursor, QIcon, QShortcut, QKeySequence, QKeyEvent
 from PySide6.QtWidgets import (QApplication, QFileSystemModel, QFileDialog, QFrame, QHBoxLayout, QLabel,
     QLineEdit, QMainWindow, QPlainTextEdit, QPushButton, QSplitter, QStackedWidget,
-    QTreeView, QVBoxLayout, QWidget, QComboBox, QDialog, QListWidget, QListWidgetItem, QMenu)
+    QTreeView, QVBoxLayout, QWidget, QComboBox, QDialog, QListWidget, QListWidgetItem, QMenu, QSystemTrayIcon)
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile, QWebEngineScript
 from .desktop import Window as VoiceWindow, STYLE
 from .harness import runtime_path
 from .terminal import powershell_arguments
 from .workspace_copy import COPY as SHELL_COPY, translate
-from .branding import icon_path
+from .branding import icon_path, configure_windows_identity
 from .local_models_ui import LocalModelsPage
 from .design import outline_icon
 from .code_view import SourceTabs
@@ -39,6 +39,10 @@ class LocalPage(QWebEnginePage):
 class Workspace(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.tray = None
+        self.exit_requested = False
+        self.shutdown_complete = False
+        self.tray_notice_shown = False
         self.voice = VoiceWindow(embedded=True)
         self.setWindowTitle("Kotoba Studio · ことば")
         self.setWindowIcon(QIcon(str(icon_path())))
@@ -183,7 +187,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         status.addWidget(self.locale_scope)
         status.addSpacing(18)
-        status.addWidget(QLabel("Kotoba Studio  0.5.0"))
+        status.addWidget(QLabel("Kotoba Studio  0.5.1"))
         outer.addWidget(statusbar)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(self.selected_panel)
@@ -278,6 +282,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setText(translate("scope", locale))
         self.local_models.set_locale(locale)
         self.source_tabs.set_locale(locale)
+        self.update_tray_locale()
         self.command_center.setText("⌕   Search commands…     Ctrl K" if locale == "en" else "⌕   コマンドを検索…     Ctrl K")
         self.voice_toggle.setText("◉ Voice studio" if locale == "en" else "◉ 音声スタジオ")
         for button, key in zip(self.nav, self.nav_keys):
@@ -535,12 +540,78 @@ class Workspace(QMainWindow):
             self.web.load(self.url)
             self.set_health("connected")
 
+    def enable_tray(self):
+        """Keep the app available after closing only when the OS exposes a tray."""
+        if self.tray is not None or not QSystemTrayIcon.isSystemTrayAvailable():
+            return
+        self.tray = QSystemTrayIcon(self.windowIcon(), self)
+        self.tray.setToolTip("Kotoba Studio · ことば")
+        self.tray_menu = QMenu(self)
+        self.tray_show = self.tray_menu.addAction(self.windowIcon(), "")
+        self.tray_show.triggered.connect(self.restore_from_tray)
+        self.tray_voice = self.tray_menu.addAction(outline_icon("mic"), "")
+        self.tray_voice.triggered.connect(self.open_voice_from_tray)
+        self.tray_menu.addSeparator()
+        self.tray_quit = self.tray_menu.addAction("")
+        self.tray_quit.triggered.connect(self.request_quit)
+        self.tray.setContextMenu(self.tray_menu)
+        self.tray.activated.connect(self.tray_activated)
+        self.tray.messageClicked.connect(self.restore_from_tray)
+        self.update_tray_locale()
+        self.tray.show()
+        QApplication.instance().setQuitOnLastWindowClosed(False)
+
+    def update_tray_locale(self):
+        if self.tray is not None:
+            en = self.voice.locale == "en"
+            self.tray_show.setText("Open Kotoba Studio" if en else "Kotoba Studio を開く")
+            self.tray_voice.setText("Open Voice Studio" if en else "音声スタジオを開く")
+            self.tray_quit.setText("Quit Kotoba Studio" if en else "Kotoba Studio を終了")
+
+    def restore_from_tray(self):
+        self.setWindowState(self.windowState() & ~Qt.WindowMinimized)
+        self.show()
+        self.raise_()
+        self.activateWindow()
+
+    def open_voice_from_tray(self):
+        self.restore_from_tray()
+        if self.voice.isHidden():
+            self.show_panel(1)
+        self.voice.draft.setFocus()
+
+    def tray_activated(self, reason):
+        if reason in (QSystemTrayIcon.Trigger, QSystemTrayIcon.DoubleClick):
+            self.restore_from_tray()
+
+    def request_quit(self):
+        self.exit_requested = True
+        self.close()
+        if self.shutdown_complete:
+            QApplication.instance().quit()
+        else:
+            self.exit_requested = False
+
     def closeEvent(self, event):
+        if self.shutdown_complete:
+            event.accept()
+            return
         if self.voice.job is not None or self.voice.stream is not None or self.local_models.job is not None:
+            self.restore_from_tray()
             self.voice.show()
             self.voice.status.setText(self.voice.t("busy_close"))
             event.ignore()
             return
+        if not self.exit_requested and self.tray is not None and self.tray.isVisible() and QSystemTrayIcon.isSystemTrayAvailable():
+            self.hide()
+            event.ignore()
+            if not self.tray_notice_shown:
+                self.tray_notice_shown = True
+                message = "Still running in the system tray. Use the tray menu to open or quit." if self.voice.locale == "en" else "トレイで実行中です。トレイのメニューから開くか終了できます。"
+                self.tray.showMessage("Kotoba Studio", message, QSystemTrayIcon.Information, 4000)
+            return
+        if self.tray is not None:
+            self.tray.hide()
         self.voice.close()
         self.local_models.stop_engine()
         for process in (self.console_process, self.backend):
@@ -553,14 +624,22 @@ class Workspace(QMainWindow):
                 if not process.waitForFinished(2000):
                     process.kill()
                     process.waitForFinished(2000)
+        self.shutdown_complete = True
         event.accept()
+        if self.tray is not None:
+            QApplication.instance().quit()
 
 
 def main():
+    configure_windows_identity()
     app = QApplication(sys.argv)
     app.setApplicationName("Kotoba")
     app.setOrganizationName("Kotoba")
+    app.setApplicationDisplayName("Kotoba Studio")
+    app.setWindowIcon(QIcon(str(icon_path())))
     window = Workspace()
+    if "--smoke" not in sys.argv or "--tray-smoke" in sys.argv:
+        window.enable_tray()
     window.show()
     if "--smoke" in sys.argv:
         completed = False
@@ -591,7 +670,7 @@ def main():
                     editor = window.source_tabs.tabs.currentWidget()
                     highlighted = bool(editor.highlighter.lines)
                     if not highlighted:
-                        window.close()
+                        window.request_quit()
                         app.exit(1)
                         return
                     window.stack.setCurrentIndex(2)
@@ -600,15 +679,28 @@ def main():
                     window.stack.setCurrentIndex(6)
                     app.processEvents()
                     window.grab().save(str(screenshot.with_name(screenshot.stem + "-local-models.png")))
+                    tray_checks = {}
+                    if "--tray-smoke" in sys.argv:
+                        tray_checks["available"] = window.tray is not None and window.tray.isVisible()
+                        window.close()
+                        tray_checks["background_runtime"] = window.isHidden() and not window.shutdown_complete and window.backend.state() == QProcess.Running
+                        if window.tray is not None:
+                            window.tray_show.trigger()
+                            tray_checks["restore"] = window.isVisible()
+                            tray_checks["branded_icon"] = not window.tray.icon().isNull() and window.tray.icon().cacheKey() == window.windowIcon().cacheKey()
+                        if not all(tray_checks.values()):
+                            window.request_quit()
+                            app.exit(1)
+                            return
                     screenshot.with_suffix(".json").write_text(json.dumps({"runtime_ready": True, "locale_toggle": True, "source_highlighting": highlighted,
-                        "chat_locales": evidence, **state}), encoding="utf-8")
-                    window.close()
+                        "chat_locales": evidence, "tray": tray_checks, **state}), encoding="utf-8")
+                    window.request_quit()
                     return
                 window.locale_toggle.setCurrentIndex(window.locale_toggle.findData(locale))
                 def inspected(raw):
                     value = json.loads(raw)
                     if value["lang"] != locale or value["notice"]:
-                        window.close()
+                        window.request_quit()
                         app.exit(1)
                         return
                     evidence[locale] = value["lang"]
@@ -622,7 +714,7 @@ def main():
         timer.start(1000)
         def deadline():
             if not completed:
-                window.close()
+                window.request_quit()
                 app.exit(1)
         QTimer.singleShot(70000, deadline)
     sys.exit(app.exec())

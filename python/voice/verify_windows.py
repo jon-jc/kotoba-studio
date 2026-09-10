@@ -53,6 +53,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("exe", type=Path)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--tray", action="store_true", help="Also require a live desktop system tray")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
@@ -62,7 +63,8 @@ def main():
     for name in ("workspace.json", "dependencies.json"):
         (args.output / name).unlink(missing_ok=True)
     for mode in ("--diagnostics", "--smoke"):
-        subprocess.run([str(args.exe.resolve()), mode], env=env, check=True, timeout=100)
+        extra = ["--tray-smoke"] if args.tray and mode == "--smoke" else []
+        subprocess.run([str(args.exe.resolve()), mode, *extra], env=env, check=True, timeout=100)
     checks = [json.loads((args.output / name).read_text(encoding="utf-8")) for name in ("workspace.json", "dependencies.json")]
     if not checks[0].get("runtime_ready") or not checks[1].get("ok"):
         raise RuntimeError("The frozen application did not pass its composition checks.")

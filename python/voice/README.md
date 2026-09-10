@@ -17,6 +17,14 @@ The compact top bar keeps Chat, Voice, Code, and Terminal within reach. The over
 
 Open multiple UTF-8 files in Code, switch or close tabs, and move between search matches. Syntax colors, line numbers, and cursor position help locate an instruction or error. Files remain read-only here; agent edits and diffs are available in Chat. Binary files and files larger than 1 MiB are refused without replacing an open source tab. Syntax coloring uses Pygments for recognized filenames up to 200,000 characters; larger and unrecognized files remain readable as plain text. Reopen a file to refresh its contents after an external edit.
 
+## System tray and Windows icons
+
+Closing the main window keeps Kotoba Studio running in the Windows system tray. Click its Kotoba icon to restore the workspace, or right-click for **Open Kotoba Studio**, **Open Voice Studio**, and **Quit Kotoba Studio**. Chat and terminal state remain in memory while hidden. Quit stops the owned runtime and local inference engine. Recording, transcription, and native model setup must finish before closing or quitting. Without an available system tray, closing exits normally. Kotoba does not enable Windows sign-in startup automatically.
+
+The taskbar group, tray, Start menu, desktop shortcut, and executable use Kotoba Studio's shared icon. Install the updated build to replace its shortcuts. If an older pinned Python shortcut still shows the previous icon, unpin that shortcut and pin **Kotoba Studio** from the Start menu.
+
+ウィンドウを閉じるとシステムトレイで実行を続けます。ことばのアイコンをクリックすると画面が戻ります。右クリックの **Kotoba Studio を終了** でランタイムとローカル推論エンジンを終了します。録音・処理中は完了してから閉じてください。トレイが利用できない環境では、ウィンドウを閉じると終了します。
+
 ## Development
 
 From the repository root, install the voice application and the same-checkout Python SDK into a virtual environment:
