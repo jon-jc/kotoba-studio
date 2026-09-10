@@ -13,6 +13,15 @@ export function followDesktopLocale(ctx: Context): () => void {
     if (choice === 'en' || choice === 'ja') ctx.locale.setLocale(choice)
   }
   document.addEventListener('kotoba:locale', change)
+  // Host settings can arrive after the desktop's initial language event.
+  // Keep the explicit desktop choice authoritative across that late adoption.
+  const stop = ctx.locale.subscribe(() => {
+    const choice = document.documentElement.dataset.kotobaLocale
+    if ((choice === 'en' || choice === 'ja') && ctx.locale.getLocale().active !== choice) change()
+  })
   change()
-  return () => { document.removeEventListener('kotoba:locale', change) }
+  return () => {
+    stop()
+    document.removeEventListener('kotoba:locale', change)
+  }
 }

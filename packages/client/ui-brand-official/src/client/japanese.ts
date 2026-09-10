@@ -41,6 +41,15 @@ export const japanese: Record<string, Record<string, string>> = {
     'blocked.composer': 'このモデルは利用できません。モデルを選択してください',
     'empty.efforts': 'このモデルには推論レベルの設定がありません。',
   },
+  'directory-browser': {
+    'browser.title': '作業フォルダーを選択', 'browser.home': 'ホーム',
+    'browser.newFolder': '新しいフォルダー', 'browser.folderName': 'フォルダー名',
+    'browser.createIn': '「{name}」にフォルダーを作成', 'browser.untitledFolder': '新しいフォルダー',
+    'browser.create': '作成', 'browser.cancel': 'キャンセル', 'browser.open': '開く',
+    'browser.editPath': 'パスを編集', 'browser.loading': '読み込み中…',
+    'browser.truncated': 'フォルダーが多いため、一部のみ表示しています。',
+    'browser.showHidden': '隠しファイルを表示',
+  },
   workspace: {
     'group.ungrouped': '未分類', 'session.new': '新しい会話', 'section.workspaces': 'ワークスペース',
     'section.sessions': '会話', 'viewOptions.label': '表示オプション', 'groupBy.label': 'グループ分け',

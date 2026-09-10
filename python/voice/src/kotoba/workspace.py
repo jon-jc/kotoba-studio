@@ -203,7 +203,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         status.addWidget(self.locale_scope)
         status.addSpacing(18)
-        status.addWidget(QLabel("Kotoba Studio  0.6.3"))
+        status.addWidget(QLabel("Kotoba Studio  0.6.4"))
         outer.addWidget(statusbar)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(self.selected_panel)
@@ -574,7 +574,8 @@ class Workspace(QMainWindow):
         environment.insert("DSH_TELEMETRY_DISABLED", "1")
         self.backend.setProcessEnvironment(environment)
         self.backend.setWorkingDirectory(self.voice.workspace)
-        args = ["web", "--no-open", "--host", "127.0.0.1", "--port", "0"]
+        args = ["--profile", "web", "--patch", str(icon_path().parent / "desktop-workspace.patch.yml"),
+                "--no-open", "--host", "127.0.0.1", "--port", "0"]
         if runtime.suffix == ".js":
             self.backend.start("node", [str(runtime), *args])
         else:
@@ -701,6 +702,10 @@ def main():
     if "--smoke" not in sys.argv or "--tray-smoke" in sys.argv:
         window.enable_tray()
     window.show()
+    if "--workspace-smoke" in sys.argv:
+        from .workspace_smoke import verify
+        verify(window)
+        sys.exit(app.exec())
     if "--smoke" in sys.argv:
         completed = False
         def check():

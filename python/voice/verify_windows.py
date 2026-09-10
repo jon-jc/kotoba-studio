@@ -62,12 +62,16 @@ def main():
     env["KOTOBA_VERIFY_REPORT"] = str((args.output / "dependencies.json").resolve())
     for name in ("workspace.json", "dependencies.json"):
         (args.output / name).unlink(missing_ok=True)
-    for mode in ("--diagnostics", "--smoke"):
-        extra = ["--tray-smoke"] if args.tray and mode == "--smoke" else []
+    env["KOTOBA_WORKSPACE_REPORT"] = str((args.output / "workspace-controls.json").resolve())
+    for mode in ("--diagnostics", "--smoke", "--workspace-smoke"):
+        extra = ["--tray-smoke"] if args.tray and mode == "--smoke" else (["--smoke"] if mode == "--workspace-smoke" else [])
         subprocess.run([str(args.exe.resolve()), mode, *extra], env=env, check=True, timeout=100)
     checks = [json.loads((args.output / name).read_text(encoding="utf-8")) for name in ("workspace.json", "dependencies.json")]
     if not checks[0].get("runtime_ready") or not checks[1].get("ok"):
         raise RuntimeError("The frozen application did not pass its composition checks.")
+    controls = json.loads((args.output / "workspace-controls.json").read_text(encoding="utf-8"))
+    if not controls.get("ok"):
+        raise RuntimeError("Workspace controls failed: " + json.dumps(controls))
     inventory = verify_inventory(args.exe)
     (args.output / "inventory.json").write_text(json.dumps(inventory, indent=2), encoding="utf-8")
     print("Installed application: dependency check and real Harness UI boot passed.")
