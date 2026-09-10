@@ -21,7 +21,7 @@ The desktop combines persistent chat, a voice dock, a file explorer, a code view
 | Japanese and English | Local multilingual Whisper transcription, language selection, terminology hints, and bilingual core interface controls |
 | Your audio sources | Microphone, system audio, application process capture, and imported recordings |
 | Local AI | GGUF models through the bundled llama.cpp CPU engine; connections to Ollama and LM Studio |
-| Cloud AI | Provider settings for endpoints, credentials, models, and per-conversation selection |
+| Cloud AI | Native OpenAI, Anthropic Claude, Kimi, and DeepSeek APIs; custom providers and per-conversation model selection |
 | An agent workspace | Persistent sessions, file and terminal tools, skills, workflows, subagents, and Cordis plugins |
 | Repeatable dictation | Saved phrases, Unicode-aware expansion, undo, transcript review, and clipboard handoff to chat |
 | Measurable results | Transcription latency, real-time factor, Japanese character error rate, and English word error rate against a supplied reference |
@@ -32,7 +32,7 @@ The desktop combines persistent chat, a voice dock, a file explorer, a code view
 
 ## Start on Windows
 
-The desktop build is **Kotoba Studio 0.5.1**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.5.1-Setup.exe` from your build output. The installer includes the desktop application, agent runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
+The desktop build is **Kotoba Studio 0.5.2**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.5.2-Setup.exe` from your build output. The installer includes the desktop application, agent runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
 
 1. **Choose a folder.** Give the agent a working directory for the task.
 2. **Connect a model.** Open **··· → Routing** to configure an API provider, or choose Configure later and open Local models. Register a local model, then select Kotoba Local in the chat composer.

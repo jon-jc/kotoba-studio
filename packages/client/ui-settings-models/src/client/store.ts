@@ -266,6 +266,29 @@ export function providerUsable(row: ProviderRow): boolean {
   return row.credential?.configured === true
 }
 
+/**
+ * API-key routes offered at first run, in product order. Other authentication
+ * flows and custom endpoints remain available from the full Models page.
+ * @param state - shared provider and credential snapshot.
+ * @returns writable OpenAI, Claude, Kimi, and mounted official DeepSeek routes.
+ */
+export function onboardingProviders(state: ModelsSettingsState): ProviderRow[] {
+  const preferred = ['openai', 'anthropic', 'moonshotai', 'deepseek-official']
+  return state.rows.filter((row) => {
+    if (!preferred.includes(row.entry.provider)) return false
+    const supported = (row.entry.settingsNs === 'llm-pi-ai' && row.entry.declared !== true)
+      || (row.entry.provider === 'deepseek-official' && row.entry.settingsNs === 'llm-deepseek'
+        && row.entry.active && row.entry.settingsPath.length === 0)
+    return supported && (row.credential ?? row.derivedCredential)?.writable === true
+  }).sort((a, b) => {
+    const rank = (id: string): number => {
+      const index = preferred.indexOf(id)
+      return index < 0 ? preferred.length : index
+    }
+    return rank(a.entry.provider) - rank(b.entry.provider)
+  })
+}
+
 /** First-run onboarding readiness derived only from the shared Models join. */
 export type OnboardingReadiness =
   | { kind: 'loading' }
@@ -285,10 +308,9 @@ export type OnboardingReadiness =
 /**
  * Project first-run readiness from the provider/settings/credential join used
  * by the Models page. The step exists to leave the user with a model to talk
- * to, so ANY usable provider ends it; only when none exists does the official
- * DeepSeek route — the one route the prompt can offer a key field for — decide
- * whether prompting can help. A missing official configurable-provider
- * declaration means the adapter is not repairable by navigating to Models.
+ * to, so any usable provider ends it. Writable catalog routes can be activated
+ * even when DeepSeek is absent. Read-only or unavailable services never block
+ * entry into the workspace.
  * @param state - current shared Models join snapshot.
  * @returns the onboarding state without reading a parallel fact source.
  */
@@ -303,6 +325,9 @@ export function onboardingReadiness(state: ModelsSettingsState): OnboardingReadi
     }
   }
   if (state.rows.some(providerUsable)) return { kind: 'provider-ready' }
+  if (state.writable && state.credentialError === null && onboardingProviders(state).length > 0) {
+    return { kind: 'credential-missing' }
+  }
   const row = state.rows.find(candidate =>
     candidate.entry.provider === 'deepseek-official'
     && candidate.entry.settingsNs === 'llm-deepseek'

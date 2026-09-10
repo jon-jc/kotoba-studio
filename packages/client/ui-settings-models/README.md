@@ -1,5 +1,5 @@
 ---
-description: "Models settings and product-onboarding plugin for the dsh web client: provider rows, API-key management, model lists, and the DeepSeek first-run dialogs."
+description: "Models settings and product-onboarding plugin for the dsh web client: provider rows, API-key management, model lists, and provider-neutral first-run setup."
 kind: "package-reference"
 ---
 
@@ -25,7 +25,7 @@ English | [中文](README.zh.md)
 <a id="use-this-package"></a>
 ## Use this package
 
-The welcome notice introduces Kotoba Studio and its developer-preview review workflow. The subsequent DeepSeek credential step names the actual API provider.
+First-run setup offers OpenAI, Anthropic Claude, Kimi (Moonshot AI), DeepSeek, with other installed catalog providers available in Models. The existing adapters supply native protocols, endpoints, and model catalogs; no gateway is required. Custom endpoints remain available from the Models page.
 
 Open the Models page from the Settings navigation to see every configured provider as a row. A whole-section provider whose key is not configured anywhere renders as its open setup card instead, but only in the first-run posture and only until the user closes that card. Each card kind owns its own open state, so closing one never discards a draft in another.
 
@@ -43,7 +43,7 @@ The add flow is a card carrying the dormant-directory provider select — a bare
 
 ### First-run dialogs
 
-Kotoba completes the retained notice seat without rendering or writing an acknowledgement. Then the DeepSeek step projects first-run readiness from the same joined snapshot. ANY provider the user can already reach ends it without rendering; only a user with none is asked for the official DeepSeek key. Configure later completes only this coordinator pass, and an absent adapter, inactive route, failed join, read-only deployment, or unusable capability completes the step without rendering — Models remains the diagnostic surface.
+The retained welcome step completes without displaying a notice or writing an acknowledgement. Provider setup reads the shared settings and credential snapshot: any usable provider ends onboarding. Otherwise, writable catalog routes can be selected even when DeepSeek is absent. Saving a key activates its route and publishes the committed settings before checking readiness. Changing providers clears an unsaved key; selection is locked during a write. Configure later ends this coordinator pass and permits local-model setup. Read-only or unavailable services do not block the workspace.
 
 ### Extension slots
 

@@ -79,6 +79,8 @@ export interface ProviderEditorProps {
   credentialRequired?: boolean
   /** Give the credential field initial focus when this editor mounts. */
   autoFocusCredential?: boolean
+  /** Notify the parent while saving so it cannot switch credential targets. */
+  onBusyChange?: (busy: boolean) => void
   /** Override the dismiss action copy. */
   cancelLabelKey?: keyof typeof en
   /** Override the idle commit action copy. */
@@ -272,7 +274,7 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
       && fallback === undefined
       && committedOriginal === undefined
       && Object.keys(next).length === 0
-    const ops: SettingsPathOpView[] = props.credentialOnly === true
+    const ops: SettingsPathOpView[] = props.credentialOnly === true && layout !== 'pi-ai'
       ? []
       : materializesNativeProfile
         ? [{ op: 'set', path: [...settingsPath], value: {} }]
@@ -294,6 +296,7 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
 
   const apply = async (): Promise<void> => {
     setBusy(true)
+    props.onBusyChange?.(true)
     setFailure(undefined)
     try {
       const failure = await applyOnce()
@@ -304,6 +307,7 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
       props.onClose(true)
     } finally {
       setBusy(false)
+      props.onBusyChange?.(false)
     }
   }
 

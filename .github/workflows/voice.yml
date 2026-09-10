@@ -1,10 +1,10 @@
 name: Kotoba voice
 on:
   pull_request:
-    paths: ['python/voice/**', 'python/sdk-runtime/**', 'integrations/**', 'packages/client/modules/**', 'packages/preset/agent-presets/**', 'packages/host/directory-picker-native/**', '.gitmodules', '.github/workflows/voice.yml']
+    paths: ['python/voice/**', 'python/sdk-runtime/**', 'integrations/**', 'packages/client/modules/**', 'packages/client/ui-settings-models/**', 'packages/client/ui-brand-official/**', 'packages/llm/llm-pi-ai/**', 'packages/preset/agent-presets/**', 'packages/host/directory-picker-native/**', '.gitmodules', '.github/workflows/voice.yml']
   push:
     branches: [master]
-    paths: ['python/voice/**', 'python/sdk-runtime/**', 'integrations/**', 'packages/client/modules/**', 'packages/preset/agent-presets/**', 'packages/host/directory-picker-native/**', '.gitmodules', '.github/workflows/voice.yml']
+    paths: ['python/voice/**', 'python/sdk-runtime/**', 'integrations/**', 'packages/client/modules/**', 'packages/client/ui-settings-models/**', 'packages/client/ui-brand-official/**', 'packages/llm/llm-pi-ai/**', 'packages/preset/agent-presets/**', 'packages/host/directory-picker-native/**', '.gitmodules', '.github/workflows/voice.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,7 +21,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build:lib:host
       - run: pnpm exec vitest run packages/client/modules/tests/node-half.client.spec.ts packages/preset/agent-presets/tests/discovery.spec.ts packages/preset/agent-presets/tests/composition-inventory.spec.ts packages/host/directory-picker-native/tests/packaged-launch.spec.ts packages/host/directory-picker-native/tests/win32-dialog.spec.ts
-      - run: pnpm exec vitest run packages/client/ui-brand-official/tests packages/client/ui-settings-models/tests/welcome-notice.client.spec.tsx scripts/project-doc-site.spec.ts scripts/verify-doc-site-fragments.spec.ts
+      - run: pnpm exec vitest run packages/client/ui-brand-official/tests packages/client/ui-settings-models/tests packages/llm/llm-pi-ai/tests/native-providers.spec.ts scripts/project-doc-site.spec.ts scripts/verify-doc-site-fragments.spec.ts
       - run: pnpm run verify-translation-pairing
   voice-tests:
     runs-on: windows-latest

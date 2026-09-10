@@ -1,0 +1,13 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`DeepSeekOnboardingDialog > discards an unsaved key when switching providers 1`] = `
+{
+  "description": "Connect OpenAI, Claude, Kimi, DeepSeek, or another provider to start building with Kotoba Studio.",
+  "providers": [
+    "OpenAI",
+    "Anthropic · Claude",
+    "Kimi · Moonshot AI",
+  ],
+  "title": "Your models. One workspace.",
+}
+`;

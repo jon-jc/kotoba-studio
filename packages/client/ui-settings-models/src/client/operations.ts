@@ -77,9 +77,13 @@ export interface ModelsOperations {
  * Bind the page's Host operations to the plugin's own Remote namespaces.
  * @param ctx - the page plugin's context, which declares `remote.credentials`,
  * `remote.llm`, and `remote.settings` in its own `inject`.
+ * @param acceptView - publish committed settings before refreshing provider readiness.
  * @returns the callbacks the section and its cards are injected with.
  */
-export function createModelsOperations(ctx: ClientContext): ModelsOperations {
+export function createModelsOperations(
+  ctx: ClientContext,
+  acceptView?: (view: SettingsNamespaceView) => void,
+): ModelsOperations {
   return {
     describeCredential: async (ref) => {
       const response = await ctx.remote.credentials.describe([ref])
@@ -95,7 +99,10 @@ export function createModelsOperations(ctx: ClientContext): ModelsOperations {
     },
     writeSettings: async (ns, ops, expectedRevision) => {
       const response = await ctx.remote.settings.mutate(ns, ops, expectedRevision)
-      if (response.ok) return { kind: 'written', view: response.value }
+      if (response.ok) {
+        acceptView?.(response.value)
+        return { kind: 'written', view: response.value }
+      }
       const { code, message } = response.error
       return code === 'settings/conflict' ? { kind: 'conflict', message } : { kind: 'refused', message }
     },

@@ -17,9 +17,10 @@ import type { PiAiReplayResponse } from '../src/replay.ts'
 import { assemble, type AssembledResult } from './assemble.ts'
 
 interface ProviderCase {
-  provider: 'openai' | 'anthropic'
-  api: 'openai-responses' | 'anthropic-messages'
+  provider: 'openai' | 'anthropic' | 'moonshotai'
+  api: 'openai-responses' | 'anthropic-messages' | 'openai-completions'
   model: string
+  apiKeyEnv: string
   apiKey?: string
   baseURL?: string
   headers?: Record<string, string>
@@ -37,17 +38,26 @@ const providerCases: ProviderCase[] = [
     provider: 'openai',
     api: 'openai-responses',
     model: process.env.DSH_PI_AI_OPENAI_MODEL ?? 'gpt-5.5',
+    apiKeyEnv: azureOpenAIKey ? 'AZURE_OPENAI_API_KEY' : 'OPENAI_API_KEY',
     ...azureOpenAIKey
       ? { apiKey: azureOpenAIKey, headers: { 'api-key': azureOpenAIKey, Authorization: '' } }
-      : {},
+      : process.env.OPENAI_API_KEY === undefined ? {} : { apiKey: process.env.OPENAI_API_KEY },
     ...openAIBaseURL ? { baseURL: openAIBaseURL } : {},
   },
   {
     provider: 'anthropic',
     api: 'anthropic-messages',
     model: process.env.DSH_PI_AI_ANTHROPIC_MODEL ?? 'claude-opus-4-8',
+    apiKeyEnv: 'ANTHROPIC_API_KEY',
     ...anthropicApiKey === undefined ? {} : { apiKey: anthropicApiKey },
     ...anthropicBaseURL === undefined ? {} : { baseURL: anthropicBaseURL },
+  },
+  {
+    provider: 'moonshotai', api: 'openai-completions',
+    model: process.env.DSH_PI_AI_KIMI_MODEL ?? 'kimi-k2-0905-preview',
+    apiKeyEnv: 'MOONSHOT_API_KEY',
+    ...process.env.MOONSHOT_API_KEY === undefined ? {} : { apiKey: process.env.MOONSHOT_API_KEY },
+    ...process.env.DSH_PI_AI_KIMI_BASE_URL === undefined ? {} : { baseURL: process.env.DSH_PI_AI_KIMI_BASE_URL },
   },
 ]
 
@@ -59,7 +69,7 @@ async function harness(image?: StoredImageAttachment): Promise<Context> {
   await ctx.plugin(LlmRuntime)
   await ctx.plugin(LlmPiAi, {
     providers: Object.fromEntries(providerCases.map(profile => [profile.provider, {
-      ...profile.apiKey === undefined ? {} : { apiKey: profile.apiKey },
+      apiKeyEnv: profile.apiKeyEnv,
       ...profile.baseURL === undefined ? {} : { baseURL: profile.baseURL },
       ...profile.headers === undefined ? {} : { headers: profile.headers },
     }])),
