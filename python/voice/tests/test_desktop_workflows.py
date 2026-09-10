@@ -16,7 +16,11 @@ def workspace(tmp_path, monkeypatch):
     window = Workspace()
     yield window
     window.close()
+    from PySide6.QtCore import QCoreApplication, QEvent
+    window.web.page().deleteLater()
+    QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
     window.deleteLater()
+    QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
     app.processEvents()
 
 
@@ -30,13 +34,15 @@ def test_top_right_locale_preserves_work_and_persists(workspace):
     window.stack.setCurrentIndex(3)
     page = window.web.page()
     window.locale_toggle.setCurrentIndex(window.locale_toggle.findData("en"))
-    assert window.nav[3].text() == "›_  Terminal"
+    assert window.nav[3].accessibleName() == "›_  Terminal"
     assert window.voice.draft.toPlainText() == "確認する deploy at 15:00"
     assert window.voice.reference.toPlainText() == "正解文"
     assert window.voice.speak.isChecked()
     assert window.voice.preferences.value("locale") == "en"
     window.locale_toggle.setCurrentIndex(window.locale_toggle.findData("ja"))
-    assert window.nav[3].text() == "›_  ターミナル"
+    assert window.nav[3].accessibleName() == "›_  ターミナル"
+    assert "コマンドを検索" in window.command_center.text()
+    assert "表示言語" in window.locale_scope.text()
     assert window.command.text() == "$value = '日本語'"
     assert window.console.toPlainText() == "existing output"
     assert window.stack.currentIndex() == 3 and window.web.page() is page
@@ -61,6 +67,43 @@ def test_phrase_expansion_undo_and_reviewed_handoff(workspace):
     assert voice.draft.toPlainText() == "議事録。"
     assert workspace.stack.currentIndex() == 0
     assert voice.job is None
+
+
+def test_docks_preserve_work_and_do_not_replace_editor(workspace):
+    workspace.voice.draft.setPlainText("設計を確認")
+    workspace.console.setPlainText("terminal history")
+    workspace.show_panel(2)
+    workspace.show_panel(1)
+    assert workspace.voice.isHidden()
+    workspace.show_panel(3)
+    assert not workspace.terminal_dock.isHidden()
+    assert workspace.stack.currentIndex() == 2
+    workspace.show_panel(1)
+    workspace.show_panel(3)
+    assert workspace.voice.draft.toPlainText() == "設計を確認"
+    assert workspace.console.toPlainText() == "terminal history"
+    assert workspace.stack.currentIndex() == 2
+
+
+def test_command_palette_search_dispatches_action(workspace):
+    from PySide6.QtCore import QTimer
+    from PySide6.QtWidgets import QApplication, QLineEdit
+    workspace.voice.set_locale("en")
+    errors = []
+    def choose():
+        dialog = QApplication.activeModalWidget()
+        try:
+            query = dialog.findChild(QLineEdit)
+            query.setText("Local models")
+            query.returnPressed.emit()
+        except Exception as error:
+            errors.append(error)
+        finally:
+            dialog.reject()
+    QTimer.singleShot(0, choose)
+    workspace.command_palette()
+    assert not errors
+    assert workspace.stack.currentWidget() is workspace.local_models
 
 
 def test_phrase_editor_saves_local_data_and_cancel_preserves_it(workspace):

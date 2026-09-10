@@ -11,7 +11,7 @@ it('selects the packaged dialog worker and retains its IPC channel', () => {
   vi.stubGlobal('process', { ...process, pkg: {}, execPath: 'C:\\Kotoba\\runtime.exe' })
   spawnDialogWorker({ title: 'Select Workspace Directory' })
   expect(spawn).toHaveBeenCalledWith('C:\\Kotoba\\runtime.exe', [], expect.objectContaining({
-    env: expect.objectContaining({ DSH_DIRECTORY_DIALOG_WORKER: '1', DSH_DIALOG_TITLE: 'Select Workspace Directory' }),
+    env: expect.objectContaining({ DSH_DIRECTORY_DIALOG_WORKER: '1', DSH_DIALOG_TITLE: 'Select Workspace Directory' }) as unknown,
     stdio: ['ignore', 'inherit', 'inherit', 'ipc'], windowsHide: true,
   }))
 })
@@ -19,6 +19,6 @@ it('selects the packaged dialog worker and retains its IPC channel', () => {
 it('retains source-mode TypeScript launch outside a packaged runtime', () => {
   spawnDialogWorker({ title: 'Source dialog' })
   expect(spawn).toHaveBeenCalledWith(process.execPath, expect.arrayContaining(['--import']), expect.objectContaining({
-    env: expect.not.objectContaining({ DSH_DIRECTORY_DIALOG_WORKER: '1' }),
+    env: expect.not.objectContaining({ DSH_DIRECTORY_DIALOG_WORKER: '1' }) as unknown,
   }))
 })

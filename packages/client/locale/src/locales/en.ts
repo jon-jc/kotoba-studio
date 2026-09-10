@@ -30,7 +30,7 @@ export const en = {
   'collapse': 'Collapse',
   'expand': 'Expand',
   'back': 'Back',
-  'brand.localBuild': 'DSH Local Build',
+  'brand.localBuild': 'Kotoba Studio',
   'unknown': 'Unknown',
   'none': 'None',
   'truncated': 'Truncated',

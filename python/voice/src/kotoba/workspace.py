@@ -1,4 +1,4 @@
-"""Desktop container for the complete upstream Harness web application."""
+"""Kotoba desktop container for the full agent web application."""
 
 import os
 import json
@@ -8,16 +8,18 @@ import re
 import sys
 
 from PySide6.QtCore import QProcess, QProcessEnvironment, QTimer, QUrl, Qt
-from PySide6.QtGui import QFont, QTextCursor
+from PySide6.QtGui import QFont, QTextCursor, QIcon, QShortcut, QKeySequence
 from PySide6.QtWidgets import (QApplication, QFileSystemModel, QFileDialog, QFrame, QHBoxLayout, QLabel,
     QLineEdit, QMainWindow, QPlainTextEdit, QPushButton, QSplitter, QStackedWidget,
-    QTreeView, QVBoxLayout, QWidget, QComboBox)
+    QTreeView, QVBoxLayout, QWidget, QComboBox, QDialog, QListWidget, QListWidgetItem)
 from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile
+from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile, QWebEngineScript
 from .desktop import Window as VoiceWindow, STYLE
 from .harness import runtime_path
 from .terminal import powershell_arguments
 from .workspace_copy import COPY as SHELL_COPY, translate
+from .branding import icon_path
+from .local_models_ui import LocalModelsPage
 
 
 class LocalPage(QWebEnginePage):
@@ -36,7 +38,8 @@ class Workspace(QMainWindow):
     def __init__(self):
         super().__init__()
         self.voice = VoiceWindow(embedded=True)
-        self.setWindowTitle("Kotoba Studio · ことば — DeepSeek Harness")
+        self.setWindowTitle("Kotoba Studio · ことば")
+        self.setWindowIcon(QIcon(str(icon_path())))
         self.resize(1536, 960)
         self.setMinimumSize(1180, 780)
         self.setStyleSheet(STYLE)
@@ -60,83 +63,191 @@ class Workspace(QMainWindow):
 
     def build(self):
         root = QWidget()
-        layout = QHBoxLayout(root)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        rail = QFrame()
-        rail.setObjectName("sidebar")
-        rail.setFixedWidth(216)
-        side = QVBoxLayout(rail)
-        side.setContentsMargins(18, 26, 18, 24)
-        side.setSpacing(14)
-        brand = QLabel("ことば\nKOTOBA STUDIO")
-        brand.setStyleSheet("font-size:20px;font-weight:700;color:#d0eddb")
-        side.addWidget(brand)
-        subtitle = QLabel("Voice × intelligence\n日本語 / English")
-        subtitle.setStyleSheet("color:#8ea79b;font-size:12px")
-        side.addWidget(subtitle)
-        side.addSpacing(28)
-        self.stack = QStackedWidget()
-        self.web = QWebEngineView()
-        self.browser_profile = QWebEngineProfile("KotobaHarness", self.web)
-        self.browser_profile.setPersistentStoragePath(str(self.voice.home / "browser"))
-        self.browser_profile.setCachePath(str(self.voice.home / "browser-cache"))
-        self.web.setPage(LocalPage(self.browser_profile, self.web))
-        self.web.setStyleSheet("background:#101416")
-        self.stack.addWidget(self.web)
-        self.stack.addWidget(self.voice)
-        self.stack.addWidget(self.files_page())
-        self.stack.addWidget(self.terminal_page())
-        self.stack.addWidget(self.routing_page())
-        self.stack.addWidget(self.plugins_page())
-        labels = ["◈  Workspace / 会話", "◉  Voice / 音声", "⌘  Code / コード", "›_  Terminal", "⇄  Routing / 接続", "⊞  Plugins"]
-        self.nav = []
-        for index, label in enumerate(labels):
-            button = QPushButton(label)
-            button.setStyleSheet("text-align:left;padding:13px 9px;font-size:12px")
-            button.setCheckable(True)
-            button.setAutoExclusive(True)
-            button.setChecked(index == 0)
-            button.clicked.connect(lambda checked=False, i=index: self.stack.setCurrentIndex(i))
-            side.addWidget(button)
-            self.nav.append(button)
-        side.addStretch()
-        folder = QPushButton("Open workspace…\n作業フォルダー")
-        folder.clicked.connect(self.choose_workspace)
-        side.addWidget(folder)
-        self.health_key = "starting"
-        self.health = QLabel()
-        self.health.setWordWrap(True)
-        self.health.setStyleSheet("color:#9fb8aa;font-size:11px")
-        side.addWidget(self.health)
-        footer = QLabel("DEEPSEEK HARNESS\n+ OPENWHISPR\n\nLocal voice · Full runtime")
-        footer.setStyleSheet("font-size:10px;color:#738f7d")
-        side.addWidget(footer)
-        layout.addWidget(rail)
-        body = QVBoxLayout()
-        body.setContentsMargins(0, 0, 0, 0)
-        bar = QHBoxLayout()
-        bar.setContentsMargins(24, 10, 20, 10)
-        self.locale_scope = QLabel()
-        self.locale_scope.setStyleSheet("color:#91a69d;font-size:12px")
-        bar.addWidget(self.locale_scope)
-        bar.addStretch()
+        outer = QVBoxLayout(root)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+        titlebar = QFrame()
+        titlebar.setObjectName("titlebar")
+        top = QHBoxLayout(titlebar)
+        top.setContentsMargins(16, 8, 14, 8)
+        logo = QLabel()
+        logo.setPixmap(self.windowIcon().pixmap(26, 26))
+        top.addWidget(logo)
+        title = QLabel("Kotoba Studio")
+        title.setStyleSheet("font-weight:600;font-size:14px;color:#d9ecdf")
+        top.addWidget(title)
+        top.addSpacing(28)
+        self.command_center = QPushButton()
+        self.command_center.setObjectName("command-center")
+        self.command_center.setMaximumWidth(560)
+        self.command_center.setMinimumWidth(220)
+        self.command_center.clicked.connect(self.command_palette)
+        top.addWidget(self.command_center, 1)
+        top.addStretch()
+        self.voice_toggle = QPushButton()
+        self.voice_toggle.clicked.connect(lambda: self.show_panel(1))
+        top.addWidget(self.voice_toggle)
         self.locale_toggle = QComboBox()
         self.locale_toggle.setObjectName("interface-language")
         self.locale_toggle.setAccessibleName("Interface language / 表示言語")
         self.locale_toggle.addItem("English", "en")
         self.locale_toggle.addItem("日本語", "ja")
         self.locale_toggle.currentIndexChanged.connect(self.change_locale)
-        bar.addWidget(self.locale_toggle)
-        body.addLayout(bar)
-        body.addWidget(self.stack, 1)
-        layout.addLayout(body, 1)
+        top.addWidget(self.locale_toggle)
+        outer.addWidget(titlebar)
+        main = QHBoxLayout()
+        main.setContentsMargins(0, 0, 0, 0)
+        main.setSpacing(0)
+        rail = QFrame()
+        rail.setObjectName("activity-rail")
+        rail.setFixedWidth(58)
+        side = QVBoxLayout(rail)
+        side.setContentsMargins(7, 12, 7, 12)
+        side.setSpacing(10)
+        self.stack = QStackedWidget()
+        self.web = QWebEngineView()
+        self.browser_profile = QWebEngineProfile("KotobaHarness", self.web)
+        self.browser_profile.setPersistentStoragePath(str(self.voice.home / "browser"))
+        self.browser_profile.setCachePath(str(self.voice.home / "browser-cache"))
+        self.web.setPage(LocalPage(self.browser_profile, self.web))
+        self.web.setStyleSheet("background:#111817")
+        self.stack.addWidget(self.web)
+        self.stack.addWidget(QWidget())  # Legacy voice navigation index; voice now lives in the dock.
+        self.stack.addWidget(self.files_page())
+        self.stack.addWidget(QWidget())
+        self.terminal_dock = self.terminal_page()
+        self.stack.addWidget(self.routing_page())
+        self.stack.addWidget(self.plugins_page())
+        self.local_models = LocalModelsPage(self)
+        self.stack.addWidget(self.local_models)
+        self.nav_keys = ["◈  Workspace / 会話", "◉  Voice / 音声", "⌘  Code / コード", "›_  Terminal", "⇄  Routing / 接続", "⊞  Plugins", "▣  Local models"]
+        self.nav = []
+        for index, icon in enumerate(("◈", "◉", "⌘", "›_", "⇄", "⊞", "▣")):
+            button = QPushButton(icon)
+            button.setObjectName("activity")
+            button.setFixedSize(43, 43)
+            button.setCheckable(True)
+            button.clicked.connect(lambda checked=False, i=index: self.show_panel(i))
+            side.addWidget(button)
+            self.nav.append(button)
+        side.addStretch()
+        folder = QPushButton("＋")
+        folder.setObjectName("activity")
+        folder.setFixedSize(43, 43)
+        folder.setToolTip("Open folder / フォルダーを開く")
+        folder.clicked.connect(self.choose_workspace)
+        side.addWidget(folder)
+        main.addWidget(rail)
+        self.workbench = QSplitter(Qt.Horizontal)
+        self.workbench.setChildrenCollapsible(False)
+        self.editor_area = QSplitter(Qt.Vertical)
+        self.editor_area.setChildrenCollapsible(False)
+        self.editor_area.addWidget(self.stack)
+        self.editor_area.addWidget(self.terminal_dock)
+        self.editor_area.setStretchFactor(0, 1)
+        self.editor_area.setStretchFactor(1, 0)
+        self.editor_area.setSizes([650, 230])
+        self.terminal_dock.hide()
+        self.workbench.addWidget(self.editor_area)
+        self.workbench.addWidget(self.voice)
+        self.workbench.setStretchFactor(0, 1)
+        self.workbench.setStretchFactor(1, 0)
+        self.workbench.setSizes([1040, 420])
+        self.voice.setVisible(self.voice.preferences.value("ui/voice_dock", True, type=bool))
+        main.addWidget(self.workbench, 1)
+        outer.addLayout(main, 1)
+        statusbar = QFrame()
+        statusbar.setObjectName("statusbar")
+        status = QHBoxLayout(statusbar)
+        status.setContentsMargins(14, 5, 16, 5)
+        self.health_key = "starting"
+        self.health = QLabel()
+        self.health.setStyleSheet("color:#a5c0af;font-size:11px")
+        status.addWidget(self.health)
+        status.addStretch()
+        self.locale_scope = QLabel()
+        self.locale_scope.setStyleSheet("color:#7e9b89;font-size:11px")
+        status.addWidget(self.locale_scope)
+        status.addSpacing(18)
+        status.addWidget(QLabel("Kotoba Studio  0.4.0"))
+        outer.addWidget(statusbar)
         self.setCentralWidget(root)
-        self.stack.currentChanged.connect(lambda index: self.nav[index].setChecked(True))
+        self.stack.currentChanged.connect(self.selected_panel)
+        for sequence, callback in (("Ctrl+K", self.command_palette), ("Ctrl+Shift+V", lambda: self.show_panel(1)),
+                                   ("Ctrl+J", lambda: self.show_panel(3)), ("Ctrl+Shift+E", lambda: self.show_panel(2))):
+            shortcut = QShortcut(QKeySequence(sequence), self)
+            shortcut.activated.connect(callback)
+        self.selected_panel(0)
+
+    def show_panel(self, index):
+        if index == 1:
+            self.voice.setVisible(self.voice.isHidden())
+            self.voice.preferences.setValue("ui/voice_dock", not self.voice.isHidden())
+            if not self.voice.isHidden():
+                self.workbench.setSizes([max(500, self.width() - 490), 420])
+        elif index == 3:
+            self.terminal_dock.setVisible(self.terminal_dock.isHidden())
+            if not self.terminal_dock.isHidden():
+                self.editor_area.setSizes([max(300, self.height() - 330), 230])
+                self.command.setFocus()
+        else:
+            self.stack.setCurrentIndex(index)
+        self.selected_panel(self.stack.currentIndex())
+
+    def selected_panel(self, index):
+        for i, button in enumerate(self.nav):
+            button.setChecked(not self.voice.isHidden() if i == 1 else not self.terminal_dock.isHidden() if i == 3 else i == index)
+
+    def command_palette(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Command center / コマンドセンター")
+        dialog.resize(560, 430)
+        layout = QVBoxLayout(dialog)
+        query = QLineEdit()
+        query.setPlaceholderText("Search actions…" if self.voice.locale == "en" else "操作を検索…")
+        layout.addWidget(query)
+        actions = QListWidget()
+        for index, key in enumerate(self.nav_keys):
+            item = QListWidgetItem(translate(key, self.voice.locale))
+            item.setData(Qt.UserRole, index)
+            actions.addItem(item)
+        actions.setCurrentRow(0)
+        layout.addWidget(actions)
+        def filter_actions(text):
+            for row in range(actions.count()):
+                item = actions.item(row)
+                item.setHidden(text.casefold() not in item.text().casefold())
+            for row in range(actions.count()):
+                if not actions.item(row).isHidden():
+                    actions.setCurrentRow(row)
+                    break
+        def activate(item):
+            if item is not None and not item.isHidden():
+                self.show_panel(item.data(Qt.UserRole))
+                dialog.accept()
+        query.textChanged.connect(filter_actions)
+        query.returnPressed.connect(lambda: activate(actions.currentItem()))
+        actions.itemActivated.connect(activate)
+        query.setFocus()
+        dialog.exec()
 
     def change_locale(self):
         self.voice.set_locale(self.locale_toggle.currentData())
         self.apply_locale(self.voice.locale)
+
+    def sync_chat_locale(self, locale):
+        script = QWebEngineScript()
+        script.setName("kotoba-language")
+        script.setInjectionPoint(QWebEngineScript.DocumentReady)
+        script.setWorldId(QWebEngineScript.MainWorld)
+        script.setRunsOnSubFrames(False)
+        source = "document.documentElement.dataset.kotobaLocale=" + json.dumps(locale) + ";document.dispatchEvent(new Event('kotoba:locale'));"
+        script.setSourceCode(source)
+        scripts = self.web.page().scripts()
+        for previous in scripts.find("kotoba-language"):
+            scripts.remove(previous)
+        scripts.insert(script)
+        self.web.page().runJavaScript(source)
 
     def apply_locale(self, locale):
         """Update shell labels without rebuilding web, terminal, or file state."""
@@ -144,6 +255,13 @@ class Workspace(QMainWindow):
         self.locale_toggle.setCurrentIndex(self.locale_toggle.findData(locale))
         self.locale_toggle.blockSignals(False)
         self.locale_scope.setText(translate("scope", locale))
+        self.local_models.set_locale(locale)
+        self.command_center.setText("⌕   Search commands…     Ctrl K" if locale == "en" else "⌕   コマンドを検索…     Ctrl K")
+        self.voice_toggle.setText("◉ Voice studio" if locale == "en" else "◉ 音声スタジオ")
+        for button, key in zip(self.nav, self.nav_keys):
+            button.setToolTip(translate(key, locale))
+            button.setAccessibleName(translate(key, locale))
+        self.sync_chat_locale(locale)
         for widget in self.centralWidget().findChildren(QWidget):
             if widget == self.voice or self.voice.isAncestorOf(widget):
                 continue
@@ -174,18 +292,18 @@ class Workspace(QMainWindow):
     def panel(self, title, description):
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        layout.setContentsMargins(32, 32, 32, 28)
+        layout.setContentsMargins(18, 14, 18, 14)
         header = QLabel(title)
-        header.setStyleSheet("font-size:28px;font-weight:600")
+        header.setStyleSheet("font-size:16px;font-weight:600")
         layout.addWidget(header)
         label = QLabel(description)
         label.setWordWrap(True)
-        label.setStyleSheet("color:#a3b8ad;padding-bottom:18px")
+        label.setStyleSheet("color:#8ca795;font-size:11px;padding-bottom:4px")
         layout.addWidget(label)
         return widget, layout
 
     def files_page(self):
-        widget, layout = self.panel("Code explorer / コード", "Read files in your selected workspace. Agent edits and diffs remain available in the full Harness workspace.")
+        widget, layout = self.panel("Code explorer / コード", "Read files in your selected workspace. Agent edits and diffs remain available in the full Kotoba Studio workspace.")
         self.path_label = QLabel(self.voice.workspace)
         layout.addWidget(self.path_label)
         splitter = QSplitter()
@@ -226,7 +344,7 @@ class Workspace(QMainWindow):
             self.code.setPlainText(translate("file_invalid", self.voice.locale))
 
     def terminal_page(self):
-        widget, layout = self.panel("Terminal / ターミナル", "Local PowerShell command console. For interactive PTY sessions, use the terminal tools in the Harness workspace.")
+        widget, layout = self.panel("Terminal / ターミナル", "Local PowerShell command console. For interactive PTY sessions, use the terminal tools in the Kotoba Studio workspace.")
         self.console = QPlainTextEdit()
         self.console.setReadOnly(True)
         self.console.setFont(QFont("Consolas", 11))
@@ -262,11 +380,11 @@ class Workspace(QMainWindow):
         scrollbar.setValue(scrollbar.maximum())
 
     def routing_page(self):
-        widget, layout = self.panel("Model routing / モデル接続", "The full Harness Models settings manage provider routes, credentials, endpoints, model discovery, and per-session selection.")
+        widget, layout = self.panel("Model routing / モデル接続", "The full Kotoba Studio Models settings manage provider routes, credentials, endpoints, model discovery, and per-session selection.")
         for title, text in [
             ("01   Add a provider", "Open Workspace → Settings → Models. Add DeepSeek or another supported provider, or configure a compatible gateway with its endpoint and model ID."),
-            ("02   Connect credentials", "Store each API key through Harness's credential manager. Keep separate keys per provider. This app does not put credentials into source or session exports."),
-            ("03   Choose the route", "Choose a provider/model in the chat composer. Voice-direct SDK settings currently select the official DeepSeek route; reviewed voice text can also be copied into any Harness chat."),
+            ("02   Connect credentials", "Store each API key through Kotoba Studio's credential manager. Keep separate keys per provider. This app does not put credentials into source or session exports."),
+            ("03   Choose the route", "Choose a provider/model in the chat composer. Voice can use DeepSeek or Kotoba Local. Open Local models to load a GGUF file or connect Ollama / LM Studio."),
         ]:
             frame = QFrame()
             frame.setObjectName("metric")
@@ -277,7 +395,7 @@ class Workspace(QMainWindow):
             description.setStyleSheet("color:#a4b7ac;padding:8px")
             box.addWidget(description)
             layout.addWidget(frame)
-        open_workspace = QPushButton("Open full Harness settings  →")
+        open_workspace = QPushButton("Open full Kotoba Studio settings  →")
         open_workspace.clicked.connect(lambda: self.open_settings("models"))
         layout.addWidget(open_workspace)
         voice_settings = QPushButton("Voice-direct API settings / 音声API設定")
@@ -287,11 +405,11 @@ class Workspace(QMainWindow):
         return widget
 
     def plugins_page(self):
-        widget, layout = self.panel("Plugin workspace / プラグイン", "The original Cordis plugin architecture remains intact. Inspect active plugins and model adapters in Harness Settings → Plugins.")
+        widget, layout = self.panel("Plugin workspace / プラグイン", "The original Cordis plugin architecture remains intact. Inspect active plugins and model adapters in Kotoba Studio Settings → Plugins.")
         description = QLabel("Tools · Agent presets · Model adapters · Skills · Subagents · Workflows\n\nUse the upstream plugin interface to inspect the complete composition. External plugin installation follows the dsh profile workflow and requires pnpm. Plugins execute code with the runtime's access; inspect their source before installing.")
         description.setWordWrap(True)
         layout.addWidget(description)
-        button = QPushButton("Open full Harness workspace  →")
+        button = QPushButton("Open full Kotoba Studio workspace  →")
         button.clicked.connect(lambda: self.open_settings("plugins"))
         layout.addWidget(button)
         layout.addStretch()
@@ -300,11 +418,11 @@ class Workspace(QMainWindow):
     def open_settings(self, section):
         """Navigate existing upstream controls; credentials stay in their owning UI."""
         self.stack.setCurrentIndex(0)
-        labels = {"models": ["Models", "模型"], "plugins": ["Plugins", "插件"]}[section]
+        labels = {"models": ["Models", "模型", "モデル"], "plugins": ["Plugins", "插件", "プラグイン"]}[section]
         script = """(() => {
             const buttons = () => Array.from(document.querySelectorAll('button'));
             const find = labels => buttons().find(b => labels.includes(b.textContent.trim()));
-            const trigger = find(['Settings', '设置']);
+            const trigger = find(['Settings', '设置', '設定']);
             if (!trigger || trigger.closest('[inert]')) return false;
             if (trigger.getAttribute('aria-expanded') !== 'true') trigger.click();
             return true;
@@ -360,12 +478,13 @@ class Workspace(QMainWindow):
             self.set_health("connected")
 
     def closeEvent(self, event):
-        if self.voice.job is not None or self.voice.stream is not None:
-            self.stack.setCurrentIndex(1)
+        if self.voice.job is not None or self.voice.stream is not None or self.local_models.job is not None:
+            self.voice.show()
             self.voice.status.setText(self.voice.t("busy_close"))
             event.ignore()
             return
         self.voice.close()
+        self.local_models.stop_engine()
         for process in (self.console_process, self.backend):
             if process.state() != QProcess.NotRunning:
                 if sys.platform == "win32":
@@ -389,32 +508,44 @@ def main():
         completed = False
         def check():
             if not completed:
-                window.web.page().runJavaScript("JSON.stringify({buttons:document.querySelectorAll('button').length, batches:window.__DSH_BOOT__?.batches?.length || 0, failed:document.body.innerText.includes('Failed to load plugins')})", result)
+                window.web.page().runJavaScript("JSON.stringify({title:document.title, buttons:document.querySelectorAll('button').length, batches:window.__DSH_BOOT__?.batches?.length || 0, failed:document.body.innerText.includes('Failed to load plugins')})", result)
         def result(raw):
             nonlocal completed
             if completed or not raw:
                 return
             state = json.loads(raw)
-            if state["buttons"] < 1 or state["batches"] < 1 or state["failed"]:
+            if state["buttons"] < 1 or state["batches"] < 1 or state["failed"] or "Kotoba Studio" not in state["title"]:
                 return
             completed = True
             screenshot = Path(os.environ.get("KOTOBA_SCREENSHOT", "kotoba-workspace.png"))
             original_locale = window.voice.locale
-            for locale in ("en", "ja"):
-                window.locale_toggle.setCurrentIndex(window.locale_toggle.findData(locale))
-                if window.voice.locale != locale:
+            pending = iter(("en", "ja"))
+            evidence = {}
+            def switch_next():
+                locale = next(pending, None)
+                if locale is None:
+                    window.locale_toggle.setCurrentIndex(window.locale_toggle.findData(original_locale))
+                    window.grab().save(str(screenshot))
+                    window.stack.setCurrentIndex(6)
+                    app.processEvents()
+                    window.grab().save(str(screenshot.with_name(screenshot.stem + "-local-models.png")))
+                    screenshot.with_suffix(".json").write_text(json.dumps({"runtime_ready": True, "locale_toggle": True,
+                        "chat_locales": evidence, **state}), encoding="utf-8")
                     window.close()
-                    app.exit(1)
                     return
-                app.processEvents()
-                window.grab().save(str(screenshot.with_name(screenshot.stem + "-" + locale + ".png")))
-            window.locale_toggle.setCurrentIndex(window.locale_toggle.findData(original_locale))
-            window.grab().save(str(screenshot))
-            window.stack.setCurrentIndex(1)
-            app.processEvents()
-            window.grab().save(str(screenshot.with_name(screenshot.stem + "-voice.png")))
-            screenshot.with_suffix(".json").write_text(json.dumps({"runtime_ready": True, "locale_toggle": True, **state}), encoding="utf-8")
-            window.close()
+                window.locale_toggle.setCurrentIndex(window.locale_toggle.findData(locale))
+                def inspected(raw):
+                    value = json.loads(raw)
+                    if value["lang"] != locale or value["notice"]:
+                        window.close()
+                        app.exit(1)
+                        return
+                    evidence[locale] = value["lang"]
+                    window.grab().save(str(screenshot.with_name(screenshot.stem + "-" + locale + ".png")))
+                    switch_next()
+                QTimer.singleShot(1000, lambda: window.web.page().runJavaScript(
+                    "JSON.stringify({lang:document.documentElement.lang,notice:!![...document.querySelectorAll('[role=dialog]')].find(x=>/Internal Testing Notice|内测声明/.test(x.textContent))})", inspected))
+            switch_next()
         timer = QTimer(window)
         timer.timeout.connect(check)
         timer.start(1000)

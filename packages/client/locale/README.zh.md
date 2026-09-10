@@ -11,6 +11,8 @@ kind: "package-reference"
 
 使用 `dsh-client-locale` 可在 web GUI 中切换内置的 English、中文 locale，或 client 插件添加的语言。用户选择会立即生效；loopback 页面把选择持久化到 `$DSH_HOME/settings.yaml`，非 loopback 页面则只为当前进程保留选择。全新浏览器会使用浏览器请求的第一个受支持语言，直到允许读取的已存储偏好到达。插件作者可添加类型化命名空间字典，并通过公开 locale API 翻译；经 slot 渲染的文案无需重新加载即可随语言切换更新。
 
+两个词典的共享产品名称回退值均为 Kotoba Studio；切换语言不会更改 API 提供方名称。
+
 ## 目录
 
 - [使用本包](#use-this-package)

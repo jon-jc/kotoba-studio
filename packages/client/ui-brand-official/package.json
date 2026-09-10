@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-client-ui-brand-official",
-  "description": "Official DeepSeek Harness brand occupants for the Web client's sidebar slots",
+  "description": "Kotoba Studio brand occupants for sidebar and conversation slots",
   "version": "0.1.5-alpha.1",
   "publishConfig": {
     "access": "public"
@@ -29,7 +29,10 @@
     "client": {
       "inject": [
         "@deepseek-ai/dsh-client-ui-renderer",
-        "@deepseek-ai/dsh-client-ui-sidebar"
+        "@deepseek-ai/dsh-client-ui-sidebar",
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-theme"
       ],
       "platform": "web"
     }
@@ -50,7 +53,10 @@
     "@testing-library/react": "^16.1.0",
     "@types/react": "~18.3.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "@deepseek-ai/dsh-client-ui-conversation": "workspace:^",
+    "@deepseek-ai/dsh-client-locale": "workspace:^",
+    "@deepseek-ai/dsh-client-ui-theme": "workspace:^"
   },
   "files": [
     "lib/index.js",

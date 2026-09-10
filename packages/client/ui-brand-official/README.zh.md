@@ -1,5 +1,5 @@
 ---
-description: "面向侧栏的官方 DeepSeek Harness 品牌填充，仅在官方构建中生效；供选择或替换品牌呈现的用户与维护者阅读。"
+description: "此分支的 Kotoba Studio 侧栏与对话品牌呈现。"
 kind: "package-reference"
 ---
 
@@ -9,7 +9,7 @@ kind: "package-reference"
 
 ## 概述
 
-本包让以 `official` profile 构建的客户端在侧栏显示 DeepSeek Harness 标志与名称。其他构建 profile 保留外壳的鱼形标志与本地构建标签，会话首屏则始终使用动画鱼。品牌为 DeepSeek Harness 的部署应选择本包；使用其他品牌的部署应提供替代品牌包。本包不保留运行时状态，也不影响模型请求。
+此分支在侧栏与空白对话首屏使用 Kotoba Studio 图标和跨语言不变的产品名称。为保持插件兼容性，保留上游包标识。所有客户端构建配置均使用这些填充和日语语言包。提供方名称、模型 ID、许可证和来源署名保持原样。
 
 ## 目录
 
@@ -20,73 +20,42 @@ kind: "package-reference"
 - [已知限制与延期工作](#known-limitations-and-deferred-work)
 - [开发备注](#dev-note)
 
------
-
 <a id="use-this-package"></a>
 ## 使用本包
 
-在身份为 DeepSeek 自身的部署的浏览器名单中挂载本插件，然后以 `official` profile 构建客户端，让填充得以注册。
+在浏览器插件列表中挂载现有包。三个填充分别占据 `sidebar.brand.mark`、`sidebar.brand.name` 和 `conversation.hero.brand.mark`。如需其他品牌，请用占据相同槽位的插件替换本包。浏览器标题由 `DSH_CLIENT_TITLE` 单独配置；此分支的官方标题和本地化回退名称均为 Kotoba Studio。
 
-### 选择 profile
-
-`DSH_CLIENT_BUILD_PROFILE` 决定渲染哪个品牌。`official` 构建在侧栏显示官方标志与名称；任何其他取值都让外壳回退——鱼形标志与本地构建标签——保持原样。会话首屏无论 profile 如何都显示来自 `dsh-client-ui-conversation` 的动画首屏鱼，因为这个回退本身就是官方标志。两种情况下插件都会照常加载并通过校验；只有注册受 profile 门控。
-
-### 替换品牌
-
-自有身份的部署不组合本包，而是组合另一个占据侧栏槽位——以及本包留给回退的首屏槽位——的包。占据槽位是唯一的组合路径；这里不存在任何品牌配置面。
-
------
+日语语言包覆盖对话、输入框、工作区、模型选择、模型设置和通用控件。其他扩展词条回退到英语。原生语言选择器无需刷新即可切换浏览器语言；消息、草稿、代码和模型回复保持原文。
 
 <a id="understand-the-implementation"></a>
 ## 理解实现
 
-<details>
-<summary>实现细节——点击展开</summary>
+主题服务管理用户的浅色/深色偏好。本插件注册成对的常青与玉绿色令牌、日语语言包以及桌面语言监听器；各项注册随插件一起释放。
 
-两个填充作为一组声明感知的注册安装：嵌套的 `ctx.slots.inject()` 调用等待侧栏声明，因此无论本行在声明者之前还是之后激活，这组注册都能工作；声明消失时两个填充一并撤回，HMR 期间也不会留下残缺的品牌混合。浏览器半部是 [`src/client/index.ts`](src/client/index.ts)；node 半部是一个空 Loader 座位。浏览器标题是构建环境的事（`DSH_CLIENT_TITLE`），不在槽位系统之内。
-
-</details>
-
------
+两个侧栏声明都存在后，图标和名称一起注册。对话声明存在后，首屏图标独立注册。声明或插件 fiber 撤销时，各组填充随之撤销。两种激活顺序都受支持，侧栏可用性不依赖对话加载。[浏览器入口](src/client/index.ts) 注册[图形](src/client/Brand.tsx)；node 入口没有副作用。
 
 <a id="further-exploration"></a>
 ## 进一步探索
 
-当品牌面不够用时阅读以下页面。它们从本包占据的槽位进入渲染这些槽位的外壳。
+- [侧栏](../ui-sidebar/README.zh.md) 声明侧栏槽位。
+- [对话](../ui-conversation/README.zh.md) 声明首屏槽位。
+- [桌面品牌](../../../python/voice/README.md) 说明原生程序和安装器图标。
 
-- [ui-sidebar](../ui-sidebar/README.zh.md)——声明 `sidebar.brand.mark` 与 `sidebar.brand.name` 并渲染其回退。
-- [ui-conversation](../ui-conversation/README.zh.md)——在首屏声明 `conversation.hero.brand.mark`。
-- [Web 客户端架构](../../../.agents/notes/implemented/architecture/2026-07-19-gui-web-client-architecture.zh.md)——浏览器插件行如何加载并注册槽位。
+<a id="dev-note"></a>
+## 开发备注
 
------
+不发布 invariant companion：本包不保留可变状态，所有填充均通过所属槽位 effect 撤销。
 
 <a id="model-experience"></a>
 ## 模型体验
 
-无，因为本包只贡献浏览器呈现；这里没有任何内容进入模型请求。
+无；本包仅提供浏览器呈现，不向模型请求添加内容。
 
 #### KV Cache 影响
 
-无；本包既不组装也不发送提供方请求。
-
-## 已知限制与延期工作
+无；本包不组装或发送提供方请求。
 
 <a id="known-limitations-and-deferred-work"></a>
+## 已知限制与延期工作
 
-
-这些限制界定了品牌呈现的供给方式。它们是当前包约束，不是品牌设计对比或任务积压。
-
-- **只有一组填充**——替代呈现属于占据相同槽位的另一个 Cordis 包。
-- **浏览器标题独立**——`DSH_CLIENT_TITLE` 在构建时选择标题文本，而非通过 UI 槽位。
-
-<a id="dev-note"></a>
-### 开发备注
-
-<details>
-<summary>维护者的工作上下文——点击展开</summary>
-
-无。
-
-</details>
-
-**运行时不变式：** 不发布伴生入口。本包不保留可变状态，三个 slot occupant 通过同一个事务性 effect 安装和释放。
+- 仅提供一组填充。浏览器标题和原生可执行文件图标由其他模块管理。显式省略本插件的配置仍可使用上游回退图形。

@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
 import { Context } from '@deepseek-ai/cordis'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render } from '@testing-library/react'
@@ -15,17 +16,20 @@ afterEach(() => {
 const HOLES = [
   'sidebar.brand.mark',
   'sidebar.brand.name',
+  'conversation.hero.brand.mark',
 ] as const
 
 const HERO_HOLE = 'conversation.hero.brand.mark'
 
 async function bench(declare = true) {
   const ctx = new Context()
+  ctx.provide('locale', new LocaleRuntime(ctx))
+  ctx.provide('theme', { overrideTokens: () => () => {} } as never)
   await ctx.plugin(SlotRegistry).await()
   const slots = ctx.get('slots') as SlotRegistry
   const declareHoles = () => slots.register({
     name: 'root',
-    children: Object.fromEntries([...HOLES, HERO_HOLE].map(name => [name, { kind: 'single', scope: 'root' }])),
+    children: Object.fromEntries(HOLES.map(name => [name, { kind: 'single', scope: 'root' }])),
   } as never, () => null)
   const disposeHoles = declare ? declareHoles() : undefined
   return { ctx, slots, declareHoles, disposeHoles }
@@ -37,14 +41,14 @@ describe('official browser-brand plugin', () => {
   })
 
   it('declares only the slot service it uses', () => {
-    expect(inject).toEqual(['slots'])
+    expect(inject).toEqual(['slots', 'locale', 'theme'])
   })
 
-  it('leaves every slot empty outside the official build profile', async () => {
+  it('brands local builds as Kotoba Studio', async () => {
     vi.stubEnv('DSH_CLIENT_BUILD_PROFILE', 'local')
     const subject = await bench()
     await subject.ctx.plugin({ inject: [...inject], apply }).await()
-    for (const hole of HOLES) expect(subject.slots.entries(hole)).toHaveLength(0)
+    for (const hole of HOLES) expect(subject.slots.entries(hole)).toHaveLength(1)
   })
 
   it('fills declarations before or after apply and removes every occupant on teardown', async () => {
@@ -71,21 +75,21 @@ describe('official browser-brand plugin', () => {
     for (const hole of HOLES) expect(after.slots.entries(hole)).toHaveLength(1)
   })
 
-  it('leaves the conversation hero on its declaring fallback even in official builds', async () => {
+  it('replaces the conversation hero in official builds', async () => {
     vi.stubEnv('DSH_CLIENT_BUILD_PROFILE', 'official')
     const subject = await bench()
     await subject.ctx.plugin({ inject: [...inject], apply }).await()
-    expect(subject.slots.entries(HERO_HOLE)).toHaveLength(0)
+    expect(subject.slots.entries(HERO_HOLE)).toHaveLength(1)
   })
 
   it('renders the official name independently from both requested mark sizes', () => {
     const name = render(<OfficialBrandName />)
-    expect(name.container.querySelector('svg')?.getAttribute('viewBox')).toBe('26 0 156 24')
+    expect(name.container.textContent).toBe('Kotoba Studio')
     name.unmount()
 
     const mark = render(<OfficialBrandMark size={34} />)
-    expect(mark.container.querySelector('svg')?.getAttribute('width')).toBe('34')
+    expect(mark.container.querySelector('img')?.getAttribute('width')).toBe('34')
     mark.rerender(<OfficialBrandMark size={24} />)
-    expect(mark.container.querySelector('svg')?.getAttribute('width')).toBe('24')
+    expect(mark.container.querySelector('img')?.getAttribute('width')).toBe('24')
   })
 })
