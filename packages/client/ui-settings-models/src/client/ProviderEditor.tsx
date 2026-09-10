@@ -350,7 +350,7 @@ export function ProviderEditor(props: ProviderEditorProps): ReactNode {
       ? t('keyEnvLocked')
       : keyState?.configured === true && props.credentialRequired !== true
         ? t('keyStored')
-        : family === 'pi-ai' ? t('keyPlaceholderNative') : t('keyPlaceholder')
+        : family === 'pi-ai' && props.credentialRequired !== true ? t('keyPlaceholderNative') : t('keyPlaceholder')
     /** What both family editors take: the rows, whose layer owns them, and the two writes. */
     const catalogProps = {
       models,

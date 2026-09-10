@@ -280,13 +280,7 @@ export function onboardingProviders(state: ModelsSettingsState): ProviderRow[] {
       || (row.entry.provider === 'deepseek-official' && row.entry.settingsNs === 'llm-deepseek'
         && row.entry.active && row.entry.settingsPath.length === 0)
     return supported && (row.credential ?? row.derivedCredential)?.writable === true
-  }).sort((a, b) => {
-    const rank = (id: string): number => {
-      const index = preferred.indexOf(id)
-      return index < 0 ? preferred.length : index
-    }
-    return rank(a.entry.provider) - rank(b.entry.provider)
-  })
+  }).sort((a, b) => preferred.indexOf(a.entry.provider) - preferred.indexOf(b.entry.provider))
 }
 
 /** First-run onboarding readiness derived only from the shared Models join. */

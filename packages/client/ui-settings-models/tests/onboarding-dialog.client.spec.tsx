@@ -197,6 +197,7 @@ describe('DeepSeekOnboardingDialog', () => {
     render(<DeepSeekOnboardingDialog {...h.props} />)
     const selector = await screen.findByRole('combobox', { name: en.provider })
     fireEvent.change(selector, { target: { value: provider } })
+    expect(screen.getByLabelText<HTMLInputElement>(en.keyInput).placeholder).toBe(en.keyPlaceholder)
     fireEvent.change(screen.getByLabelText(en.keyInput), { target: { value: 'sk-fixture-only' } })
     fireEvent.click(screen.getByRole('button', { name: en.onboardingSave }))
     await waitFor(() => { expect(h.complete).toHaveBeenCalledOnce() })

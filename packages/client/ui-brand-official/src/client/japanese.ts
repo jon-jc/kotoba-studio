@@ -149,7 +149,7 @@ export const japanese: Record<string, Record<string, string>> = {
     settingsPathUnresolvable: '設定のパスを解決できません', create: 'プロバイダーを作成', creating: '作成中…',
     welcomeTitle: '開発プレビュー', welcomeBody: 'Kotoba Studio へようこそ。', welcomeContinue: '続ける', welcomeError: '保存できませんでした。',
     onboardingTitle: '好きなモデルを、ひとつのワークスペースで。', onboardingDescription: 'OpenAI、Claude、Kimi、DeepSeek などのプロバイダーを接続して、Kotoba Studio で作業を始めましょう。',
-    onboardingHint: '選択したプロバイダーの API キーを入力してください。「設定 → モデル」で追加できます。ローカルモデルを使う場合は「後で設定」を選んでください。',
+    onboardingHint: 'API キーを保存したら、チャットで使うモデルを選んでください。「設定 → モデル」でプロバイダーを追加できます。ローカルモデルを使う場合は「後で設定」を選んでください。',
     providerOpenAI: 'OpenAI', providerClaude: 'Anthropic · Claude', providerKimi: 'Kimi · Moonshot AI',
     onboardingLater: '後で設定', onboardingSave: '保存して続ける', onboardingSaving: '保存中…', keyRequired: '続行するには API キーを入力してください。',
   },
