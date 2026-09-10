@@ -117,7 +117,7 @@ class GlobalDictation(QAbstractNativeEventFilter):
         if not self.enabled:
             return
         voice = self.voice
-        if voice.job is not None or getattr(voice, "meeting_active", False):
+        if voice.job is not None or getattr(voice, "meeting_active", False) or getattr(voice, "permission_dialog_active", False):
             self.notice("Voice is busy", "音声処理中です")
             return
         if voice.stream is not None:

@@ -72,3 +72,11 @@ Choose **Processing → Cloud** to configure an HTTPS OpenAI-compatible file-tra
 完了した文字起こしは時刻付きで端末に保存します。**停止して保存** で残りの音声も処理します。重要事項の候補はキーワード抽出なので、決定事項やタスクとして使う前に確認してください。開発メモは自動保存し、検索・Markdown 書き出し・エージェントの下書きへの追加ができます。
 
 ローカル処理が既定で、クラウドへの自動切替はありません。クラウドを明示的に選択すると、音声と用語を指定した提供者へ送信します。API キーは今回の起動中のみ保持します。録音音声は保存しませんが、完了した文字起こしとメモは暗号化せず端末に保存します。クラッシュ時の未処理音声は復元できません。Windows の全体ホットキーとアプリ音声捕獲を実装しています。macOS/Linux 向けインストーラーや全体ホットキーは、この版の提供範囲に含まれません。
+
+## Agent access
+
+Use **Access** in the desktop toolbar to choose **Read-only**, **Workspace access**, or **Full access**. Select a particular existing chat or the default for new chats and the next voice conversation. Full access requires acknowledgment; the choice is stored in Harness, not only desktop preferences. Changing the default resets the idle voice SDK client so its next conversation picks up the new permission. Existing chats retain their setting until explicitly selected. A session change governs subsequent tool calls; it does not stop already-running commands.
+
+These controls govern agent file and command tools. Chat displays interactive one-time approval requests; the voice SDK rejects requests without an available approval responder. Use **Add to chat** for interactive approvals. On Windows, the built-in sandbox primarily restricts writes and does not fully isolate reads or network traffic. Commands you type manually and privileged plugins are outside this agent policy. Full access still cannot exceed your operating-system account permissions.
+
+デスクトップ上部の **アクセス** から、**読み取り専用**・**ワークスペース内の変更**・**フルアクセス** を選択します。既存のチャットを指定するか、新しいチャットと次の音声会話の既定値を設定できます。フルアクセスには確認が必要です。個別の承認はチャットに表示されます。音声 SDK は承認できない要求を拒否するため、対話的な承認には **チャットに追加** を使用してください。Windows では主に書き込みを制限し、読み取りやネットワークを完全には隔離しません。手入力のコマンドと権限を持つプラグインは対象外です。
