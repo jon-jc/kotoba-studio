@@ -670,6 +670,8 @@ class Window(QMainWindow):
         self.job = None
         job.deleteLater()
         self.busy(False)
+        if self.status.text() == self.t("working"):
+            self.status.setText(self.t("ready"))
         continuation, self.after_job = self.after_job, None
         if continuation is not None:
             continuation()

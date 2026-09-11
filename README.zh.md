@@ -26,7 +26,17 @@
 | 可重复的听写流程 | Windows 全局快捷键、光标位置粘贴、保存短语、撤销和经审阅的智能体草稿 |
 | 可测量的结果 | 转录延迟、实时因子，以及针对所提供参考文本计算日语字符错误率和英语词错误率 |
 
-![Kotoba Studio 桌面聊天与语音工作区](assets/brand/kotoba-workspace.png)
+### 聊天与语音并排显示
+
+在智能体工作区旁审阅语音草稿。截图展示审阅框中的示例草稿，尚未发送给提供方。
+
+![Kotoba Studio 0.6.8 英语聊天与语音审阅面板](assets/screenshots/voice-workspace-en.png)
+
+### 更清晰地查看代码
+
+浏览文件、比较标签页，并在需要时搜索。再次点击 **Code**、使用 **Close Code** 或按 **Esc** 返回聊天，已打开的标签页会保留。
+
+![Kotoba Studio 0.6.8 代码工作区、资源管理器、源码标签与关闭按钮](assets/screenshots/code-workspace-en.png)
 
 <a id="run"></a>
 
@@ -46,8 +56,10 @@ Voice Studio 的 **Agent → Ask voice agent** 还提供独立的智能体会话
 | `Ctrl+K` | 搜索工作空间命令 |
 | `Ctrl+Shift+V` | 显示或隐藏 Voice Studio |
 | `Ctrl+J` | 显示或隐藏终端 |
-| `Ctrl+Shift+E` | 打开代码浏览器 |
+| `Ctrl+Shift+E` | 显示或隐藏代码页 |
 | `Ctrl+F` | 搜索当前源文件 |
+| `Ctrl+W` | 关闭当前源码标签页 |
+| `Esc` | 关闭代码搜索，然后返回聊天 |
 | `Ctrl+Shift+Space` | 开始或停止录音 |
 
 关闭窗口后 Kotoba 保留在系统托盘；可从托盘菜单重新打开或退出。参阅[托盘行为与图标](python/voice/README.md#system-tray-and-windows-icons)。
@@ -61,6 +73,10 @@ Kotoba Studio は、日本語・英語の音声入力から AI との作業へ�
 音声スタジオで録音元と言語を選び、録音または音声ファイルの読み込みを行います。文字起こしの名前・数字・意図を確認し、必要に応じて修正してください。**チャットに追加** で会話の下書きに追加します。入力欄が未準備の場合はコピーします。確認してから送信してください。
 
 **ローカルモデル** では GGUF ファイルを同梱の CPU エンジンで実行できます。Ollama / LM Studio への接続も可能です。モデルの重みは別途必要です。登録後、チャットのモデル選択で **Kotoba Local** を選びます。再起動後はローカルエンジンを起動し直してください。
+
+![Kotoba Studio 0.6.8 の日本語インターフェースと音声レビュー](assets/screenshots/voice-workspace-ja.png)
+
+上の画像は、送信前に確認するための入力例です。
 
 ## 听写与会议笔记
 
