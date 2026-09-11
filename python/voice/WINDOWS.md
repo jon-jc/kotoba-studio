@@ -1,6 +1,6 @@
 # Kotoba Studio for Windows
 
-The installer is `python/voice/dist/Kotoba-Studio-0.6.6-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes Python, Qt WebEngine, the complete matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
+The installer is `python/voice/dist/Kotoba-Studio-0.6.7-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes Python, Qt WebEngine, the complete matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
 
 ## Try the application
 
@@ -17,6 +17,8 @@ Audio capture remains in memory. Only text you send goes to the model provider. 
 Japanese/English voice input is supported. The top-right English/Japanese selector updates both the native panels and core embedded chat controls. Extension strings without Japanese translations fall back to English. Windows global paste-at-cursor dictation and durable meeting notes are described in the [voice guide](VOICE.md). Speaker diarization, streaming interruption, and automatic provider failover are not implemented.
 
 The chat welcome headline is **Create with Kotoba** in English and **ことばを、かたちに。** in Japanese.
+
+Click the top-left **Kotoba Studio** icon or name to return to chat and open its workspace sidebar from any panel. Open code tabs, terminal output, and voice drafts remain available when you return to those panels.
 
 ## Workspace selection
 

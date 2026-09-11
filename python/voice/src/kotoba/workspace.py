@@ -58,6 +58,12 @@ class Workspace(QMainWindow):
         self.backend.finished.connect(lambda *_: self.set_health("stopped"))
         self.output = ""
         self.url = None
+        self.sidebar_attempts = 0
+        self.sidebar_check_pending = False
+        self.sidebar_timer = QTimer(self)
+        self.sidebar_timer.setSingleShot(True)
+        self.sidebar_timer.setInterval(200)
+        self.sidebar_timer.timeout.connect(self.expand_sidebar)
         self.console_process = QProcess(self)
         self.console_decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
         self.console_process.setProcessChannelMode(QProcess.MergedChannels)
@@ -82,12 +88,13 @@ class Workspace(QMainWindow):
         titlebar.setObjectName("titlebar")
         top = QHBoxLayout(titlebar)
         top.setContentsMargins(16, 8, 14, 8)
-        logo = QLabel()
-        logo.setPixmap(self.windowIcon().pixmap(26, 26))
-        top.addWidget(logo)
-        title = QLabel("Kotoba Studio")
-        title.setStyleSheet("font-weight:600;font-size:15px;color:#e8e8ec")
-        top.addWidget(title)
+        self.sidebar_button = QPushButton("Kotoba Studio")
+        self.sidebar_button.setIcon(self.windowIcon())
+        self.sidebar_button.setIconSize(QSize(26, 26))
+        self.sidebar_button.setObjectName("ghost")
+        self.sidebar_button.setStyleSheet("font-weight:600;font-size:15px;color:#e8e8ec;padding:4px 2px")
+        self.sidebar_button.clicked.connect(self.open_sidebar)
+        top.addWidget(self.sidebar_button)
         top.addSpacing(28)
         self.command_center = QPushButton()
         self.command_center.setObjectName("command-center")
@@ -203,7 +210,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         status.addWidget(self.locale_scope)
         status.addSpacing(18)
-        status.addWidget(QLabel("Kotoba Studio  0.6.6"))
+        status.addWidget(QLabel("Kotoba Studio  0.6.7"))
         outer.addWidget(statusbar)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(self.selected_panel)
@@ -242,6 +249,32 @@ class Workspace(QMainWindow):
     def selected_panel(self, index):
         for i, button in enumerate(self.nav):
             button.setChecked(not self.voice.isHidden() if i == 1 else not self.terminal_dock.isHidden() if i == 3 else i == index)
+
+    def open_sidebar(self):
+        """Return to the retained chat page and expand its existing sidebar."""
+        self.show_panel(0)
+        self.sidebar_attempts = 50
+        self.expand_sidebar()
+
+    def expand_sidebar(self):
+        if self.sidebar_check_pending or not self.sidebar_attempts or self.stack.currentIndex() != 0:
+            return
+        self.sidebar_check_pending = True
+        self.sidebar_attempts -= 1
+        def revealed(ok):
+            self.sidebar_check_pending = False
+            if ok:
+                self.sidebar_attempts = 0
+                self.sidebar_timer.stop()
+            elif self.sidebar_attempts and self.stack.currentIndex() == 0:
+                self.sidebar_timer.start()
+        self.web.page().runJavaScript("""(() => {
+            const buttons = [...document.querySelectorAll('button')];
+            const find = labels => buttons.find(b => labels.includes(b.getAttribute('aria-label')) && !b.closest('[inert]'));
+            const expand = find(['Open sidebar', 'サイドバーを開く', '打开侧边栏']);
+            if (expand) { expand.click(); return true; }
+            return !!find(['Collapse sidebar', 'サイドバーを閉じる', '收起侧边栏']);
+        })()""", revealed)
 
     def command_palette(self):
         dialog = QDialog(self)
@@ -316,6 +349,8 @@ class Workspace(QMainWindow):
     def apply_locale(self, locale):
         """Update shell labels without rebuilding web, terminal, or file state."""
         self.reduce_motion.setText("Reduce motion" if locale == "en" else "動きを減らす")
+        self.sidebar_button.setToolTip("Open workspace sidebar" if locale == "en" else "ワークスペースのサイドバーを開く")
+        self.sidebar_button.setAccessibleName(self.sidebar_button.toolTip())
         self.locale_toggle.blockSignals(True)
         self.access_button.setText("Access ▾" if locale == "en" else "アクセス ▾")
         self.locale_toggle.setCurrentIndex(self.locale_toggle.findData(locale))
