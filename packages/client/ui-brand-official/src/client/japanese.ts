@@ -197,7 +197,7 @@ export const japanese: Record<string, Record<string, string>> = {
     'access.confirm.title': 'フルアクセスを有効にしますか？',
     'access.confirm.description': '確認を減らし、ファイルの変更や外部コマンドなどの操作を許可します。信頼できるタスクで使用してください。',
     'access.confirm.acknowledge': 'リスクを理解して続行します', 'access.confirm.cancel': 'キャンセル', 'access.confirm.enable': 'フルアクセスを有効にする',
-    'hero.headline': 'ことばから、できることを広げよう', 'hero.preview': 'プレビュー', 'hero.chooseWorkspace': 'ワークスペースを選択',
+    'hero.headline': 'ことばを、かたちに。', 'hero.preview': 'プレビュー', 'hero.chooseWorkspace': 'ワークスペースを選択',
     'session.hierarchy': '会話の階層', 'todo.title': 'タスク', 'todo.progress.done': '{done} 件完了',
     'todo.progress.active': '{active} 件実行中', 'todo.progress.pending': '{pending} 件待機中', 'todo.rowTitle': 'タスク一覧を更新',
     'todo.completed': '{done}/{total} 件完了', 'command.attachmentsUnsupported': '/{command} では添付を使用できません。添付を削除してください',
