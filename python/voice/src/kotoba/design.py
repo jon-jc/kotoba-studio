@@ -37,6 +37,8 @@ QPlainTextEdit, QTextBrowser, QLineEdit {background:#202127; border:1px solid #3
 QPlainTextEdit:focus, QLineEdit:focus {border-color:#718a7e;}
 QComboBox, QSpinBox {background:#222329; border:1px solid #383a45; border-radius:6px; padding:7px;}
 QComboBox QAbstractItemView {background:#25262d; selection-background-color:#3a4540;}
+QProgressBar {background:#222329; border:1px solid #383a45; border-radius:6px; text-align:center; color:#eceef0;}
+QProgressBar::chunk {background:#466658; border-radius:5px;}
 QTabWidget::pane {border:0;}
 QTabBar::tab {background:transparent; color:#999daa; padding:9px 12px; border-bottom:2px solid transparent;}
 QTabBar::tab:selected {color:#f0f0f2; border-bottom:2px solid #a5cbbb;}

@@ -75,6 +75,55 @@ def settle(window):
     assert window.job is None
 
 
+@pytest.mark.parametrize("fails", [False, True])
+def test_model_setup_progress_crosses_worker_thread_and_recovers(window, monkeypatch, fails):
+    from threading import Event
+    from PySide6.QtWidgets import QMessageBox
+    from kotoba.model_progress import ModelProgress
+    release = Event()
+    errors = []
+    monkeypatch.setattr(QMessageBox, "warning", lambda *args: errors.append(args[-1]))
+    def prepare(config, allow_download, progress):
+        progress(ModelProgress("downloading", 1048576, 2097152))
+        assert release.wait(5)
+        if fails:
+            raise RuntimeError("fixture connection interrupted")
+        progress(ModelProgress("loading"))
+    monkeypatch.setattr(window.engine, "prepare", prepare)
+    window.set_locale("en")
+    window.prepare()
+    try:
+        deadline = monotonic() + 5
+        while window.download_progress.value() != 500 and monotonic() < deadline:
+            QApplication.processEvents()
+            QTest.qWait(5)
+        assert window.download_progress.value() == 500
+        assert not window.download_progress.isHidden()
+        assert "1.0 / 2.0 MiB" in window.download_progress.format()
+        assert not window.prepare_button.isEnabled()
+    finally:
+        release.set()
+        settle(window)
+    assert window.prepare_button.isEnabled()
+    if fails:
+        assert window.download_progress.isHidden()
+        assert errors == ["fixture connection interrupted"]
+    else:
+        assert window.download_progress.value() == 100
+        assert "Model ready" in window.status.text()
+
+
+def test_unknown_model_size_and_loading_do_not_claim_completion(window):
+    from kotoba.model_progress import ModelProgress
+    window.set_locale("ja")
+    window.show_model_progress(ModelProgress("downloading", 1048576))
+    assert window.download_progress.maximum() == 0
+    assert "1.0 MiB" in window.status.text()
+    window.show_model_progress(ModelProgress("loading"))
+    assert window.download_progress.maximum() == 0
+    assert window.status.text() == "モデルを読み込み中…"
+
+
 def test_missing_model_prompts_before_recording_then_explicit_retry(window, monkeypatch):
     from kotoba.speech_models import ModelDownloadRequired
     calls = []
@@ -125,7 +174,7 @@ def test_setup_prompt_requires_download_choice_and_never_starts_capture(window, 
     calls = []
     window.set_locale("en")
     window.global_dictation.target = (100, 20)
-    monkeypatch.setattr(window.engine, "prepare", lambda config, allow_download: calls.append((config.language, allow_download)))
+    monkeypatch.setattr(window.engine, "prepare", lambda config, allow_download, progress: calls.append((config.language, allow_download)))
     def choose():
         dialog = QApplication.activeModalWidget()
         assert isinstance(dialog, QMessageBox)

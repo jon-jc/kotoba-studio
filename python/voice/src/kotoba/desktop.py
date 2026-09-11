@@ -9,12 +9,12 @@ import sys
 from time import perf_counter
 
 import numpy as np
-from PySide6.QtCore import Qt, QThread, QTimer, Signal, QStandardPaths, QSettings
+from PySide6.QtCore import Qt, QThread, QTimer, Signal, Slot, QStandardPaths, QSettings
 from PySide6.QtGui import QFont, QTextCursor, QIcon
 from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QDialogButtonBox,
     QFileDialog, QFormLayout, QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
     QMessageBox, QPlainTextEdit, QPushButton, QSplitter, QTextBrowser,
-    QVBoxLayout, QWidget, QListWidget)
+    QVBoxLayout, QWidget, QListWidget, QProgressBar)
 from PySide6.QtTextToSpeech import QTextToSpeech
 
 from .harness import HarnessSession
@@ -98,6 +98,7 @@ class Window(QMainWindow):
     locale_changed = Signal(str)
     busy_changed = Signal(bool)
     draft_handoff = Signal(str)
+    model_progress = Signal(object)
 
     def __init__(self, embedded=False):
         super().__init__()
@@ -147,6 +148,7 @@ class Window(QMainWindow):
         self.setMinimumSize(360, 560) if embedded else self.setMinimumSize(1080, 740)
         self.setStyleSheet(STYLE)
         self.build()
+        self.model_progress.connect(self.show_model_progress)
 
     def route_controls(self):
         box = QWidget()
@@ -302,6 +304,7 @@ class Window(QMainWindow):
         content.addWidget(self.label(self.t("welcome"), "hero"))
         self.status = self.label(self.t("ready"), "muted")
         content.addWidget(self.status)
+        self.add_model_progress(content)
         self.route_label = self.label(self.provider + " · " + self.model, "muted")
         content.addWidget(self.route_label)
         content.addWidget(self.route_controls())
@@ -414,6 +417,7 @@ class Window(QMainWindow):
         layout.addLayout(header)
         self.status = self.label(self.t("ready"), "muted")
         layout.addWidget(self.status)
+        self.add_model_progress(layout)
         source = QHBoxLayout()
         self.language = QComboBox()
         for name, value in (("日本語", "ja"), ("English", "en"), ("Auto", "auto")):
@@ -651,6 +655,7 @@ class Window(QMainWindow):
     def work(self, task, result):
         if self.job is not None:
             return
+        self.download_progress.hide()
         self.busy(True)
         self.status.setText(self.t("working"))
         self.job = Job(task)
@@ -670,6 +675,7 @@ class Window(QMainWindow):
             continuation()
 
     def failure(self, message):
+        self.download_progress.hide()
         # Runtime diagnostics can contain provider details; never export them automatically.
         if self.api_key:
             message = message.replace(self.api_key, "[redacted]")
@@ -688,7 +694,51 @@ class Window(QMainWindow):
 
     def prepare(self):
         config = self.selected_config()
-        self.work(lambda emit: self.engine.prepare(config), lambda _: self.status.setText(self.t("prepared")))
+        self.prepare_model(config)
+
+    def add_model_progress(self, layout):
+        self.download_progress = QProgressBar()
+        self.download_progress.setAccessibleName("Model setup progress" if self.locale == "en" else "モデル準備の進捗")
+        self.download_progress.setMinimumHeight(22)
+        self.download_progress.hide()
+        layout.addWidget(self.download_progress)
+
+    @Slot(object)
+    def show_model_progress(self, progress):
+        en = self.locale == "en"
+        labels = {"checking": ("Checking model files…", "モデルファイルを確認中…"),
+                  "downloading": ("Downloading model…", "モデルをダウンロード中…"),
+                  "extracting": ("Unpacking model…", "モデルを展開中…"),
+                  "loading": ("Loading model…", "モデルを読み込み中…")}
+        label = labels[progress.phase][0 if en else 1]
+        bar = self.download_progress
+        bar.show()
+        if progress.total > 0:
+            bar.setRange(0, 1000)
+            bar.setValue(min(1000, int(progress.completed * 1000 / progress.total)))
+            if progress.unit == "bytes":
+                detail = f"{progress.completed / 1048576:.1f} / {progress.total / 1048576:.1f} MiB"
+            else:
+                detail = f"{progress.completed} / {progress.total} " + ("files" if en else "ファイル")
+            bar.setFormat(f"%p% · {detail}")
+        else:
+            bar.setRange(0, 0)
+            detail = (f"{progress.completed / 1048576:.1f} MiB" if progress.completed else "")
+        self.status.setText(label + (f" · {detail}" if detail else ""))
+
+    def prepare_model(self, config):
+        if self.job is not None:
+            return
+        def ready(_):
+            self.download_progress.setRange(0, 100)
+            self.download_progress.setValue(100)
+            self.download_progress.setFormat(self.t("prepared"))
+            self.download_progress.show()
+            self.status.setText("Model ready · press Record to start" if self.locale == "en" else "準備完了 · 録音を押してください")
+        self.work(lambda emit: self.engine.prepare(config, allow_download=True,
+                                                  progress=self.model_progress.emit), ready)
+        from .model_progress import ModelProgress
+        self.show_model_progress(ModelProgress("checking"))
 
     def ensure_speech(self, ready):
         """Check local files on the worker before opening any audio stream."""
@@ -716,9 +766,7 @@ class Window(QMainWindow):
         dialog.addButton(QMessageBox.Cancel)
         dialog.exec()
         if dialog.clickedButton() == download:
-            self.work(lambda emit: self.engine.prepare(config, allow_download=True),
-                      lambda _: self.status.setText("Model ready · press Record to start" if self.locale == "en" else "準備完了 · 録音を押してください"))
-            self.status.setText("Downloading and preparing model…" if self.locale == "en" else "モデルをダウンロード・準備中…")
+            self.prepare_model(config)
         else:
             self.status.setText(self.t("configure"))
 

@@ -330,9 +330,10 @@ export function languageSwitcherTargets(counterpart: string): string[] {
   return [basename(counterpart), `${PUBLIC_REPOSITORY_BLOB_ROOT}${counterpart}`]
 }
 
-/** Generated English sources cannot carry a switcher without making their generator stale. */
+/** Generated sources and the English/Japanese product landing page omit the Chinese switcher. */
 export function requiresSourceLanguageSwitcher(source: string): boolean {
   return ![
+    'README.md',
     'docs/agent-lifecycle.md',
     'docs/capability-seams.md',
     'docs/config-catalog.md',

@@ -4,7 +4,7 @@ Kotoba Studio adapts [OpenWhispr](https://github.com/OpenWhispr/openwhispr)'s Wi
 
 ## Choose a speech model
 
-In Voice Studio, choose the input language, expand **Audio settings**, and choose **Download / warm model**. Downloads are explicit. Recording and transcription only load existing local weights; missing weights produce an error. No audio is sent during a model download. Hugging Face telemetry is disabled.
+In Voice Studio, choose the input language, expand **Audio settings**, and choose **Download / warm model**. Downloads are explicit. Recording and transcription only load existing local weights; missing weights produce an error. Setup displays download progress, received size when available, unpacking, and model loading. Unknown download sizes use an indeterminate bar; older Hugging Face versions may report file counts. Completion appears only after the model loads successfully. No audio is sent during a model download. Hugging Face telemetry is disabled.
 
 | Input language | Recommended default | Other choices |
 | --- | --- | --- |

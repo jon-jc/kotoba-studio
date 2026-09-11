@@ -204,6 +204,7 @@ describe('translation pairing switchers', () => {
     expect(requiresSourceLanguageSwitcher('docs/cordis-api/context.md')).toBe(false)
     expect(requiresSourceLanguageSwitcher('docs/cordis-api/inherited.md')).toBe(false)
     expect(requiresSourceLanguageSwitcher('docs/architecture.md')).toBe(true)
+    expect(requiresSourceLanguageSwitcher('README.md')).toBe(false)
     expect(requiresSourceLanguageSwitcher('packages/core/session/README.md')).toBe(true)
   })
 
