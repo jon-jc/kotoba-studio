@@ -48,6 +48,12 @@ QSplitter::handle {background:#2d2f38; width:2px; height:2px;}
 QTreeView {background:#191a1e; border:0; outline:none; alternate-background-color:#202127;}
 QTreeView::item {padding:6px;}
 QTreeView::item:selected {background:#333a3a;}
+QFrame#code-explorer {background:#1c1e23;border:1px solid #30343c;border-radius:8px;}
+QFrame#code-explorer QTreeView {background:transparent;}
+QWidget#code-source {background:#1c1d22;border:1px solid #30343c;border-radius:8px;}
+QWidget#code-source QTabBar {background:#202228;}
+QWidget#code-source QTabBar::tab {background:#202228;padding:10px 14px;}
+QWidget#code-source QTabBar::tab:selected {background:#1c1d22;border-bottom:2px solid #a5cbbb;}
 QHeaderView::section {background:#202127; border:0; padding:8px; color:#a3a6b2;}
 QListWidget {background:#1c1d22; border:1px solid #343640; border-radius:8px; padding:6px;}
 QListWidget::item {padding:12px; border-radius:6px;}
@@ -64,6 +70,7 @@ QPushButton::menu-indicator {width:0;}
 """
 
 PATHS = {
+    "file": '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/>',
     "chat": '<path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-6 4V6a2 2 0 0 1 2-2Z"/><path d="M7 9h10M7 13h6"/>',
     "mic": '<rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/>',
     "code": '<path d="m8 6-6 6 6 6m8-12 6 6-6 6M14 3l-4 18"/>',

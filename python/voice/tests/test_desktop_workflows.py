@@ -263,6 +263,43 @@ def test_source_tabs_search_preserve_files_and_reject_binary(workspace, tmp_path
     assert tabs.tabs.count() == 1
 
 
+@pytest.mark.parametrize("locale", ["en", "ja"])
+def test_code_can_close_and_reopen_without_losing_tabs(workspace, tmp_path, locale):
+    workspace.voice.set_locale(locale)
+    path = tmp_path / "example.py"
+    workspace.source_tabs.open_file(path, "answer = 42\n")
+    editor = workspace.source_tabs.tabs.currentWidget()
+    workspace.nav[2].click()
+    assert workspace.stack.currentIndex() == 2
+    workspace.nav[2].click()
+    assert workspace.stack.currentIndex() == 0 and not workspace.nav[2].isChecked()
+    workspace.nav[2].click()
+    workspace.code_close.click()
+    assert workspace.stack.currentIndex() == 0
+    workspace.nav[2].click()
+    assert workspace.source_tabs.tabs.currentWidget() is editor
+    workspace.code_find.click()
+    assert not workspace.source_tabs.find_bar.isHidden()
+    workspace.escape_code()
+    assert workspace.source_tabs.find_bar.isHidden() and workspace.stack.currentIndex() == 2
+    workspace.escape_code()
+    assert workspace.stack.currentIndex() == 0
+    assert editor.toPlainText() == "answer = 42\n"
+
+
+def test_last_code_tab_returns_to_clean_empty_state(workspace, tmp_path):
+    tabs = workspace.source_tabs
+    assert tabs.find_bar.isHidden() and not workspace.code_find.isEnabled()
+    tabs.open_file(tmp_path / "file.py", "print('hello')\n")
+    assert workspace.code_find.isEnabled()
+    tabs.show_find()
+    tabs.close_tab(0)
+    assert tabs.tabs.count() == 0 and not tabs.empty.isHidden()
+    assert tabs.find_bar.isHidden() and tabs.position.isHidden() and tabs.breadcrumb.isHidden()
+    assert not workspace.code_find.isEnabled()
+    tabs.close_tab(-1)
+
+
 def test_reviewed_handoff_pastes_without_submitting(workspace):
     from time import monotonic
     from PySide6.QtTest import QTest

@@ -21,7 +21,7 @@ from .workspace_copy import COPY as SHELL_COPY, translate
 from .branding import icon_path, configure_windows_identity
 from .local_models_ui import LocalModelsPage
 from .design import outline_icon
-from .code_view import SourceTabs
+from .code_view import SourceTabs, ElidedPath, SourceIcons
 from .motion import Reveal, web_script, system_reduced_motion
 
 
@@ -210,7 +210,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         status.addWidget(self.locale_scope)
         status.addSpacing(18)
-        status.addWidget(QLabel("Kotoba Studio  0.6.7"))
+        status.addWidget(QLabel("Kotoba Studio  0.6.8"))
         outer.addWidget(statusbar)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(self.selected_panel)
@@ -243,7 +243,9 @@ class Workspace(QMainWindow):
                 self.editor_area.setSizes([max(300, self.height() - 330), 230])
                 self.command.setFocus()
         else:
-            self.stack.setCurrentIndex(index)
+            self.stack.setCurrentIndex(0 if index == 2 and self.stack.currentIndex() == 2 else index)
+            if self.stack.currentIndex() == 2:
+                (self.source_tabs.tabs.currentWidget() or self.tree).setFocus()
         self.selected_panel(self.stack.currentIndex())
 
     def selected_panel(self, index):
@@ -358,6 +360,14 @@ class Workspace(QMainWindow):
         self.locale_scope.setText(translate("scope", locale))
         self.local_models.set_locale(locale)
         self.source_tabs.set_locale(locale)
+        self.code_title.setText("Code" if locale == "en" else "コード")
+        self.explorer_title.setText("EXPLORER" if locale == "en" else "エクスプローラー")
+        self.code_find.setText("Find in file" if locale == "en" else "ファイル内を検索")
+        self.code_find.setToolTip("Ctrl+F")
+        self.code_folder.setText("Open folder" if locale == "en" else "フォルダーを開く")
+        self.code_close.setText("Close Code  ×" if locale == "en" else "コードを閉じる  ×")
+        self.code_close.setToolTip("Return to chat · Esc" if locale == "en" else "会話に戻る · Esc")
+        self.code_close.setAccessibleName(self.code_close.text())
         self.update_tray_locale()
         self.command_center.setText("⌕   Search commands…     Ctrl K" if locale == "en" else "⌕   コマンドを検索…     Ctrl K")
         self.voice_toggle.setText("◉ Voice studio" if locale == "en" else "◉ 音声スタジオ")
@@ -435,8 +445,7 @@ class Workspace(QMainWindow):
 
     def find_in_file(self):
         if self.stack.currentIndex() == 2:
-            self.source_tabs.query.setFocus()
-            self.source_tabs.query.selectAll()
+            self.source_tabs.show_find()
         else:
             self.web.setFocus()
 
@@ -454,11 +463,46 @@ class Workspace(QMainWindow):
         return widget, layout
 
     def files_page(self):
-        widget, layout = self.panel("Code explorer / コード", "Read files in your selected workspace. Agent edits and diffs remain available in the full Kotoba Studio workspace.")
-        self.path_label = QLabel(self.voice.workspace)
-        layout.addWidget(self.path_label)
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(20, 16, 20, 16)
+        layout.setSpacing(14)
+        header = QHBoxLayout()
+        self.code_title = QLabel()
+        self.code_title.setStyleSheet("font-size:20px;font-weight:600;color:#e8ecea")
+        header.addWidget(self.code_title)
+        header.addStretch()
+        self.code_find = QPushButton()
+        self.code_find.setObjectName("ghost")
+        self.code_find.clicked.connect(self.find_in_file)
+        header.addWidget(self.code_find)
+        self.code_folder = QPushButton()
+        self.code_folder.setIcon(outline_icon("folder"))
+        self.code_folder.clicked.connect(self.choose_workspace)
+        header.addWidget(self.code_folder)
+        self.code_close = QPushButton()
+        self.code_close.setObjectName("ghost")
+        self.code_close.clicked.connect(lambda: self.show_panel(0))
+        header.addWidget(self.code_close)
+        layout.addLayout(header)
         splitter = QSplitter()
+        splitter.setChildrenCollapsible(False)
+        explorer = QFrame()
+        explorer.setObjectName("code-explorer")
+        explorer.setMinimumWidth(200)
+        explorer_layout = QVBoxLayout(explorer)
+        explorer_layout.setContentsMargins(12, 12, 12, 8)
+        explorer_layout.setSpacing(12)
+        self.explorer_title = QLabel()
+        self.explorer_title.setStyleSheet("font-size:11px;font-weight:600;color:#9ca7b2")
+        explorer_layout.addWidget(self.explorer_title)
+        self.path_label = ElidedPath(Path(self.voice.workspace).name or self.voice.workspace)
+        self.path_label.setToolTip(self.voice.workspace)
+        self.path_label.setFixedHeight(24)
+        explorer_layout.addWidget(self.path_label)
         self.files = QFileSystemModel(self)
+        self.source_icons = SourceIcons()
+        self.files.setIconProvider(self.source_icons)
         self.files.setReadOnly(True)
         self.files.setRootPath(self.voice.workspace)
         self.tree = QTreeView()
@@ -466,16 +510,36 @@ class Workspace(QMainWindow):
         self.tree.setRootIndex(self.files.index(self.voice.workspace))
         for column in (1, 2, 3):
             self.tree.hideColumn(column)
-        self.tree.setMinimumWidth(180)
         self.tree.setHeaderHidden(True)
         self.tree.setIndentation(16)
         self.tree.clicked.connect(self.view_file)
+        explorer_layout.addWidget(self.tree, 1)
         self.source_tabs = SourceTabs()
-        splitter.addWidget(self.tree)
+        self.source_tabs.set_workspace(self.voice.workspace)
+        self.source_tabs.setObjectName("code-source")
+        self.source_tabs.choose_folder.connect(self.choose_workspace)
+        self.source_tabs.tabs.currentChanged.connect(lambda *_: self.code_find.setEnabled(self.source_tabs.tabs.count() > 0))
+        self.code_find.setEnabled(False)
+        splitter.addWidget(explorer)
         splitter.addWidget(self.source_tabs)
-        splitter.setStretchFactor(1, 4)
+        splitter.setStretchFactor(0, 0)
+        splitter.setStretchFactor(1, 1)
+        splitter.setSizes([260, 1000])
         layout.addWidget(splitter, 1)
+        escape = QShortcut(QKeySequence("Escape"), widget)
+        escape.setContext(Qt.WidgetWithChildrenShortcut)
+        escape.activated.connect(self.escape_code)
+        close_tab = QShortcut(QKeySequence("Ctrl+W"), widget)
+        close_tab.setContext(Qt.WidgetWithChildrenShortcut)
+        close_tab.activated.connect(lambda: self.source_tabs.close_tab(self.source_tabs.tabs.currentIndex())
+                                    if self.source_tabs.tabs.count() else self.show_panel(0))
         return widget
+
+    def escape_code(self):
+        if not self.source_tabs.find_bar.isHidden():
+            self.source_tabs.hide_find()
+        else:
+            self.show_panel(0)
 
     def view_file(self, index):
         path = Path(self.files.filePath(index))
@@ -490,7 +554,7 @@ class Workspace(QMainWindow):
             if "\x00" in content:
                 raise UnicodeError("Binary file")
             self.source_tabs.open_file(path, content)
-            self.path_label.setText(str(path))
+
         except (OSError, UnicodeError):
             self.health_key = None
             self.health.setText(translate("file_invalid", self.voice.locale))
@@ -594,7 +658,9 @@ class Workspace(QMainWindow):
             self.voice.workspace = path
             self.files.setRootPath(path)
             self.tree.setRootIndex(self.files.index(path))
-            self.path_label.setText(path)
+            self.path_label.setText(Path(path).name or path)
+            self.path_label.setToolTip(path)
+            self.source_tabs.set_workspace(path)
             self.stack.setCurrentIndex(2)
 
     def start_backend(self):
