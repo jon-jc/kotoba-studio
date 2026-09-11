@@ -23,7 +23,7 @@ jobs:
       - run: pnpm exec vitest run packages/client/modules/tests/node-half.client.spec.ts packages/preset/agent-presets/tests/discovery.spec.ts packages/preset/agent-presets/tests/composition-inventory.spec.ts packages/host/directory-picker-native/tests/packaged-launch.spec.ts packages/host/directory-picker-native/tests/win32-dialog.spec.ts
       - run: pnpm exec vitest run packages/client/ui-brand-official/tests packages/client/ui-settings-models/tests packages/llm/llm-pi-ai/tests/native-providers.spec.ts scripts/project-doc-site.spec.ts scripts/verify-doc-site-fragments.spec.ts
       - run: pnpm exec vitest run packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts packages/interaction/permission-presets/tests/permission-presets.spec.ts
-      - run: pnpm exec vitest run packages/client/ui-sidebar/tests/sidebar-styles.client.spec.ts packages/client/ui-workspace/tests/workspace-picker.client.spec.tsx packages/client/ui-directory-picker-browse/tests
+      - run: pnpm exec vitest run packages/client/ui-sidebar/tests/sidebar-styles.client.spec.ts packages/client/ui-workspace/tests/workspace-picker.client.spec.tsx packages/client/ui-directory-picker-browse/tests packages/client/ui-theme/tests/elevation-styles.client.spec.ts scripts/sandbox-workflow.spec.ts
       - run: pnpm run verify-translation-pairing
   voice-tests:
     runs-on: windows-latest
