@@ -11,9 +11,9 @@ from time import perf_counter
 import numpy as np
 from PySide6.QtCore import Qt, QThread, QTimer, Signal, QStandardPaths, QSettings
 from PySide6.QtGui import QFont, QTextCursor, QIcon
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
+from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QDialogButtonBox,
     QFileDialog, QFormLayout, QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
-    QMessageBox, QPlainTextEdit, QPushButton, QSplitter, QTabWidget, QTextBrowser,
+    QMessageBox, QPlainTextEdit, QPushButton, QSplitter, QTextBrowser,
     QVBoxLayout, QWidget, QListWidget)
 from PySide6.QtTextToSpeech import QTextToSpeech
 
@@ -28,6 +28,7 @@ from .speech_models import MODEL_CHOICES, resolve_model, ModelDownloadRequired
 from .voice_routes import load_routes
 from .global_dictation import GlobalDictation
 from .meetings import MeetingStore
+from .selection_widgets import ClickComboBox as QComboBox, ClickTabWidget as QTabWidget
 
 
 COPY = {
@@ -293,7 +294,7 @@ class Window(QMainWindow):
         self.locale_button = switch
         side.addWidget(switch)
         switch.setVisible(not self.embedded)
-        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.6.4", "muted"))
+        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.6.5", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
         content.setSpacing(12)

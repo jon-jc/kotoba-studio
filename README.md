@@ -34,7 +34,7 @@ The desktop combines persistent chat, a voice dock, a file explorer, a code view
 
 ## Start on Windows
 
-The desktop build is **Kotoba Studio 0.6.4**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.6.4-Setup.exe` from your build output. The installer includes the desktop application, agent runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
+The desktop build is **Kotoba Studio 0.6.5**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.6.5-Setup.exe` from your build output. The installer includes the desktop application, agent runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
 
 1. **Choose a folder.** Give the agent a working directory for the task.
 2. **Connect a model.** Open **··· → Routing** to configure an API provider, or choose Configure later and open Local models. Register a local model, then select Kotoba Local in the chat composer.

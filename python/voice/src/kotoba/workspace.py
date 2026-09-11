@@ -203,7 +203,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         status.addWidget(self.locale_scope)
         status.addSpacing(18)
-        status.addWidget(QLabel("Kotoba Studio  0.6.4"))
+        status.addWidget(QLabel("Kotoba Studio  0.6.5"))
         outer.addWidget(statusbar)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(self.selected_panel)
