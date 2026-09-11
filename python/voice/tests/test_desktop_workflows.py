@@ -130,11 +130,47 @@ def test_docks_preserve_work_and_do_not_replace_editor(workspace):
     workspace.show_panel(3)
     assert not workspace.terminal_dock.isHidden()
     assert workspace.stack.currentIndex() == 2
+
     workspace.show_panel(1)
     workspace.show_panel(3)
     assert workspace.voice.draft.toPlainText() == "設計を確認"
     assert workspace.console.toPlainText() == "terminal history"
     assert workspace.stack.currentIndex() == 2
+
+
+@pytest.mark.parametrize("locale", ["en", "ja"])
+def test_brand_button_returns_to_sidebar_without_discarding_work(workspace, monkeypatch, locale):
+    workspace.voice.set_locale(locale)
+    workspace.voice.draft.setPlainText("確認する deployment")
+    workspace.console.setPlainText("existing terminal output")
+    workspace.show_panel(2)
+    editor = workspace.stack.currentWidget()
+    page = workspace.web.page()
+    calls = []
+    monkeypatch.setattr(page, "runJavaScript", lambda script, callback: (calls.append(script), callback(True)))
+    workspace.sidebar_button.click()
+    assert workspace.stack.currentIndex() == 0
+    assert len(calls) == 1 and workspace.sidebar_attempts == 0
+    assert workspace.web.page() is page
+    assert workspace.voice.draft.toPlainText() == "確認する deployment"
+    assert workspace.console.toPlainText() == "existing terminal output"
+    assert workspace.sidebar_button.toolTip() == ("Open workspace sidebar" if locale == "en" else "ワークスペースのサイドバーを開く")
+    workspace.show_panel(2)
+    assert workspace.stack.currentWidget() is editor
+
+
+def test_sidebar_request_retries_loading_but_does_not_interrupt_another_panel(workspace, monkeypatch):
+    callbacks = []
+    monkeypatch.setattr(workspace.web.page(), "runJavaScript", lambda script, callback: callbacks.append(callback))
+    workspace.sidebar_button.click()
+    workspace.sidebar_button.click()
+    assert len(callbacks) == 1
+    callbacks.pop()(False)
+    assert workspace.sidebar_timer.isActive()
+    workspace.sidebar_timer.stop()
+    workspace.show_panel(2)
+    workspace.expand_sidebar()
+    assert not callbacks and workspace.stack.currentIndex() == 2
 
 
 def test_command_palette_search_dispatches_action(workspace):
