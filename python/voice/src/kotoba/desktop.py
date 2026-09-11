@@ -296,7 +296,7 @@ class Window(QMainWindow):
         self.locale_button = switch
         side.addWidget(switch)
         switch.setVisible(not self.embedded)
-        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.6.7", "muted"))
+        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.6.8", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
         content.setSpacing(12)
@@ -670,6 +670,8 @@ class Window(QMainWindow):
         self.job = None
         job.deleteLater()
         self.busy(False)
+        if self.status.text() == self.t("working"):
+            self.status.setText(self.t("ready"))
         continuation, self.after_job = self.after_job, None
         if continuation is not None:
             continuation()

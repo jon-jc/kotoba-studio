@@ -1,6 +1,6 @@
 # Kotoba Studio for Windows
 
-The installer is `python/voice/dist/Kotoba-Studio-0.6.7-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes Python, Qt WebEngine, the complete matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
+The installer is `python/voice/dist/Kotoba-Studio-0.6.8-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes Python, Qt WebEngine, the complete matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
 
 ## Try the application
 
@@ -19,6 +19,10 @@ Japanese/English voice input is supported. The top-right English/Japanese select
 The chat welcome headline is **Create with Kotoba** in English and **ことばを、かたちに。** in Japanese.
 
 Click the top-left **Kotoba Studio** icon or name to return to chat and open its workspace sidebar from any panel. Open code tabs, terminal output, and voice drafts remain available when you return to those panels.
+
+## Code workspace
+
+Click **Code** again or **Close Code** to return to chat; open file tabs are retained. **Esc** closes search first, then the Code page. **Ctrl+W** closes the active file, or returns to chat when no file is open. Explorer shows the selected folder, file tabs support comparison, and the path bar uses workspace-relative paths. **Find in file / Ctrl+F** opens search only when a file is available. The viewer remains read-only.
 
 ## Workspace selection
 

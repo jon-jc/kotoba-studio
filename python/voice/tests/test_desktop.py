@@ -75,6 +75,12 @@ def settle(window):
     assert window.job is None
 
 
+def test_background_refresh_does_not_leave_voice_status_working(window):
+    window.work(lambda emit: None, lambda _: None)
+    settle(window)
+    assert window.status.text() == window.t("ready")
+
+
 @pytest.mark.parametrize("fails", [False, True])
 def test_model_setup_progress_crosses_worker_thread_and_recovers(window, monkeypatch, fails):
     from threading import Event

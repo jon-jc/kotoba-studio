@@ -26,13 +26,23 @@ The desktop combines persistent chat, a voice dock, a file explorer, a code view
 | Repeatable dictation | Global Windows hotkey, paste at cursor, saved phrases, undo, and reviewed agent drafts |
 | Measurable results | Transcription latency, real-time factor, Japanese character error rate, and English word error rate against a supplied reference |
 
-![Kotoba Studio desktop with chat and Voice Studio](assets/brand/kotoba-workspace.png)
+### Chat and voice, side by side
+
+Review a voice draft alongside your agent workspace. This screenshot shows an example draft in the review field; it has not been sent to a provider.
+
+![Kotoba Studio 0.6.8 with English chat and the voice review panel](assets/screenshots/voice-workspace-en.png)
+
+### A clearer view of your code
+
+Browse files, compare tabs, and search when you need it. Click **Code** again, use **Close Code**, or press **Esc** to return to chat without losing your open tabs.
+
+![Kotoba Studio 0.6.8 Code workspace with Explorer, source tabs, and Close Code](assets/screenshots/code-workspace-en.png)
 
 <a id="run"></a>
 
 ## Start on Windows
 
-The desktop build is **Kotoba Studio 0.6.7**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.6.7-Setup.exe` from your build output. The installer includes the desktop application, agent runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
+The desktop build is **Kotoba Studio 0.6.8**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.6.8-Setup.exe` from your build output. The installer includes the desktop application, agent runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
 
 1. **Choose a folder.** Give the agent a working directory for the task.
 2. **Connect a model.** Open **··· → Routing** to configure an API provider, or choose Configure later and open Local models. Register a local model, then select Kotoba Local in the chat composer.
@@ -46,8 +56,10 @@ Voice Studio also offers a separate agent session through **Agent → Ask voice 
 | `Ctrl+K` | Search workspace commands |
 | `Ctrl+Shift+V` | Show or hide Voice Studio |
 | `Ctrl+J` | Show or hide the terminal |
-| `Ctrl+Shift+E` | Open the code explorer |
+| `Ctrl+Shift+E` | Show or hide Code |
 | `Ctrl+F` | Search the selected source file |
+| `Ctrl+W` | Close the active source tab |
+| `Esc` | Close Code search, then return to chat |
 | `Ctrl+Shift+Space` | Start or stop recording |
 
 Close the window to keep Kotoba in the system tray; use its menu to reopen or quit. See [tray behavior and icons](python/voice/README.md#system-tray-and-windows-icons).
@@ -61,6 +73,10 @@ Kotoba Studio は、日本語・英語の音声入力から AI との作業へ�
 音声スタジオで録音元と言語を選び、録音または音声ファイルの読み込みを行います。文字起こしの名前・数字・意図を確認し、必要に応じて修正してください。**チャットに追加** で会話の下書きに追加します。入力欄が未準備の場合はコピーします。確認してから送信してください。
 
 **ローカルモデル** では GGUF ファイルを同梱の CPU エンジンで実行できます。Ollama / LM Studio への接続も可能です。モデルの重みは別途必要です。登録後、チャットのモデル選択で **Kotoba Local** を選びます。再起動後はローカルエンジンを起動し直してください。
+
+![Kotoba Studio 0.6.8 の日本語インターフェースと音声レビュー](assets/screenshots/voice-workspace-ja.png)
+
+上の画像は、送信前に確認するための入力例です。
 
 ## Dictation and meeting notes
 
