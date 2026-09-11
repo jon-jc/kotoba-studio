@@ -13,6 +13,7 @@ import tarfile
 import tempfile
 from types import SimpleNamespace
 import urllib.request
+from .model_progress import ModelProgress
 
 JAPANESE_MODEL = "kotoba-tech/kotoba-whisper-v2.0-faster"
 PARAKEET_MODELS = {
@@ -53,7 +54,7 @@ class ModelDownloadRequired(RuntimeError):
         super().__init__(f"Download speech model: {model}. / 音声モデルを準備してください: {model}")
 
 
-def prepare_parakeet(cache: Path, model: str, allow_download: bool):
+def prepare_parakeet(cache: Path, model: str, allow_download: bool, progress=None):
     directory, digest = PARAKEET_MODELS[model]
     target = cache / directory
     required = ("encoder.int8.onnx", "decoder.int8.onnx", "joiner.int8.onnx", "tokens.txt")
@@ -69,15 +70,20 @@ def prepare_parakeet(cache: Path, model: str, allow_download: bool):
         checksum = hashlib.sha256()
         size = 0
         with urllib.request.urlopen(url, timeout=60) as response, archive.open("wb") as output:
+            total = int(response.headers.get("Content-Length", "0"))
             while chunk := response.read(1024 * 1024):
                 size += len(chunk)
                 if size > 900_000_000:
                     raise ValueError("Speech model exceeds download size limit")
                 output.write(chunk)
                 checksum.update(chunk)
+                if progress:
+                    progress(ModelProgress("downloading", size, total))
         if checksum.hexdigest() != digest:
             raise ValueError("Speech model checksum mismatch")
         extracted = stage / "ready"
+        if progress:
+            progress(ModelProgress("extracting"))
         extracted.mkdir()
         with tarfile.open(archive) as bundle:
             for name in required:

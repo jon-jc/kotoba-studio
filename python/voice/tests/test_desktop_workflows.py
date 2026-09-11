@@ -58,6 +58,52 @@ def test_top_right_locale_preserves_work_and_persists(workspace):
     assert window.locale_toggle.isEnabled()
 
 
+def test_voice_tabs_and_routes_require_deliberate_selection(workspace):
+    from PySide6.QtCore import QPoint, QPointF, Qt
+    from PySide6.QtGui import QWheelEvent
+    from PySide6.QtTest import QTest
+    from PySide6.QtWidgets import QApplication
+
+    voice = workspace.voice
+    workspace.show()
+    workspace.show_panel(1)
+    QApplication.processEvents()
+    bar = voice.tabs.tabBar()
+    voice.tabs.setCurrentIndex(1)
+    # Isolate selection behavior from live provider discovery and agent requests.
+    voice.agent_provider.blockSignals(True)
+    voice.agent_model.blockSignals(True)
+    for combo in (voice.agent_provider, voice.agent_model):
+        combo.setEnabled(True)
+        combo.clear()
+        combo.addItems(["First", "Second", "Third"])
+        combo.setCurrentIndex(1)
+
+    for control in (bar, voice.agent_provider, voice.agent_model):
+        for focused in (False, True):
+            control.setFocus() if focused else control.clearFocus()
+            for delta in (-120, 120):
+                event = QWheelEvent(QPointF(10, 10), QPointF(control.mapToGlobal(QPoint(10, 10))),
+                    QPoint(), QPoint(0, delta), Qt.NoButton, Qt.NoModifier,
+                    Qt.ScrollUpdate, False)
+                QApplication.sendEvent(control, event)
+                assert control.currentIndex() == 1
+
+    QTest.mouseClick(bar, Qt.LeftButton, pos=bar.tabRect(0).center())
+    assert voice.tabs.currentIndex() == 0
+    QTest.keyClick(bar, Qt.Key_Right)
+    assert voice.tabs.currentIndex() == 1
+    voice.tabs.setCurrentIndex(0)
+    for combo in (voice.agent_provider, voice.agent_model):
+        combo.showPopup()
+        QApplication.processEvents()
+        QTest.keyClick(combo.view(), Qt.Key_Down)
+        QTest.keyClick(combo.view(), Qt.Key_Return)
+        assert combo.currentIndex() == 2
+        QTest.keyClick(combo, Qt.Key_Up)
+        assert combo.currentIndex() == 1
+
+
 def test_phrase_expansion_undo_and_reviewed_handoff(workspace):
     from PySide6.QtWidgets import QApplication
     voice = workspace.voice

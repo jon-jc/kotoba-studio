@@ -1,6 +1,6 @@
 # Kotoba Studio for Windows
 
-The installer is `python/voice/dist/Kotoba-Studio-0.6.4-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes Python, Qt WebEngine, the complete matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
+The installer is `python/voice/dist/Kotoba-Studio-0.6.5-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes Python, Qt WebEngine, the complete matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
 
 ## Try the application
 
@@ -19,6 +19,8 @@ Japanese/English voice input is supported. The top-right English/Japanese select
 ## Workspace selection
 
 **Add workspace** opens a folder browser inside the app from both the expanded sidebar and the collapsed icon rail. Enter a path with the pencil control or browse folders, then select **Open**. The desktop composes the browse backend and its matching interface through a packaged profile overlay; the automatic native picker is disabled for this launch. This avoids an unowned OS chooser appearing behind the desktop window. English and Japanese labels follow the language selector.
+
+The voice panel tabs and closed dropdowns keep their selection while scrolling. Click a tab or open a dropdown to choose an option; keyboard navigation remains available.
 
 ## Motion and recovery
 

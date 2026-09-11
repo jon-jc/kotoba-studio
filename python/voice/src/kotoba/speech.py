@@ -82,7 +82,10 @@ class SpeechEngine:
         self._key = None
         self.cloud = None
 
-    def prepare(self, config: SpeechConfig, allow_download=True):
+    def prepare(self, config: SpeechConfig, allow_download=True, progress=None):
+        from .model_progress import ModelProgress, download_whisper
+        if progress:
+            progress(ModelProgress("checking"))
         if config.processing == "cloud":
             if self.cloud is None:
                 raise RuntimeError("Configure cloud speech in Audio settings first. / 音声設定でクラウドを設定してください。")
@@ -94,7 +97,10 @@ class SpeechEngine:
             self._model = None
             self._key = None
             if factory is None and config.model in PARAKEET_MODELS:
-                self._model = ParakeetRecognizer(prepare_parakeet(self.cache, config.model, allow_download))
+                path = prepare_parakeet(self.cache, config.model, allow_download, progress)
+                if progress:
+                    progress(ModelProgress("loading"))
+                self._model = ParakeetRecognizer(path)
                 self._key = key
                 return
             if factory is None:
@@ -103,8 +109,13 @@ class SpeechEngine:
                 factory = WhisperModel
                 from huggingface_hub.errors import LocalEntryNotFoundError
                 try:
-                    model_path = Path(config.model) if Path(config.model).is_dir() else Path(download_model(
-                        config.model, cache_dir=str(self.cache), local_files_only=not allow_download))
+                    if Path(config.model).is_dir():
+                        model_path = Path(config.model)
+                    elif progress:
+                        model_path = Path(download_whisper(config.model, self.cache, allow_download, progress))
+                    else:
+                        model_path = Path(download_model(config.model, cache_dir=str(self.cache),
+                                                         local_files_only=not allow_download))
                 except LocalEntryNotFoundError as error:
                     raise ModelDownloadRequired(config.model) from error
                 # faster-whisper otherwise fetches a fallback tokenizer even in
@@ -114,6 +125,8 @@ class SpeechEngine:
                 model_name = str(model_path)
             else:
                 model_name = config.model
+            if progress:
+                progress(ModelProgress("loading"))
             self._model = factory(model_name, device=config.device,
                                   compute_type=config.compute_type, download_root=str(self.cache),
                                   local_files_only=not allow_download)
