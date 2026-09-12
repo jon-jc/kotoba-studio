@@ -87,7 +87,7 @@ export const japanese: Record<string, Record<string, string>> = {
     'stats.dialog.toolTime': 'ツールの処理時間', 'stats.dialog.ttft': '最初のトークンまでの平均時間（TTFT）',
     'stats.dialog.speed': '出力速度（TPS）', 'chat.loadingHistory': '履歴を読み込み中…',
     'chat.loadError': '履歴を読み込めませんでした：{message}（{code}）', 'chat.loadOlder': '以前の履歴を読み込む',
-    'chat.toBottom': '一番下へ', 'chat.deepDiving': '考えています…', 'chat.turnNavigation.label': 'ターンの移動',
+    'chat.toBottom': '一番下へ', 'chat.deepDiving': 'アイデアをかたちに…', 'chat.turnNavigation.label': 'ターンの移動',
     'chat.turnNavigation.jump': 'ターン {turn} に移動', 'chat.turnNavigation.jumpLoad': 'ターン {turn} を読み込んで移動',
     'chat.turnNavigation.turn': 'ターン {turn}', 'settings.transcript.title': '会話の表示',
     'settings.transcript.description': '完了したターンの処理内容の表示方法', 'settings.transcript.normal': '標準',
