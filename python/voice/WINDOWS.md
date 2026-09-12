@@ -1,6 +1,6 @@
 # Kotoba Studio for Windows
 
-The installer is `python/voice/dist/Kotoba-Studio-0.7.3-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes Python, Qt WebEngine, the complete matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
+The installer is `python/voice/dist/Kotoba-Studio-0.8.0-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes Python, Qt WebEngine, the complete matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
 
 ## Try the application
 
@@ -63,3 +63,19 @@ Open **Local models** and select a compatible GGUF instruction model. **Start / 
 **ローカルモデル** 画面で GGUF を選択すると、同梱の CPU エンジンで実行できます。モデルの重みは別途用意してください。登録後、チャットのモデル選択で **Kotoba Local** を選びます。アプリの再起動後はエンジンを再度起動してください。
 
 Kotoba Studio starts without the upstream Internal Testing Notice. Provider setup remains available; choose Configure later to use the Local models page.
+
+## English–Japanese team handoffs
+
+Open **Team handoffs** from the workspace **···** menu or **Ctrl+K** command center. In **Meetings & notes**, **Bilingual handoff** copies the selected meeting into a separate local handoff. Later meeting edits do not update that copy. Create a handoff directly for messages, release notes, or development context.
+
+Keep the original context and team terminology in **Context**, edit the English and Japanese versions in **Bilingual brief**, and track decisions, actions, and questions with owners, explicit dates/timezones, progress, and individual review marks. Changes to wording or responsibility reset the corresponding review mark; changing the source or glossary resets all review marks. Unspecified owners and deadlines stay unspecified. Work items are local records and do not execute tasks.
+
+**AI assistant → Prepare AI request** puts a request in the existing Voice agent draft. Close the handoff window, select the provider/model in Voice, review the request, and send it explicitly. Paste the JSON reply into the handoff's AI assistant tab and import it as an unreviewed draft. This is a manual exchange, not automatic translation. The prompt requests no tools; the selected agent still uses its existing access policy. Cloud providers receive the submitted context; a configured local model keeps this generation local. No provider-specific translation quality has been evaluated for this workflow.
+
+Imports check the source/glossary fingerprint, response fields, and exact source quotes before replacing existing briefs and work items with confirmation. Matching quotes provide traceability, not semantic verification. Review names, numbers, uncertainty, and commitments in both languages. Copy or export bilingual Markdown with review labels and original context to share through your team's existing tools. This feature has no remote synchronization, multi-user accounts, or automatic messaging. Handoffs persist in `collaboration.sqlite3` under the Kotoba application data directory; conflicting edits from another window fail instead of overwriting newer data.
+
+### 日本語での引き継ぎ
+
+ワークスペースの **··· → チームの引き継ぎ**、または **Ctrl+K** から開きます。会議のメモ画面の **バイリンガル引き継ぎ** は、選択した会議を独立した引き継ぎにコピーします。その後の会議の変更はコピーに反映されません。原文・用語集、英語と日本語の要約、担当者・期限・進捗を記録し、両言語の内容を確認できます。
+
+AI アシスタントで依頼を作成すると、音声エージェントの下書きに追加されます。この画面を閉じてプロバイダーとモデルを選び、依頼を確認して送信してください。JSON の応答を引き継ぎ画面に貼り付け、未確認の下書きとして取り込みます。自動翻訳ではなく手動の受け渡しです。引用の一致は意味や翻訳精度の保証ではありません。担当者、期日、否定表現、不確かな点を照合してから共有してください。共有はコピーまたは Markdown の書き出しで行い、自動送信・遠隔同期はありません。

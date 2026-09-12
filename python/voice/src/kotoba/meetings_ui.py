@@ -81,7 +81,8 @@ class MeetingsDialog(QDialog):
         actions = QHBoxLayout()
         for en, ja, callback in (("☆ Highlight", "☆ 重要事項", self.highlight),
                                  ("Find key points", "重要事項の候補", self.suggest),
-                                 ("Add to agent draft", "エージェントの下書きへ", self.handoff)):
+                                 ("Add to agent draft", "エージェントの下書きへ", self.handoff),
+                                 ("Bilingual handoff", "バイリンガル引き継ぎ", self.bilingual_handoff)):
             button = QPushButton(self.tr(en, ja))
             button.clicked.connect(callback)
             actions.addWidget(button)
@@ -220,6 +221,13 @@ class MeetingsDialog(QDialog):
                 self.store.highlight(row['id'])
             self.render()
             self.state.setText(self.tr("Keyword-based suggestions · review before using as decisions or tasks", "キーワードによる候補です · 決定事項やタスクにする前に確認してください"))
+
+    def bilingual_handoff(self):
+        if self.selected:
+            from .collaboration import CollaborationStore
+            meeting, _ = self.store.read(self.selected)
+            identity = CollaborationStore(self.voice.home / "collaboration.sqlite3").create(meeting["title"], self.store.markdown(self.selected))
+            self.voice.open_collaboration(identity)
 
     def handoff(self):
         if self.selected:

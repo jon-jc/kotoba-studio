@@ -302,7 +302,7 @@ class Window(QMainWindow):
         self.locale_button = switch
         side.addWidget(switch)
         switch.setVisible(not self.embedded)
-        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.7.3", "muted"))
+        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.8.0", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
         content.setSpacing(12)
@@ -631,6 +631,12 @@ class Window(QMainWindow):
             self.global_toggle.setChecked(False)
             self.global_toggle.blockSignals(False)
             self.failure(str(error))
+
+    def open_collaboration(self, identity=None):
+        from .collaboration_ui import CollaborationDialog
+        dialog = CollaborationDialog(self, identity)
+        dialog.exec()
+        dialog.deleteLater()
 
     def open_meetings(self):
         from .meetings_ui import MeetingsDialog

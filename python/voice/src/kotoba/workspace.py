@@ -164,6 +164,8 @@ class Workspace(QMainWindow):
             action = self.workspace_menu.addAction(outline_icon(("routing", "plugins", "models")[index - 4]), "")
             action.triggered.connect(lambda checked=False, i=index: self.show_panel(i))
             self.workspace_actions.append(action)
+        self.team_action = self.workspace_menu.addAction("Team handoffs / チームの引き継ぎ")
+        self.team_action.triggered.connect(lambda: self.voice.open_collaboration())
         self.workspace_menu.addSeparator()
         self.reduce_motion = self.workspace_menu.addAction("Reduce motion / 動きを減らす")
         self.reduce_motion.setCheckable(True)
@@ -214,7 +216,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         status.addWidget(self.locale_scope)
         status.addSpacing(18)
-        status.addWidget(QLabel("Kotoba Studio  0.7.3"))
+        status.addWidget(QLabel("Kotoba Studio  0.8.0"))
         outer.addWidget(statusbar)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(self.selected_panel)
@@ -337,6 +339,9 @@ class Workspace(QMainWindow):
             item = QListWidgetItem(translate(key, self.voice.locale))
             item.setData(Qt.UserRole, index)
             actions.addItem(item)
+        team = QListWidgetItem("Team handoffs" if self.voice.locale == "en" else "チームの引き継ぎ")
+        team.setData(Qt.UserRole, "team")
+        actions.addItem(team)
         actions.setCurrentRow(0)
         layout.addWidget(actions)
         def filter_actions(text):
@@ -349,8 +354,12 @@ class Workspace(QMainWindow):
                     break
         def activate(item):
             if item is not None and not item.isHidden():
-                self.show_panel(item.data(Qt.UserRole))
+                target = item.data(Qt.UserRole)
                 dialog.accept()
+                if target == "team":
+                    self.voice.open_collaboration()
+                else:
+                    self.show_panel(target)
         query.textChanged.connect(filter_actions)
         query.returnPressed.connect(lambda: activate(actions.currentItem()))
         actions.itemActivated.connect(activate)

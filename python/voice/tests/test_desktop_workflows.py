@@ -560,3 +560,27 @@ def test_voice_prefers_configured_provider_without_carrying_old_model(workspace)
     voice.preferences.setValue("voice/model_provider", "openai")
     voice.apply_routes(routes)
     assert voice.model == "custom-openai-model"
+
+
+def test_team_handoffs_workspace_entry_and_meeting_copy(workspace, monkeypatch):
+    from kotoba.collaboration import CollaborationStore
+    from kotoba.meetings_ui import MeetingsDialog
+    seen = []
+    monkeypatch.setattr(workspace.voice, "open_collaboration", lambda identity=None: seen.append(identity))
+    workspace.team_action.trigger()
+    assert seen == [None]
+    identity = workspace.voice.meeting_store.create("Bilingual planning")
+    workspace.voice.meeting_store.notes(identity, "QA approval is pending. QA の承認待ちです。")
+    workspace.voice.meeting_store.finish(identity)
+    dialog = MeetingsDialog(workspace.voice)
+    try:
+        dialog.selected = identity
+        dialog.bilingual_handoff()
+        _, document = CollaborationStore(workspace.voice.home / "collaboration.sqlite3").read(seen[-1])
+        assert document["title"] == "Bilingual planning"
+        assert "QA の承認待ちです。" in document["source"]
+        workspace.voice.meeting_store.notes(identity, "Edited after import")
+        assert "Edited after import" not in document["source"]
+    finally:
+        dialog.close()
+        dialog.deleteLater()
