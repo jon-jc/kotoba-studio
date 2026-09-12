@@ -30,25 +30,25 @@ The desktop combines persistent chat, a voice dock, a file explorer, a code view
 | Repeatable dictation | Global Windows hotkey, paste at cursor, saved phrases, undo, and reviewed agent drafts |
 | Measurable results | Transcription latency, real-time factor, Japanese character error rate, and English word error rate against a supplied reference |
 
-These screenshots show the running 0.7.1 app. Chat and voice drafts are manually entered, unsent examples, not transcription results or generated responses.
+These screenshots show the running 0.7.3 app with **OpenAI → GPT-6 Astra** selected in chat and voice. The provider dropdown lists only configured providers; the adjacent model dropdown shows models for the selected provider. Chat and voice drafts are manually entered, unsent examples, not transcription results or generated responses.
 
 ### Multiple agents, independent conversations
 
 Use **+ New agent** or **Ctrl+T** to open another retained chat. Choose its provider and model in its own composer: OpenAI, Claude, Kimi, DeepSeek, and local routes can work in parallel. The left-hand chat list keeps one conversation visible at a time. Select a chat to make it the destination for reviewed voice input. Rows show the model, running activity, and background completion, with the full provider/model in the tooltip. Double-click a row to name the task. **Ctrl+Tab** and **Ctrl+Shift+Tab** switch chats. Closing a view leaves saved sessions and running agents on the host; confirm before discarding a view with an unsent draft. Separate browser storage preserves each open view's session selection across restarts. Agents sharing a workspace can edit the same files; use separate folders for conflicting work.
 
-![Kotoba Studio 0.7.1 with independent agents in the left sidebar](assets/screenshots/agents-workspace-en.png)
+![Kotoba Studio 0.7.3 with independent agents in the left sidebar](assets/screenshots/agents-workspace-en.png)
 
 ### Chat and voice, side by side
 
 Review a voice draft alongside your agent workspace. This screenshot shows an example draft in the review field; it has not been sent to a provider.
 
-![Kotoba Studio 0.7.1 with English chat and the voice review panel](assets/screenshots/voice-workspace-en.png)
+![Kotoba Studio 0.7.3 with English chat and the voice review panel](assets/screenshots/voice-workspace-en.png)
 
 ### A clearer view of your code
 
 Browse files, compare tabs, and search when you need it. Click **Code** again, use **Close Code**, or press **Esc** to return to chat without losing your open tabs.
 
-![Kotoba Studio 0.7.1 Code workspace with Explorer, source tabs, and Close Code](assets/screenshots/code-workspace-en.png)
+![Kotoba Studio 0.7.3 Code workspace with Explorer, source tabs, and Close Code](assets/screenshots/code-workspace-en.png)
 
 <a id="run"></a>
 
@@ -121,7 +121,7 @@ Kotoba Studio は、日本語と英語の音声入力、AI エージェント、
 
 **＋ 新しいエージェント** または **Ctrl+T** でチャットを追加し、ワークスペースとモデルを選択してください。検索、名前のダブルクリックによる変更、**Ctrl+Tab** での切り替えに対応しています。**履歴とワークスペース** から保存済みの会話を開き、**エージェントに戻る** で一覧に戻れます。同じファイルへの編集が競合しそうな場合は、作業フォルダーを分けてください。
 
-![Kotoba Studio 0.7.1：日本語のエージェント一覧と送信前の下書き](assets/screenshots/agents-workspace-ja.png)
+![Kotoba Studio 0.7.3：日本語のエージェント一覧と送信前の下書き](assets/screenshots/agents-workspace-ja.png)
 
 ### 音声を確認して、次のアクションへ
 
@@ -129,15 +129,15 @@ Kotoba Studio は、日本語と英語の音声入力、AI エージェント、
 
 名前・数字・意図を確認して修正し、**チャットに追加** で選択中の会話の下書きに入れます。内容を確認してから送信してください。デスクトップ音声入力を有効にすると、**Ctrl+Shift+Space** でカーソル位置に入力できます。会議とノートの機能では、時刻付きの文字起こし、重要箇所、検索できるメモを残せます。詳しくは[音声ワークフロー](python/voice/VOICE.md)をご覧ください。
 
-![Kotoba Studio 0.7.1：日本語の音声スタジオと会議後のタスク整理の入力例](assets/screenshots/voice-workspace-ja.png)
+![Kotoba Studio 0.7.3：日本語の音声スタジオと会議後のタスク整理の入力例](assets/screenshots/voice-workspace-ja.png)
 
 ### コードとツールを、同じアプリで
 
 ファイル一覧、ソースコードのタブ、検索、PowerShell ターミナルを利用できます。**コード** を再度クリックするか、**コードを閉じる** または **Esc** で会話に戻れます。Harness のツール、権限、スキル、ワークフロー、サブエージェント、Cordis プラグインも利用できます。
 
-![Kotoba Studio 0.7.1：日本語のコード画面と Python ソースのタブ](assets/screenshots/code-workspace-ja.png)
+![Kotoba Studio 0.7.3：日本語のコード画面と Python ソースのタブ](assets/screenshots/code-workspace-ja.png)
 
-画像は 0.7.1 の実際のアプリ画面です。チャットと音声欄の文章は手入力した未送信の例であり、文字起こし結果や AI の生成結果ではありません。
+画像は 0.7.3 の実際のアプリ画面です。会話と音声エージェントには **OpenAI → GPT-6 Astra** を選択しています。プロバイダーの一覧には設定済みの接続先のみを表示し、隣のモデル一覧からその接続先のモデルを選べます。チャットと音声欄の文章は手入力した未送信の例であり、文字起こし結果や AI の生成結果ではありません。
 
 ### Windows で始める
 
