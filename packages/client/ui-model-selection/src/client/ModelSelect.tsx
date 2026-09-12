@@ -96,6 +96,8 @@ export function ModelSelect(
     ], [reasoning, t])
   const providerLabel = state.groups.find(group => group.id === state.current?.provider)?.name
     ?? state.current?.provider ?? t('provider.select')
+  const visibleGroups = state.groups.filter(group => group.configured === true
+    && (pane === 'provider' || group.id === state.current?.provider))
   const busy = state.status === 'selecting'
 
   const reload = (): void => {
@@ -332,7 +334,7 @@ export function ModelSelect(
                 </div>
               ))}
               <div className={clsx(css.groups, 'scrollable')}>
-                {state.groups.filter(group => pane === 'provider' || group.id === state.current?.provider).map((group) => {
+                {visibleGroups.map((group) => {
                   const headingId = `${id}-${group.id}`
                   if (pane === 'provider') {
                     const selected = group.id === state.current?.provider
@@ -385,7 +387,7 @@ export function ModelSelect(
                   )
                 })}
               </div>
-              {state.status === 'ready' && choices.length === 0 && (
+              {state.status === 'ready' && visibleGroups.length === 0 && (
                 <div className={css.empty}>{t('empty.models')}</div>
               )}
             </>

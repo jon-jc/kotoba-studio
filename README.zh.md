@@ -30,31 +30,31 @@
 | 可重复的听写流程 | Windows 全局快捷键、光标位置粘贴、保存短语、撤销和经审阅的智能体草稿 |
 | 可测量的结果 | 转录延迟、实时因子，以及针对所提供参考文本计算日语字符错误率和英语词错误率 |
 
-截图来自运行中的 0.7.1 应用。聊天和语音草稿均为手动输入且未发送的示例，并非转写结果或生成的回答。
+截图来自运行中的 0.7.3 应用，聊天和语音均已选择 **OpenAI → GPT-6 Astra**。提供商菜单仅显示已配置的提供商；旁边的模型菜单显示所选提供商的模型。聊天和语音草稿均为手动输入且未发送的示例，并非转写结果或生成的回答。
 
 ### 多个智能体，独立会话
 
 使用 **+ New agent** 或 **Ctrl+T** 打开另一个保留状态的聊天窗口。在各自输入栏选择提供商和模型：OpenAI、Claude、Kimi、DeepSeek 和本地路由可以并行工作。左侧聊天列表每次显示一个会话。选择聊天后，已审阅的语音输入将发送到该会话。列表显示模型、运行状态和后台完成提示，悬浮提示显示完整提供商与模型。双击列表项可命名任务。**Ctrl+Tab** 和 **Ctrl+Shift+Tab** 切换聊天。关闭视图后，已保存会话和运行中的智能体仍保留在主机上；丢弃包含未发送草稿的视图前需要确认。独立浏览器存储在重启后保留各视图的会话选择。共享工作目录的智能体可能编辑相同文件；存在冲突的任务请使用不同目录。
 
-![Kotoba Studio 0.7.1：左侧的独立智能体列表](assets/screenshots/agents-workspace-en.png)
+![Kotoba Studio 0.7.3：左侧的独立智能体列表](assets/screenshots/agents-workspace-en.png)
 
 ### 聊天与语音并排显示
 
 在智能体工作区旁审阅语音草稿。截图展示审阅框中的示例草稿，尚未发送给提供方。
 
-![Kotoba Studio 0.7.1 英语聊天与语音审阅面板](assets/screenshots/voice-workspace-en.png)
+![Kotoba Studio 0.7.3 英语聊天与语音审阅面板](assets/screenshots/voice-workspace-en.png)
 
 ### 更清晰地查看代码
 
 浏览文件、比较标签页，并在需要时搜索。再次点击 **Code**、使用 **Close Code** 或按 **Esc** 返回聊天，已打开的标签页会保留。
 
-![Kotoba Studio 0.7.1 代码工作区、资源管理器、源码标签与关闭按钮](assets/screenshots/code-workspace-en.png)
+![Kotoba Studio 0.7.3 代码工作区、资源管理器、源码标签与关闭按钮](assets/screenshots/code-workspace-en.png)
 
 <a id="run"></a>
 
 ## 在 Windows 上开始
 
-桌面版本为 **Kotoba Studio 0.7.2**，是面向 Windows x64 的未签名开发预览版。从构建输出安装 `Kotoba-Studio-0.7.2-Setup.exe`。安装包包含桌面应用、智能体运行时、音频捕获助手和 CPU 推理引擎。语音与语言模型权重单独提供。构建和验证安装包的方法见 [Windows 指南](python/voice/WINDOWS.md)。
+桌面版本为 **Kotoba Studio 0.7.3**，是面向 Windows x64 的未签名开发预览版。从构建输出安装 `Kotoba-Studio-0.7.3-Setup.exe`。安装包包含桌面应用、智能体运行时、音频捕获助手和 CPU 推理引擎。语音与语言模型权重单独提供。构建和验证安装包的方法见 [Windows 指南](python/voice/WINDOWS.md)。
 
 1. **选择文件夹。** 为任务指定智能体的工作目录。
 2. **连接模型。** 在 **··· → Routing** 中配置 API 提供方，或选择 Configure later 后打开 Local models。注册本地模型后，在聊天输入框中选择 Kotoba Local。
@@ -121,7 +121,7 @@ Kotoba Studio は、日本語と英語の音声入力、AI エージェント、
 
 **＋ 新しいエージェント** または **Ctrl+T** でチャットを追加し、ワークスペースとモデルを選択してください。検索、名前のダブルクリックによる変更、**Ctrl+Tab** での切り替えに対応しています。**履歴とワークスペース** から保存済みの会話を開き、**エージェントに戻る** で一覧に戻れます。同じファイルへの編集が競合しそうな場合は、作業フォルダーを分けてください。
 
-![Kotoba Studio 0.7.1：日本語のエージェント一覧と送信前の下書き](assets/screenshots/agents-workspace-ja.png)
+![Kotoba Studio 0.7.3：日本語のエージェント一覧と送信前の下書き](assets/screenshots/agents-workspace-ja.png)
 
 ### 音声を確認して、次のアクションへ
 
@@ -129,19 +129,19 @@ Kotoba Studio は、日本語と英語の音声入力、AI エージェント、
 
 名前・数字・意図を確認して修正し、**チャットに追加** で選択中の会話の下書きに入れます。内容を確認してから送信してください。デスクトップ音声入力を有効にすると、**Ctrl+Shift+Space** でカーソル位置に入力できます。会議とノートの機能では、時刻付きの文字起こし、重要箇所、検索できるメモを残せます。詳しくは[音声ワークフロー](python/voice/VOICE.md)をご覧ください。
 
-![Kotoba Studio 0.7.1：日本語の音声スタジオと会議後のタスク整理の入力例](assets/screenshots/voice-workspace-ja.png)
+![Kotoba Studio 0.7.3：日本語の音声スタジオと会議後のタスク整理の入力例](assets/screenshots/voice-workspace-ja.png)
 
 ### コードとツールを、同じアプリで
 
 ファイル一覧、ソースコードのタブ、検索、PowerShell ターミナルを利用できます。**コード** を再度クリックするか、**コードを閉じる** または **Esc** で会話に戻れます。Harness のツール、権限、スキル、ワークフロー、サブエージェント、Cordis プラグインも利用できます。
 
-![Kotoba Studio 0.7.1：日本語のコード画面と Python ソースのタブ](assets/screenshots/code-workspace-ja.png)
+![Kotoba Studio 0.7.3：日本語のコード画面と Python ソースのタブ](assets/screenshots/code-workspace-ja.png)
 
-画像は 0.7.1 の実際のアプリ画面です。チャットと音声欄の文章は手入力した未送信の例であり、文字起こし結果や AI の生成結果ではありません。
+画像は 0.7.3 の実際のアプリ画面です。会話と音声エージェントには **OpenAI → GPT-6 Astra** を選択しています。プロバイダーの一覧には設定済みの接続先のみを表示し、隣のモデル一覧からその接続先のモデルを選べます。チャットと音声欄の文章は手入力した未送信の例であり、文字起こし結果や AI の生成結果ではありません。
 
 ### Windows で始める
 
-現在のデスクトップ版は **0.7.2**、Windows x64 向けの未署名の開発者プレビューです。[Windows パッケージ作成ガイド](python/voice/WINDOWS.md)に従って `Kotoba-Studio-0.7.2-Setup.exe` を作成できます。インストーラーには、デスクトップアプリ、エージェントの実行環境、音声キャプチャー、CPU 推論エンジンが含まれます。モデルの重みは別途ダウンロードするか、手元のファイルを登録してください。
+現在のデスクトップ版は **0.7.3**、Windows x64 向けの未署名の開発者プレビューです。[Windows パッケージ作成ガイド](python/voice/WINDOWS.md)に従って `Kotoba-Studio-0.7.3-Setup.exe` を作成できます。インストーラーには、デスクトップアプリ、エージェントの実行環境、音声キャプチャー、CPU 推論エンジンが含まれます。モデルの重みは別途ダウンロードするか、手元のファイルを登録してください。
 
 1. **作業フォルダーを選ぶ。** エージェントが作業するフォルダーを指定します。
 2. **モデルを接続する。** **··· → 接続** で OpenAI、Anthropic Claude、Kimi、DeepSeek、またはカスタムの接続先を設定します。ローカルで使う場合は **ローカル AI** で GGUF モデルを登録してエンジンを起動し、会話の入力欄で **Kotoba Local** を選びます。Ollama と LM Studio にも接続できます。

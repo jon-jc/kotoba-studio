@@ -302,7 +302,7 @@ class Window(QMainWindow):
         self.locale_button = switch
         side.addWidget(switch)
         switch.setVisible(not self.embedded)
-        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.7.2", "muted"))
+        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.7.3", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
         content.setSpacing(12)

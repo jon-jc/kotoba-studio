@@ -36,6 +36,7 @@ function state(overrides: Partial<ModelDirectoryState> = {}): ModelDirectoryStat
     groups: [{
       id: 'deepseek-official',
       name: 'DeepSeek',
+      configured: true,
       models: [{
         id: 'deepseek-v4-flash',
         name: 'DeepSeek-V4-Flash',
@@ -171,6 +172,7 @@ describe('ModelSelect reasoning effort', () => {
     const groups = [{
       id: 'deepseek-official',
       name: 'DeepSeek',
+      configured: true,
       models: [
         { id: 'deepseek-v4-flash', name: 'DeepSeek-V4-Flash', reasoning },
         { id: 'deepseek-v4-pro', name: 'DeepSeek-V4-Pro' },
@@ -255,7 +257,8 @@ describe('ModelSelect reasoning effort', () => {
 it('separates per-chat providers from their models and preserves another chat selection', async () => {
   const groups = [
     { id: 'openai', name: 'OpenAI', configured: true, models: [{ id: 'gpt-a', name: 'GPT A' }, { id: 'gpt-b', name: 'GPT B' }] },
-    ...state().groups,
+    ...state().groups.map(group => ({ ...group, configured: false })),
+    { id: 'unknown', name: 'Unknown', models: [{ id: 'unknown-model', name: 'Unknown model' }] },
   ]
   const directory = createSnapshotStore(state({ groups }))
   const otherChat = createSnapshotStore(state({ groups }))
@@ -265,7 +268,7 @@ it('separates per-chat providers from their models and preserves another chat se
   })
   render(<ModelSelect available locked={false} directory={directory} load={vi.fn()} select={select} t={t} />)
   fireEvent.click(screen.getByRole('button', { name: /选择 API/ }))
-  expect(screen.getAllByRole('menuitemradio').map(row => row.textContent)).toEqual(['OpenAI已配置', 'DeepSeek'])
+  expect(screen.getAllByRole('menuitemradio').map(row => row.textContent)).toEqual(['OpenAI已配置'])
   fireEvent.click(screen.getByRole('menuitemradio', { name: /OpenAI/ }))
   await waitFor(() => { expect(screen.queryByRole('menu')).toBeNull() })
   expect(select).toHaveBeenCalledWith({ provider: 'openai', model: 'gpt-a' })
@@ -277,4 +280,13 @@ it('separates per-chat providers from their models and preserves another chat se
   fireEvent.click(screen.getByRole('button', { name: /选择 API/ }))
   fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' })
   expect(screen.queryByRole('menu')).toBeNull()
+})
+
+
+it('shows an empty menu when no provider is configured', () => {
+  const directory = createSnapshotStore(state({ groups: state().groups.map(group => ({ ...group, configured: false })) }))
+  render(<ModelSelect available locked={false} directory={directory} load={vi.fn()} select={vi.fn()} t={t} />)
+  fireEvent.click(screen.getByRole('button', { name: /选择 API/ }))
+  expect(screen.queryByRole('menuitemradio')).toBeNull()
+  expect(screen.getByText('没有可用的模型。')).toBeTruthy()
 })
