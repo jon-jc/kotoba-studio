@@ -8,6 +8,7 @@ def load_routes(url):
     registered = remote.call("llm/listProviders", {})
     catalog = remote.call("session/modelCatalog", {})
     groups = {group["id"]: group["models"] for group in catalog["groups"]}
+    readiness = {group["id"]: group.get("configured", True) for group in catalog["groups"]}
     directory = remote.call("llm/listConfigurableProviders", {})
     namespaces = {item["ns"]: item["value"] for item in remote.call("settings/describe", {})["namespaces"]}
     entries = {item["provider"]: item for item in directory}
@@ -19,12 +20,11 @@ def load_routes(url):
             profile = profile.get(part, {}) if isinstance(profile, dict) else {}
         ref = profile.get("apiKeyEnv", "") if isinstance(profile, dict) else ""
         routes.append({"id": provider["id"], "name": provider["name"], "key_ref": ref,
-                       "configured": True,
+                       "configured": readiness.get(provider["id"], True),
                        "models": groups.get(provider["id"], [])})
     active = {route["id"] for route in routes}
     for entry in directory:
         if entry["provider"] not in active:
             routes.append({"id": entry["provider"], "name": entry["displayName"], "key_ref": "",
                            "configured": False, "models": []})
-    preferred = ["openai", "anthropic", "moonshotai", "deepseek-official", "kotoba-local"]
-    return sorted(routes, key=lambda r: (preferred.index(r["id"]) if r["id"] in preferred else len(preferred), r["name"]))
+    return sorted(routes, key=lambda route: not route["configured"])

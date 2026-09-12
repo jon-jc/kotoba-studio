@@ -10,6 +10,10 @@
 
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
+  'provider.select': '选择 API 提供商',
+  'provider.aria': '选择 API 提供商，当前 {provider}',
+  'provider.ready': '已配置',
+  'provider.setup': '需要设置',
   'command.description': '选择本会话使用的模型',
   'option.loadError': '目录加载失败：{message}',
   'trigger.fallback': '选择模型',
@@ -35,6 +39,10 @@ export type ModelKey = keyof typeof zh
 
 /** English dictionary, checked complete against the zh key set. */
 export const en = {
+  'provider.select': 'Select API provider',
+  'provider.aria': 'Select API provider, current {provider}',
+  'provider.ready': 'Configured',
+  'provider.setup': 'Setup required',
   'command.description': 'Select the model for this conversation',
   'option.loadError': 'Catalog failed to load: {message}',
   'trigger.fallback': 'Select model',

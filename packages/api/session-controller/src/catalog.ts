@@ -1,6 +1,8 @@
 /** Shared projection of the live LLM registry into the browser model catalog. */
 
 import type { Context } from '@deepseek-ai/cordis'
+import type { CredentialRef } from '@deepseek-ai/dsh-credentials'
+import type {} from '@deepseek-ai/dsh-settings'
 import type {
   ModelCatalog,
   ModelReasoning,
@@ -18,8 +20,28 @@ export async function buildModelCatalog(
   defaultSelection: ModelSelection = ctx.agentDefaultModel.currentSelection(),
 ): Promise<ModelCatalog> {
   const providers = ctx.llm.listProviders()
+  const directory = ctx.llm.listConfigurableProviders()
+  const settings = ctx.get('settings')
+  const credentials = ctx.get('credentials')
   const catalog = await Promise.all(providers.map(async (provider) => {
     try {
+      let configured: boolean | undefined
+      const declared = directory.find(entry => entry.provider === provider.id)
+      if (declared !== undefined && settings !== undefined) {
+        let profile = settings.get(declared.settingsNs)
+        for (const part of declared.settingsPath) {
+          profile = typeof profile === 'object' && profile !== null
+            ? (profile as Record<string, unknown>)[part] : undefined
+        }
+        if (typeof profile === 'object' && profile !== null) {
+          const ref = (profile as Record<string, unknown>).apiKeyEnv
+          if (typeof ref !== 'string' || ref.length === 0) configured = true
+          else if (credentials !== undefined) {
+            try { configured = (await credentials.describe(ref as CredentialRef)).configured }
+            catch { /* Credential availability is unknown; keep the catalog usable. */ }
+          }
+        } else configured = false
+      }
       const models = await ctx.llm.listModels(provider.id)
       const entries = await Promise.all(models.map(async (model) => {
         const resolved = await ctx.llm.resolveModelInfo(provider.id, model.id)
@@ -44,7 +66,7 @@ export async function buildModelCatalog(
       }))
       return {
         kind: 'group' as const,
-        group: { id: provider.id, name: provider.name, models: entries },
+        group: { id: provider.id, name: provider.name, models: entries, ...configured === undefined ? {} : { configured } },
       }
     } catch (error) {
       return {
@@ -61,7 +83,8 @@ export async function buildModelCatalog(
     default: { ...defaultSelection },
     routableProviders: providers.map(provider => provider.id),
     groups: catalog.flatMap(item => item.kind === 'group' ? [item.group] : [])
-      .filter(group => group.models.length > 0),
+      .filter(group => group.models.length > 0)
+      .sort((a, b) => Number(b.configured === true) - Number(a.configured === true)),
     failures: catalog.flatMap(item => item.kind === 'failure' ? [item.failure] : []),
   }
 }

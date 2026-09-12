@@ -80,8 +80,8 @@ def test_missing_whisper_cache_has_actionable_setup_error(tmp_path, monkeypatch)
 def test_catalog_joins_configured_custom_and_unconfigured_routes(monkeypatch):
     from kotoba.voice_routes import load_routes
     responses = {
-        "llm/listProviders": [{"id":"custom", "name":"Private Gateway"}],
-        "session/modelCatalog": {"groups":[{"id":"custom", "models":[{"id":"voice-agent"}]}]},
+        "llm/listProviders": [{"id":"deepseek-official", "name":"DeepSeek"}, {"id":"custom", "name":"Private Gateway"}],
+        "session/modelCatalog": {"groups":[{"id":"deepseek-official", "configured":False, "models":[{"id":"deepseek-model"}]}, {"id":"custom", "models":[{"id":"voice-agent"}]}]},
         "llm/listConfigurableProviders": [
             {"provider":"custom", "settingsNs":"llm-pi-ai", "settingsPath":["providers", "custom"]},
             {"provider":"openai", "displayName":"OpenAI"}],
@@ -92,9 +92,10 @@ def test_catalog_joins_configured_custom_and_unconfigured_routes(monkeypatch):
         def call(self, method, args): return responses[method]
     monkeypatch.setattr("kotoba.voice_routes.HarnessRemote", Remote)
     routes = load_routes("fixture")
-    assert routes[0]["id"] == "openai" and routes[0]["configured"] is False
-    assert routes[1]["models"] == [{"id":"voice-agent"}]
-    assert routes[1]["key_ref"] == "CUSTOM_KEY"
+    assert routes[2]["id"] == "openai" and routes[2]["configured"] is False
+    assert routes[1]["id"] == "deepseek-official" and routes[1]["configured"] is False
+    assert routes[0]["models"] == [{"id":"voice-agent"}]
+    assert routes[0]["key_ref"] == "CUSTOM_KEY"
 
 
 @pytest.mark.parametrize("provider,ref", [("openai","OPENAI_API_KEY"), ("anthropic","ANTHROPIC_API_KEY"), ("moonshotai","MOONSHOT_API_KEY"), ("custom","GATEWAY_KEY")])

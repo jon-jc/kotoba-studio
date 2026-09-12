@@ -136,7 +136,6 @@ describe('ModelSelect reasoning effort', () => {
     expect(trigger.textContent).toContain('deepseek-official/removed-model')
     fireEvent.click(trigger)
     expect(screen.queryByRole('menuitem', { name: /推理等级/ })).toBeNull()
-    fireEvent.click(screen.getByRole('menuitem', { name: /模型/ }))
     expect(screen.queryByRole('menuitemradio', { name: 'removed-model' })).toBeNull()
     expect(screen.getByRole('menuitemradio', { name: 'DeepSeek-V4-Flash' })).toBeTruthy()
     expect(screen.queryByText('Fast catalog description')).toBeNull()
@@ -191,8 +190,7 @@ describe('ModelSelect reasoning effort', () => {
       t={t}
     />)
 
-    fireEvent.click(screen.getByRole('button', { name: /选择模型|当前/ }))
-    fireEvent.click(screen.getByRole('menuitem', { name: /模型/ }))
+    fireEvent.click(screen.getByRole('button', { name: /选择模型/ }))
     fireEvent.click(screen.getByRole('menuitemradio', { name: /DeepSeek-V4-Pro/ }))
     const toast = await screen.findByRole('alert')
     expect(toast.textContent).toContain('模型操作失败：session/model-unavailable: session already contains images')
@@ -251,4 +249,32 @@ describe('ModelSelect reasoning effort', () => {
     expect(screen.queryByRole('button')).toBeNull()
     expect(load).not.toHaveBeenCalled()
   })
+})
+
+
+it('separates per-chat providers from their models and preserves another chat selection', async () => {
+  const groups = [
+    { id: 'openai', name: 'OpenAI', configured: true, models: [{ id: 'gpt-a', name: 'GPT A' }, { id: 'gpt-b', name: 'GPT B' }] },
+    ...state().groups,
+  ]
+  const directory = createSnapshotStore(state({ groups }))
+  const otherChat = createSnapshotStore(state({ groups }))
+  const select = vi.fn(async (current: ModelSelection) => {
+    directory.set(state({ groups, current }))
+    return true
+  })
+  render(<ModelSelect available locked={false} directory={directory} load={vi.fn()} select={select} t={t} />)
+  fireEvent.click(screen.getByRole('button', { name: /选择 API/ }))
+  expect(screen.getAllByRole('menuitemradio').map(row => row.textContent)).toEqual(['OpenAI已配置', 'DeepSeek'])
+  fireEvent.click(screen.getByRole('menuitemradio', { name: /OpenAI/ }))
+  await waitFor(() => { expect(screen.queryByRole('menu')).toBeNull() })
+  expect(select).toHaveBeenCalledWith({ provider: 'openai', model: 'gpt-a' })
+  fireEvent.click(screen.getByRole('button', { name: /选择模型/ }))
+  expect(screen.getAllByRole('menuitemradio').map(row => row.textContent)).toEqual(['GPT A', 'GPT B'])
+  fireEvent.click(screen.getByRole('menuitemradio', { name: 'GPT B' }))
+  await waitFor(() => { expect(directory.getSnapshot().current?.model).toBe('gpt-b') })
+  expect(otherChat.getSnapshot().current?.provider).toBe('deepseek-official')
+  fireEvent.click(screen.getByRole('button', { name: /选择 API/ }))
+  fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' })
+  expect(screen.queryByRole('menu')).toBeNull()
 })

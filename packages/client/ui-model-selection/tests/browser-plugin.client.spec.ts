@@ -15,7 +15,7 @@ import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
 import { createSnapshotStore, type SnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { TestRemote } from '@deepseek-ai/dsh-client-test-runtime'
-import type { ModelSelection, ModelSelectionProjection } from '@deepseek-ai/dsh-api-session-controller/types'
+import type { ModelProviderGroup, ModelSelection, ModelSelectionProjection } from '@deepseek-ai/dsh-api-session-controller/types'
 import type { CommandContribution, SelectOption } from '@deepseek-ai/dsh-client-ui-commands/client'
 import type { ModelSelectInjected } from '../src/client/slots.ts'
 import { apply, inject } from '../src/client/index.ts'
@@ -55,7 +55,7 @@ const GROUPS = [{
 }]
 
 /** Boot the plugin over fake faces + a stateful fake host (current moves on selectModel). */
-async function bench() {
+async function bench(groups: readonly ModelProviderGroup[] = GROUPS) {
   const ctx = new Context()
   let defaultSelection: ModelSelection = { provider: 'deepseek-official', model: 'deepseek-v4-flash' }
   let selected = defaultSelection
@@ -72,7 +72,7 @@ async function bench() {
         value: {
           default: defaultSelection,
           routableProviders: routable ? ['deepseek-official'] : [],
-          groups: GROUPS,
+          groups,
           failures: [],
         },
       })
@@ -388,4 +388,24 @@ describe('ui-model-selection dual entry', () => {
     await Promise.resolve()
     expect(b.calls).toEqual({ models: 2, select: 0 })
   })
+})
+
+
+it('chooses a configured default only for a fresh chat and keeps explicit selections separate', async () => {
+  const b = await bench([
+    { id: 'openai', name: 'OpenAI', configured: true, models: [{ id: 'gpt-fixture', name: 'GPT fixture' }] },
+    { ...GROUPS[0]!, configured: false },
+  ])
+  try {
+    b.mint('fresh')
+    b.mint('explicit')
+    b.setProjected(sid('explicit'), { lastUsed: null, next: { provider: 'deepseek-official', model: 'private-model' } })
+    const fresh = b.seat().inject!(sid('fresh'))
+    const explicit = b.seat().inject!(sid('explicit'))
+    await b.ctx.modelDirectories.directoryFor(sid('fresh')).load()
+    await b.ctx.modelDirectories.directoryFor(sid('explicit')).load()
+    expect(fresh.directory.getSnapshot().current).toEqual({ provider: 'openai', model: 'gpt-fixture' })
+    expect(explicit.directory.getSnapshot().current).toEqual({ provider: 'deepseek-official', model: 'private-model' })
+    expect(b.calls.select).toBe(1)
+  } finally { await b.ctx.fiber.dispose() }
 })

@@ -1,16 +1,4 @@
-/**
- * ModelSelect: the composer's named model seat (`conversation.input.model`).
- * Two-level selection per figma 496:26454's MenuDropdown: the root menu is
- * the Model / Effort row pair (label + current value + a right chevron),
- * each drilling into its own list — the provider-grouped model list over
- * the shared directory, and the effort levels. The trigger (313:14108's
- * ToggleButton) shows both: model name + effort in the caption tone.
- * Data and submission ride the SAME per-session ModelDirectory as the
- * /model popup; exact-model reasoning metadata and the selected effort come
- * from the Host rather than a client-owned vocabulary. A rejected selection
- * announces through the shared transient Toast anchored to the composer
- * card; the in-menu strip with Retry remains the catalog-load surface.
- */
+/** Per-chat provider and model controls backed by the shared session directory. */
 import {
   useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore,
   type CSSProperties, type KeyboardEvent, type FocusEvent,
@@ -26,8 +14,8 @@ import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ModelSelectInjected } from './slots.ts'
 import css from './ModelSelect.module.css'
 
-/** Which pane the dropdown shows: the two-row root or one drilled-in list. */
-type Pane = 'root' | 'model' | 'effort'
+/** The independently anchored provider/model lists and model effort sub-menu. */
+type Pane = 'provider' | 'model' | 'effort'
 
 /** One dynamic effort row; undefined means preserve the provider default. */
 interface EffortChoice {
@@ -54,7 +42,7 @@ export function ModelSelect(
     () => directory.getSnapshot(),
   )
   const [open, setOpen] = useState(false)
-  const [pane, setPane] = useState<Pane>('root')
+  const [pane, setPane] = useState<Pane>('model')
   // The in-menu error strip serves catalog loads (its Retry re-runs the
   // load); a rejected SELECTION announces through the transient toast
   // instead, so the strip renders only while the latest failure-capable
@@ -64,6 +52,8 @@ export function ModelSelect(
   const toastSeq = useRef(0)
   const rootRef = useRef<HTMLDivElement | null>(null)
   const triggerRef = useRef<HTMLButtonElement | null>(null)
+  const providerRef = useRef<HTMLButtonElement | null>(null)
+  const anchorRef = useRef<HTMLButtonElement | null>(null)
   const menuRef = useRef<HTMLDivElement | null>(null)
   const [menuPos, setMenuPos] = useState<CSSProperties | null>(null)
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
@@ -104,6 +94,8 @@ export function ModelSelect(
         label: effort.name,
       })),
     ], [reasoning, t])
+  const providerLabel = state.groups.find(group => group.id === state.current?.provider)?.name
+    ?? state.current?.provider ?? t('provider.select')
   const busy = state.status === 'selecting'
 
   const reload = (): void => {
@@ -134,7 +126,7 @@ export function ModelSelect(
     if (!open) { setMenuPos(null); return }
     const place = (): void => {
       /* v8 ignore next 2 -- the trigger ref is attached whenever the menu is open. */
-      const rect = triggerRef.current?.getBoundingClientRect()
+      const rect = anchorRef.current?.getBoundingClientRect()
       if (rect === undefined) return
       const MARGIN = 12
       const lw = menuRef.current?.offsetWidth ?? 0
@@ -159,16 +151,17 @@ export function ModelSelect(
 
   if (!available) return null
 
-  const show = (): void => {
-    setPane('root')
+  const show = (nextPane: Pane = 'model'): void => {
+    anchorRef.current = nextPane === 'provider' ? providerRef.current : triggerRef.current
+    setPane(nextPane)
     setOpen(true)
     reload()
   }
 
   const close = (restoreFocus = false): void => {
     setOpen(false)
-    setPane('root')
-    if (restoreFocus) queueMicrotask(() => { triggerRef.current?.focus() })
+    setPane('model')
+    if (restoreFocus) queueMicrotask(() => { anchorRef.current?.focus() })
   }
 
   const moveFocus = (offset: number): void => {
@@ -182,8 +175,8 @@ export function ModelSelect(
   const onRootKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     if (event.key === 'Escape' && open) {
       event.preventDefault()
-      // Escape backs out of a drilled pane first, then closes.
-      if (pane !== 'root') setPane('root')
+      // Return from effort options to the model list, otherwise dismiss.
+      if (pane === 'effort') setPane('model')
       else close(true)
       return
     }
@@ -262,17 +255,32 @@ export function ModelSelect(
     <div ref={rootRef} className={css.root} onKeyDown={onRootKeyDown} onBlur={onBlur}
       data-kotoba-provider={state.current?.provider ?? ''} data-kotoba-model={state.current?.model ?? ''}>
       <button
+        ref={providerRef}
+        type="button"
+        className={clsx(css.trigger, css.providerTrigger)}
+        aria-label={t('provider.aria', { provider: providerLabel })}
+        aria-haspopup="menu"
+        aria-expanded={open && pane === 'provider'}
+        aria-controls={open && pane === 'provider' ? `${id}-menu` : undefined}
+        disabled={locked || busy}
+        title={providerLabel}
+        onClick={() => { if (open && pane === 'provider') close(); else show('provider') }}
+      >
+        <span className={css.triggerLabel}>{providerLabel}</span>
+        <IconChevronDownOutline14 className={clsx(css.chevron, open && pane === 'provider' && css.chevronOpen)} />
+      </button>
+      <button
         ref={triggerRef}
         type="button"
         className={css.trigger}
         aria-label={triggerAria}
         aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={open ? `${id}-menu` : undefined}
+        aria-expanded={open && pane !== 'provider'}
+        aria-controls={open && pane !== 'provider' ? `${id}-menu` : undefined}
         title={triggerLabel}
-        disabled={locked}
+        disabled={locked || busy}
         onClick={() => {
-          if (open) {
+          if (open && pane !== 'provider') {
             close()
           } else {
             show()
@@ -282,7 +290,7 @@ export function ModelSelect(
         <IconDataOutline16 className={css.triggerIcon} size={16} />
         <span className={css.triggerLabel}>{modelLabel}</span>
         {effortLabel !== undefined && <span className={css.triggerEffort}>{effortLabel}</span>}
-        <IconChevronDownOutline14 className={clsx(css.chevron, open && css.chevronOpen)} />
+        <IconChevronDownOutline14 className={clsx(css.chevron, open && pane !== 'provider' && css.chevronOpen)} />
       </button>
 
       {/* Portaled to body (Menu primitive's portal mode) so the sidebar and
@@ -295,28 +303,19 @@ export function ModelSelect(
           className={css.menu}
           style={menuPos ?? MEASURE_STYLE}
           role="menu"
-          aria-label={t('menu.aria')}
+          aria-label={pane === 'provider' ? t('provider.select') : t('menu.aria')}
           aria-busy={state.status === 'loading' || busy}
         >
-          {pane === 'root' && (
+          {(pane === 'model' || pane === 'provider') && (
             <>
-              <button ref={itemRef()} type="button" role="menuitem" className={css.cell} onClick={() => { setPane('model') }}>
-                <span className={css.cellLabel}>{t('menu.model')}</span>
-                <span className={css.cellValue}>{modelLabel}</span>
-                <IconChevronRightOutline14 className={css.cellChevron} />
-              </button>
-              {reasoning !== undefined && (
-                <button ref={itemRef()} type="button" role="menuitem" className={css.cell} onClick={() => { setPane('effort') }}>
+              {pane === 'model' && reasoning !== undefined && (
+                <button ref={itemRef()} type="button" role="menuitem" className={css.cell}
+                  onClick={() => { setPane('effort') }}>
                   <span className={css.cellLabel}>{t('menu.effort')}</span>
                   <span className={css.cellValue}>{effortLabel}</span>
                   <IconChevronRightOutline14 className={css.cellChevron} />
                 </button>
               )}
-            </>
-          )}
-
-          {pane === 'model' && (
-            <>
               {state.status === 'loading' && (
                 <div className={css.status}>{t('status.loading')}</div>
               )}
@@ -333,8 +332,29 @@ export function ModelSelect(
                 </div>
               ))}
               <div className={clsx(css.groups, 'scrollable')}>
-                {state.groups.map((group) => {
+                {state.groups.filter(group => pane === 'provider' || group.id === state.current?.provider).map((group) => {
                   const headingId = `${id}-${group.id}`
+                  if (pane === 'provider') {
+                    const selected = group.id === state.current?.provider
+                    return (
+                      <button ref={itemRef()} type="button" role="menuitemradio"
+                        aria-checked={selected} key={group.id}
+                        className={clsx(css.option, selected && css.selected)} disabled={busy}
+                        onClick={() => {
+                          const model = group.models[0]
+                          if (selected) close(true)
+                          else if (model !== undefined) choose({ provider: group.id, model: model.id })
+                        }}>
+                        <span className={css.optionCopy}>
+                          <span className={css.modelName}>{group.name}</span>
+                          {group.configured !== undefined && <span className={css.providerStatus}>
+                            {t(group.configured ? 'provider.ready' : 'provider.setup')}
+                          </span>}
+                        </span>
+                        <span className={css.check}>{selected ? <IconCheckOutline16 /> : null}</span>
+                      </button>
+                    )
+                  }
                   return (
                     <section role="group" aria-labelledby={headingId} className={css.group} key={group.id}>
                       <div className={css.groupTitle} id={headingId}>{group.name}</div>

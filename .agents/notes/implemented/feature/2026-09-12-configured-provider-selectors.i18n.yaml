@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-09-12-configured-provider-selectors.md
+2026-09-12-configured-provider-selectors.md: a0ea53a2c0034cd4b90c1ba0cfd23150c22f462b
+2026-09-12-configured-provider-selectors.zh.md: f07f5b11e16b29372ad1cacddbe4d2015798c4eb

@@ -738,3 +738,33 @@ describe('Web session model selection', () => {
     await ctx.fiber.dispose()
   })
 })
+
+
+describe('configured provider priority', () => {
+  it('orders saved credentials first and refreshes readiness without returning secrets', async () => {
+    const { ctx } = await harness()
+    try {
+      ctx.llm.registerAdapter(['openai'], new CatalogAdapter('OpenAI', [
+        { provider: 'openai', id: 'gpt-fixture', name: 'GPT fixture' },
+      ]))
+      vi.spyOn(ctx.llm, 'listConfigurableProviders').mockReturnValue([
+        { provider: 'deepseek-official', displayName: 'DeepSeek', settingsNs: 'fixture', settingsPath: ['deepseek'] },
+        { provider: 'openai', displayName: 'OpenAI', settingsNs: 'fixture', settingsPath: ['openai'] },
+      ])
+      ctx.provide('settings', { get: () => ({ deepseek: { apiKeyEnv: 'DS_KEY' }, openai: { apiKeyEnv: 'CUSTOM_KEY' } }) } as never)
+      const describe = vi.fn(async (ref: string) => ({ configured: ref === 'CUSTOM_KEY' }))
+      ctx.provide('credentials', { describe } as never)
+      const fallback = { provider: 'deepseek-official', model: 'deepseek-chat' }
+      const catalog = await buildModelCatalog(ctx, fallback)
+      expect(catalog.groups.map(group => [group.id, group.configured])).toEqual([
+        ['openai', true], ['deepseek-official', false],
+      ])
+      expect(catalog.default).toEqual(fallback)
+      expect(JSON.stringify(catalog)).not.toContain('CUSTOM_KEY')
+      describe.mockImplementation(async () => ({ configured: false }))
+      expect((await buildModelCatalog(ctx, fallback)).groups[0]?.id).toBe('deepseek-official')
+      describe.mockRejectedValue(new Error('credential store unavailable'))
+      expect((await buildModelCatalog(ctx, fallback)).groups.every(group => group.configured === undefined)).toBe(true)
+    } finally { await ctx.fiber.dispose() }
+  })
+})
