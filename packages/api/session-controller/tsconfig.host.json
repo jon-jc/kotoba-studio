@@ -23,6 +23,8 @@
   ],
   "references": [
     { "path": "../../../vendor/cordis" },
+    { "path": "../../credentials/credentials" },
+    { "path": "../../settings/settings" },
     { "path": "../../../vendor/schemastery" },
     { "path": "../../core/agent" },
     { "path": "../../core/agent-default-model" },

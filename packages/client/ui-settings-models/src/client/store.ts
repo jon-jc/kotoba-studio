@@ -236,6 +236,7 @@ export class ModelsSettingsStore {
           ...derived === undefined ? {} : { derivedCredential: derived },
         }
       })
+      s.rows = [...s.rows].sort((a, b) => Number(providerUsable(b)) - Number(providerUsable(a)))
       s.namespaces = namespaces
     })
   }

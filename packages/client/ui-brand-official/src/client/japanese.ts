@@ -31,6 +31,9 @@ export const japanese: Record<string, Record<string, string>> = {
     'connection.restart': '自動再接続中。クリックして再試行',
   },
   model: {
+    'provider.select': 'API プロバイダーを選択',
+    'provider.aria': 'API プロバイダーを選択、現在 {provider}',
+    'provider.ready': '設定済み', 'provider.setup': '設定が必要',
     'command.description': 'この会話で使用するモデルを選択', 'option.loadError': '一覧を読み込めませんでした：{message}',
     'trigger.fallback': 'モデルを選択', 'trigger.loading': 'モデルを読み込み中…', 'trigger.selectAria': 'モデルを選択',
     'trigger.aria': 'モデルを選択、現在：{model}', 'trigger.ariaEffort': 'モデルを選択、現在：{model}、推論レベル：{effort}',

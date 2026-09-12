@@ -543,3 +543,20 @@ def test_reduced_motion_persists_and_updates_embedded_chat(workspace):
 
 def test_chat_loading_background_matches_dark_shell(workspace):
     assert workspace.web.page().backgroundColor().name() == "#191a1e"
+
+
+def test_voice_prefers_configured_provider_without_carrying_old_model(workspace):
+    voice = workspace.voice
+    voice.provider = "deepseek-official"
+    voice.model = "deepseek-v4-flash"
+    voice.api_key = ""
+    routes = [
+        {"id": "openai", "name": "OpenAI", "configured": True, "models": [{"id": "gpt-fixture"}]},
+        {"id": "deepseek-official", "name": "DeepSeek", "configured": False, "models": [{"id": "deepseek-v4-flash"}]},
+    ]
+    voice.apply_routes(routes)
+    assert voice.provider == "openai" and voice.model == "gpt-fixture"
+    voice.model = "custom-openai-model"
+    voice.preferences.setValue("voice/model_provider", "openai")
+    voice.apply_routes(routes)
+    assert voice.model == "custom-openai-model"

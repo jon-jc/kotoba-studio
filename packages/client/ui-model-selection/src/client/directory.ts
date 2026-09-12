@@ -74,8 +74,22 @@ export class ModelDirectory {
    */
   async load(): Promise<ModelDirectoryState> {
     this.assertAvailable()
+    const generation = this.generation
     await this.catalog.load()
     this.syncInputs()
+    const projected = modelSelectionProjection(this.projected.getSnapshot())
+    const state = this.store.getSnapshot()
+    // Only replace an unconfigured deployment default in an untouched chat.
+    // Explicit session choices and selections made during the load take precedence.
+    if (!this.disposed && generation === this.generation && projected?.next === null
+      && projected.lastUsed === null && state.status === 'ready'
+      && state.groups.find(group => group.id === state.current?.provider)?.configured === false) {
+      const provider = state.groups.find(group => group.configured === true && group.models.length > 0)
+      const model = provider?.models[0]
+      if (provider !== undefined && model !== undefined) {
+        await this.select({ provider: provider.id, model: model.id })
+      }
+    }
     return this.store.getSnapshot()
   }
 

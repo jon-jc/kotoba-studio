@@ -188,11 +188,17 @@ class Window(QMainWindow):
 
     def apply_routes(self, routes):
         self.routes = routes
+        preferred_id = self.provider
+        current = next((route for route in routes if route["id"] == self.provider), None)
+        if not self.api_key and (current is None or not current["configured"]):
+            preferred = next((route for route in routes if route["configured"] and route["models"]), None)
+            if preferred is not None:
+                preferred_id = preferred["id"]
         self.agent_provider.blockSignals(True)
         self.agent_provider.clear()
         for route in routes:
             self.agent_provider.addItem(route["name"], route["id"])
-        self.agent_provider.setCurrentIndex(self.agent_provider.findData(self.provider))
+        self.agent_provider.setCurrentIndex(self.agent_provider.findData(preferred_id))
         self.agent_provider.blockSignals(False)
         if self.agent_provider.currentIndex() >= 0:
             self.select_provider()
@@ -296,7 +302,7 @@ class Window(QMainWindow):
         self.locale_button = switch
         side.addWidget(switch)
         switch.setVisible(not self.embedded)
-        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.7.1", "muted"))
+        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.7.2", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
         content.setSpacing(12)

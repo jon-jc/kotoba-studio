@@ -128,6 +128,8 @@ export interface ModelCatalogModel {
 
 /** One provider and its successfully loaded model catalog. */
 export interface ModelProviderGroup {
+  /** Saved credential or keyless configuration is present; omitted when readiness is unknown. */
+  readonly configured?: boolean
   readonly id: string
   readonly name: string
   readonly models: readonly ModelCatalogModel[]

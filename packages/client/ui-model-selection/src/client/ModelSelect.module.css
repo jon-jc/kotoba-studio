@@ -1,4 +1,7 @@
 .root {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   position: relative;
   min-width: 0;
 }
@@ -290,4 +293,18 @@
 .cellChevron {
   flex: 0 0 auto;
   color: var(--dsw-alias-label-tertiary);
+}
+
+.providerTrigger {
+  max-width: min(140px, 20cqw);
+}
+
+.providerStatus {
+  color: var(--dsw-alias-label-caption);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.providerTrigger .triggerLabel {
+  display: block;
 }
