@@ -29,6 +29,10 @@
   border-right: 0.5px solid var(--dsw-alias-border-l3);
 }
 
+.frame[data-kotoba-roster] > .sidebarCol {
+  visibility: hidden;
+}
+
 .centerCol {
   min-width: 0;
   display: flex;

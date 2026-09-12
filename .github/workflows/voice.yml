@@ -1,10 +1,10 @@
 name: Kotoba voice
 on:
   pull_request:
-    paths: ['python/voice/**', 'python/sdk-runtime/**', 'integrations/**', 'packages/client/modules/**', 'packages/client/ui-settings-models/**', 'packages/client/ui-brand-official/**', 'packages/client/ui-sidebar/**', 'packages/client/ui-workspace/**', 'packages/client/ui-directory-picker-browse/**', 'packages/llm/llm-pi-ai/**', 'packages/preset/agent-presets/**', 'packages/host/directory-picker-native/**', '.gitmodules', '.github/workflows/voice.yml']
+    paths: ['python/voice/**', 'python/sdk-runtime/**', 'integrations/**', 'packages/client/modules/**', 'packages/client/ui-settings-models/**', 'packages/client/ui-brand-official/**', 'packages/client/ui-sidebar/**', 'packages/client/ui-workspace/**', 'packages/client/ui-layout/**', 'packages/client/ui-model-selection/**', 'packages/core/agent-loop/tests/system-prompt-admission.spec.ts', 'packages/client/ui-directory-picker-browse/**', 'packages/llm/llm-pi-ai/**', 'packages/preset/agent-presets/**', 'packages/host/directory-picker-native/**', '.gitmodules', '.github/workflows/voice.yml']
   push:
     branches: [master]
-    paths: ['python/voice/**', 'python/sdk-runtime/**', 'integrations/**', 'packages/client/modules/**', 'packages/client/ui-settings-models/**', 'packages/client/ui-brand-official/**', 'packages/client/ui-sidebar/**', 'packages/client/ui-workspace/**', 'packages/client/ui-directory-picker-browse/**', 'packages/llm/llm-pi-ai/**', 'packages/preset/agent-presets/**', 'packages/host/directory-picker-native/**', '.gitmodules', '.github/workflows/voice.yml']
+    paths: ['python/voice/**', 'python/sdk-runtime/**', 'integrations/**', 'packages/client/modules/**', 'packages/client/ui-settings-models/**', 'packages/client/ui-brand-official/**', 'packages/client/ui-sidebar/**', 'packages/client/ui-workspace/**', 'packages/client/ui-layout/**', 'packages/client/ui-model-selection/**', 'packages/core/agent-loop/tests/system-prompt-admission.spec.ts', 'packages/client/ui-directory-picker-browse/**', 'packages/llm/llm-pi-ai/**', 'packages/preset/agent-presets/**', 'packages/host/directory-picker-native/**', '.gitmodules', '.github/workflows/voice.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -25,6 +25,7 @@ jobs:
       - run: pnpm exec vitest run packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts packages/interaction/permission-presets/tests/permission-presets.spec.ts
       - run: pnpm exec vitest run packages/client/ui-sidebar/tests/sidebar-styles.client.spec.ts packages/client/ui-workspace/tests/workspace-picker.client.spec.tsx packages/client/ui-directory-picker-browse/tests packages/client/ui-theme/tests/elevation-styles.client.spec.ts scripts/sandbox-workflow.spec.ts
       - run: pnpm run verify-translation-pairing
+      - run: pnpm exec vitest run packages/client/ui-layout/tests/app-frame.client.spec.tsx packages/client/ui-model-selection/tests/model-select.client.spec.tsx packages/core/agent-loop/tests/system-prompt-admission.spec.ts
   voice-tests:
     runs-on: windows-latest
     timeout-minutes: 15

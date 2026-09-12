@@ -79,6 +79,8 @@ These limits define the current layout behavior. They are current package constr
 - **Track and panel travel on one shared curve** — the frame's track transition and the occupant's slide read the same duration and easing variables; an occupant that used its own would detach the panel's edge from the conversation's while squeezing.
 - **No scroll anchoring during squeeze reflow** — layout changes may move the reader's viewport.
 
+The desktop reads the selected session ID and running state from the frame’s `data-kotoba-session` and `data-kotoba-running` attributes. They expose presentation state only; session operations stay on the existing controller.
+
 <a id="dev-note"></a>
 ### Dev Note
 

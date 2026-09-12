@@ -81,6 +81,8 @@ These limits define the current model surface. They are current package constrai
 - **Directory names are presentation-only** — selection and persistence use provider/model/effort ids; a provider whose catalog or exact-model metadata lookup fails lists as an unselectable failure row until reload.
 - **No arbitrary effort input** — the composer offers only the exact model's adapter-advertised levels; an adapter without reasoning metadata leaves the Effort row absent.
 
+The composer exposes its current route through `data-kotoba-provider` and `data-kotoba-model` for the desktop agent roster. These attributes contain provider/model identifiers, never credentials. Each seat continues to select through its session’s ModelDirectory.
+
 <a id="dev-note"></a>
 ### Dev Note
 

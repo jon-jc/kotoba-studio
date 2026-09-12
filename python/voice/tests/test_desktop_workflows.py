@@ -58,6 +58,120 @@ def test_top_right_locale_preserves_work_and_persists(workspace):
     assert window.locale_toggle.isEnabled()
 
 
+def test_parallel_chat_views_keep_independent_storage_and_focus(workspace):
+    from PySide6.QtWidgets import QApplication
+    window = workspace
+    first = window.web
+    second = window.chats.add()
+    assert window.web is second
+    assert first.page().profile() is not second.page().profile()
+    assert first.page().profile().persistentStoragePath() != second.page().profile().persistentStoragePath()
+    window.chats.list.setCurrentRow(0)
+    assert window.web is first
+    assert window.chats.entries[1]['view'] is second
+    assert window.chats.pages.count() == 2
+    assert window.chats.pages.currentWidget() is first
+    assert second.isHidden()
+    window.chats.list.setCurrentRow(1)
+    assert window.chats.pages.currentWidget() is second
+    assert first.isHidden()
+    assert not hasattr(window.chats, 'split_button')
+    assert window.web is second
+    window.chats.close_view(1)
+    QApplication.processEvents()
+    assert window.web is first
+    assert len(window.chats.entries) == 1
+
+
+def test_parallel_agent_status_is_independent_and_late_callbacks_are_ignored(workspace):
+    chats = workspace.chats
+    chats.set_locale('en')
+    first = chats.entries[0]
+    chats.add()
+    second = chats.entries[1]
+    for entry, provider in ((first, 'openai'), (second, 'anthropic')):
+        chats.update_state(entry, {'ready': True, 'settled': True, 'session': provider, 'running': True,
+                                  'title': provider, 'provider': provider, 'model': 'test-model'})
+    assert first['running'] and second['running']
+    assert '2 agents running' in chats.context.text()
+    chats.update_state(first, {'ready': True, 'settled': True, 'session': 'openai', 'running': False, 'title': 'Review'})
+    assert first['unread'] and second['running']
+    chats.list.setCurrentRow(0)
+    assert not first['unread']
+    chats.close_view(1)
+    chats.update_state(second, {'running': True, 'title': 'late callback'})
+    assert len(chats.entries) == 1 and not first['running']
+
+
+def test_chat_switch_cancels_pending_voice_paste_and_localizes_all_views(workspace):
+    window = workspace
+    first = window.web
+    window.pending_handoff = object()
+    second = window.chats.add()
+    assert window.pending_handoff is None
+    window.apply_locale('ja')
+    assert '新しいエージェント' in window.chats.add_button.text()
+    for view in (first, second):
+        scripts = view.page().scripts().find('kotoba-language')
+        assert len(scripts) == 1 and '"ja"' in scripts[0].sourceCode()
+
+
+def test_agent_selection_is_saved_only_after_host_list_is_ready(workspace):
+    import json
+    chats = workspace.chats
+    entry = chats.entries[0]
+    chats.update_state(entry, {'ready': True, 'settled': True, 'session': 'retained-session', 'running': True})
+    saved = json.loads(chats.preferences.value('agents/views'))
+    assert saved[0]['session'] == 'retained-session'
+    chats.update_state(entry, {'ready': True, 'settled': False, 'session': '', 'running': False})
+    assert json.loads(chats.preferences.value('agents/views'))[0]['session'] == 'retained-session'
+    scripts = entry['view'].page().scripts().find('kotoba-selection')
+    assert len(scripts) == 1
+    assert 'retained-session' in scripts[0].sourceCode()
+    chats.update_state(entry, {'ready': True, 'settled': True, 'session': '', 'running': False})
+    assert json.loads(chats.preferences.value('agents/views'))[0]['session'] == ''
+
+
+def test_child_selection_retains_its_parent_address(workspace):
+    import json
+    chats = workspace.chats
+    entry = chats.entries[0]
+    address = {'parentSessionId': 'parent', 'childSessionId': 'child', 'mode': 'continuable'}
+    chats.update_state(entry, {'ready': True, 'settled': True, 'session': 'child', 'address': address})
+    saved = json.loads(chats.preferences.value('agents/views'))[0]
+    assert saved['address'] == address
+    script = entry['view'].page().scripts().find('kotoba-selection')[0].sourceCode()
+    assert 'subagentAddress' in script and 'parent' in script
+    assert chats.child_address({**address, 'childSessionId': 'other'}, 'child') is None
+
+
+def test_agent_search_does_not_change_the_active_conversation(workspace):
+    chats = workspace.chats
+    first = chats.entries[0]
+    first['label'] = 'Implementation'
+    chats.add(label='Review')
+    current = workspace.web
+    chats.search.setText('Implementation')
+    assert not chats.list.item(0).isHidden()
+    assert chats.list.item(1).isHidden()
+    assert workspace.web is current
+    chats.search.clear()
+    assert not chats.list.item(1).isHidden()
+
+
+def test_history_replaces_agent_roster_and_returns_without_reloading(workspace):
+    window = workspace
+    page = window.web.page()
+    window.open_sidebar()
+    assert window.chats.history and window.chats.sidebar.isHidden()
+    assert not window.chats.back_button.isHidden()
+    window.chats.back_button.click()
+    assert not window.chats.history and not window.chats.sidebar.isHidden()
+    assert window.web.page() is page
+    scripts = page.scripts().find('kotoba-navigation')
+    assert len(scripts) == 1 and 'agents' in scripts[0].sourceCode()
+
+
 def test_voice_tabs_and_routes_require_deliberate_selection(workspace):
     from PySide6.QtCore import QPoint, QPointF, Qt
     from PySide6.QtGui import QWheelEvent
