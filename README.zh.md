@@ -6,9 +6,13 @@
 
 [English](README.md) | 中文
 
+[中文](#english) · [日本語](#japanese)
+
 面向日语和英语语音输入、AI 对话与开发工作的 Windows 桌面工作空间。从麦克风或应用程序捕获想法，将其变成可编辑的指令，再通过本地模型或云端 API 与智能体协作。
 
 [开始使用](#run) · [语音与本地模型](python/voice/README.md) · [Windows 打包](python/voice/WINDOWS.md) · [日本語](#japanese)
+
+<a id="english"></a>
 
 ## 从语音到行动，在同一个工作空间完成
 
@@ -26,21 +30,25 @@
 | 可重复的听写流程 | Windows 全局快捷键、光标位置粘贴、保存短语、撤销和经审阅的智能体草稿 |
 | 可测量的结果 | 转录延迟、实时因子，以及针对所提供参考文本计算日语字符错误率和英语词错误率 |
 
+截图来自运行中的 0.7.1 应用。聊天和语音草稿均为手动输入且未发送的示例，并非转写结果或生成的回答。
+
 ### 多个智能体，独立会话
 
 使用 **+ New agent** 或 **Ctrl+T** 打开另一个保留状态的聊天窗口。在各自输入栏选择提供商和模型：OpenAI、Claude、Kimi、DeepSeek 和本地路由可以并行工作。左侧聊天列表每次显示一个会话。选择聊天后，已审阅的语音输入将发送到该会话。列表显示模型、运行状态和后台完成提示，悬浮提示显示完整提供商与模型。双击列表项可命名任务。**Ctrl+Tab** 和 **Ctrl+Shift+Tab** 切换聊天。关闭视图后，已保存会话和运行中的智能体仍保留在主机上；丢弃包含未发送草稿的视图前需要确认。独立浏览器存储在重启后保留各视图的会话选择。共享工作目录的智能体可能编辑相同文件；存在冲突的任务请使用不同目录。
+
+![Kotoba Studio 0.7.1：左侧的独立智能体列表](assets/screenshots/agents-workspace-en.png)
 
 ### 聊天与语音并排显示
 
 在智能体工作区旁审阅语音草稿。截图展示审阅框中的示例草稿，尚未发送给提供方。
 
-![Kotoba Studio 0.6.8 英语聊天与语音审阅面板](assets/screenshots/voice-workspace-en.png)
+![Kotoba Studio 0.7.1 英语聊天与语音审阅面板](assets/screenshots/voice-workspace-en.png)
 
 ### 更清晰地查看代码
 
 浏览文件、比较标签页，并在需要时搜索。再次点击 **Code**、使用 **Close Code** 或按 **Esc** 返回聊天，已打开的标签页会保留。
 
-![Kotoba Studio 0.6.8 代码工作区、资源管理器、源码标签与关闭按钮](assets/screenshots/code-workspace-en.png)
+![Kotoba Studio 0.7.1 代码工作区、资源管理器、源码标签与关闭按钮](assets/screenshots/code-workspace-en.png)
 
 <a id="run"></a>
 
@@ -57,6 +65,7 @@ Voice Studio 的 **Agent → Ask voice agent** 还提供独立的智能体会话
 
 | 快捷键 | 操作 |
 | --- | --- |
+| `Ctrl+T` / `Ctrl+Tab` | 新建智能体 / 切换聊天 |
 | `Ctrl+K` | 搜索工作空间命令 |
 | `Ctrl+Shift+V` | 显示或隐藏 Voice Studio |
 | `Ctrl+J` | 显示或隐藏终端 |
@@ -67,20 +76,6 @@ Voice Studio 的 **Agent → Ask voice agent** 还提供独立的智能体会话
 | `Ctrl+Shift+Space` | 开始或停止录音 |
 
 关闭窗口后 Kotoba 保留在系统托盘；可从托盘菜单重新打开或退出。参阅[托盘行为与图标](python/voice/README.md#system-tray-and-windows-icons)。
-
-<a id="japanese"></a>
-
-## 日本語で使う
-
-Kotoba Studio は、日本語・英語の音声入力から AI との作業へつなぐ Windows アプリです。右上の **English / 日本語** で、デスクトップと主要なチャット操作の表示言語を切り替えられます。会話本文やコードは翻訳しません。
-
-音声スタジオで録音元と言語を選び、録音または音声ファイルの読み込みを行います。文字起こしの名前・数字・意図を確認し、必要に応じて修正してください。**チャットに追加** で会話の下書きに追加します。入力欄が未準備の場合はコピーします。確認してから送信してください。
-
-**ローカルモデル** では GGUF ファイルを同梱の CPU エンジンで実行できます。Ollama / LM Studio への接続も可能です。モデルの重みは別途必要です。登録後、チャットのモデル選択で **Kotoba Local** を選びます。再起動後はローカルエンジンを起動し直してください。
-
-![Kotoba Studio 0.6.8 の日本語インターフェースと音声レビュー](assets/screenshots/voice-workspace-ja.png)
-
-上の画像は、送信前に確認するための入力例です。
 
 ## 听写与会议笔记
 
@@ -111,3 +106,66 @@ Kotoba Studio は、日本語・英語の音声入力から AI との作業へ�
 Kotoba Studio 基于真实的 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 运行时和插件架构构建。音频捕获与保存短语的集成取自 [OpenWhispr](https://github.com/OpenWhispr/openwhispr)；本地原生推理使用 [llama.cpp](https://github.com/ggml-org/llama.cpp)。在兼容性、提供方选择和署名需要的地方保留上游标识。
 
 [MIT 许可证](LICENSE) · [第三方声明](THIRD_PARTY_NOTICES.md) · [随包许可证](python/voice/THIRD_PARTY_LICENSES)
+
+---
+
+<a id="japanese"></a>
+
+## 日本語 — 声から、開発へ。
+
+Kotoba Studio は、日本語と英語の音声入力、AI エージェント、開発作業を一つにまとめた Windows デスクトップアプリです。ローカルモデルやクラウド API を選び、複数のエージェントを独立したチャットで動かせます。音声で伝えた内容は、送信前に確認・編集できます。
+
+### 複数のエージェントを、左の一覧で管理
+
+左側の一覧から、作業したいチャットを選びます。チャットごとに下書きとモデルを管理し、別のエージェントはバックグラウンドで実行を続けられます。実行中・完了の状態も一覧で確認できます。
+
+**＋ 新しいエージェント** または **Ctrl+T** でチャットを追加し、ワークスペースとモデルを選択してください。検索、名前のダブルクリックによる変更、**Ctrl+Tab** での切り替えに対応しています。**履歴とワークスペース** から保存済みの会話を開き、**エージェントに戻る** で一覧に戻れます。同じファイルへの編集が競合しそうな場合は、作業フォルダーを分けてください。
+
+![Kotoba Studio 0.7.1：日本語のエージェント一覧と送信前の下書き](assets/screenshots/agents-workspace-ja.png)
+
+### 音声を確認して、次のアクションへ
+
+**音声** を開き、マイク、システム音声、アプリの音声、または音声ファイルを選びます。ローカルで文字起こしを行う前に、**音声設定 → モデルを準備** でモデルをダウンロードしてください。英語は NVIDIA Parakeet、日本語は Kotoba-Whisper が初期設定です。ほかの Whisper モデルも選べます。
+
+名前・数字・意図を確認して修正し、**チャットに追加** で選択中の会話の下書きに入れます。内容を確認してから送信してください。デスクトップ音声入力を有効にすると、**Ctrl+Shift+Space** でカーソル位置に入力できます。会議とノートの機能では、時刻付きの文字起こし、重要箇所、検索できるメモを残せます。詳しくは[音声ワークフロー](python/voice/VOICE.md)をご覧ください。
+
+![Kotoba Studio 0.7.1：日本語の音声スタジオと会議後のタスク整理の入力例](assets/screenshots/voice-workspace-ja.png)
+
+### コードとツールを、同じアプリで
+
+ファイル一覧、ソースコードのタブ、検索、PowerShell ターミナルを利用できます。**コード** を再度クリックするか、**コードを閉じる** または **Esc** で会話に戻れます。Harness のツール、権限、スキル、ワークフロー、サブエージェント、Cordis プラグインも利用できます。
+
+![Kotoba Studio 0.7.1：日本語のコード画面と Python ソースのタブ](assets/screenshots/code-workspace-ja.png)
+
+画像は 0.7.1 の実際のアプリ画面です。チャットと音声欄の文章は手入力した未送信の例であり、文字起こし結果や AI の生成結果ではありません。
+
+### Windows で始める
+
+現在のデスクトップ版は **0.7.1**、Windows x64 向けの未署名の開発者プレビューです。[Windows パッケージ作成ガイド](python/voice/WINDOWS.md)に従って `Kotoba-Studio-0.7.1-Setup.exe` を作成できます。インストーラーには、デスクトップアプリ、エージェントの実行環境、音声キャプチャー、CPU 推論エンジンが含まれます。モデルの重みは別途ダウンロードするか、手元のファイルを登録してください。
+
+1. **作業フォルダーを選ぶ。** エージェントが作業するフォルダーを指定します。
+2. **モデルを接続する。** **··· → 接続** で OpenAI、Anthropic Claude、Kimi、DeepSeek、またはカスタムの接続先を設定します。ローカルで使う場合は **ローカル AI** で GGUF モデルを登録してエンジンを起動し、会話の入力欄で **Kotoba Local** を選びます。Ollama と LM Studio にも接続できます。
+3. **会話または音声入力を始める。** チャットごとにモデルを選びます。ローカル録音の前に音声モデルを準備し、文字起こしを確認してから送信してください。
+
+| ショートカット | 操作 |
+| --- | --- |
+| `Ctrl+T` / `Ctrl+Tab` | エージェントを追加 / チャットを切り替え |
+| `Ctrl+K` | コマンドを検索 |
+| `Ctrl+Shift+V` | 音声スタジオを表示・非表示 |
+| `Ctrl+Shift+E` / `Ctrl+J` | コード / ターミナルを表示・非表示 |
+| `Ctrl+F` / `Ctrl+W` | コード内を検索 / ソースのタブを閉じる |
+| `Ctrl+Shift+Space` | 録音を開始・停止 |
+
+ウィンドウを閉じると、Kotoba はシステムトレイで動作を続けます。トレイのメニューから再表示・終了できます。更新をインストールする前に終了してください。アプリの再起動後は、ローカルエンジンを起動し直す必要があります。右上の **English / 日本語** は表示言語の切り替えです。会話本文やコードは翻訳しません。
+
+### ローカル処理と、利用上の制約
+
+音声処理はローカルモードで起動します。クラウドでの文字起こしは明示的に選ぶ設定で、クラウドのプロバイダーには送信した内容が渡ります。GGUF モデルは同梱の llama.cpp CPU エンジンで実行し、Ollama と LM Studio はループバック接続に対応します。ローカル処理の失敗時に、クラウドへ自動で切り替えることはありません。エージェントのツールは権限に応じてネットワークを利用できます。
+
+ノート、文字起こし、保存したフレーズ、会話履歴はローカルに暗号化せず保存されます。精度は音声、ハードウェア、タスクによって変わります。日本語の CER・英語の WER は、人が確認した参照文で評価してください。自動字幕を正解として扱わないでください。話者分離、ストリーミング中の割り込み、アプリが管理する GPU 推論、GGUF の自動ダウンロードは未実装です。日本語訳がない拡張機能は英語で表示されます。[デスクトップガイド](python/voice/README.md)と[アクセス権限の説明](SAFETY.zh.md)も参照してください。
+
+### 開発・拡張・貢献
+
+[デスクトップ開発](python/voice/README.md#development)、[アーキテクチャ](docs/architecture.zh.md)、[貢献ガイド](CONTRIBUTING.zh.md)から始められます。Kotoba は [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) の実際の実行環境とプラグイン機構を基盤とし、[OpenWhispr](https://github.com/OpenWhispr/openwhispr) の音声キャプチャー・音声入力の実装を取り入れています。ローカル推論には [llama.cpp](https://github.com/ggml-org/llama.cpp) を使用しています。詳しくは[統合内容の調査](python/voice/INSPECTION.md)をご覧ください。
+
+[MIT ライセンス](LICENSE) · [第三者ライセンス表記](THIRD_PARTY_NOTICES.md) · [同梱ライセンス](python/voice/THIRD_PARTY_LICENSES)
