@@ -2,6 +2,7 @@
 from PySide6.QtCore import QByteArray, Qt
 from PySide6.QtGui import QIcon, QPainter, QPixmap
 from PySide6.QtSvg import QSvgRenderer
+from .branding import icon_path
 
 
 STYLE = """
@@ -36,6 +37,10 @@ QPushButton#command-center {background:#24252c; color:#a3a6b2; border-color:#363
 QPlainTextEdit, QTextBrowser, QLineEdit {background:#202127; border:1px solid #383a45; border-radius:8px; padding:12px; selection-background-color:#455951;}
 QPlainTextEdit:focus, QLineEdit:focus {border-color:#718a7e;}
 QComboBox, QSpinBox {background:#222329; border:1px solid #383a45; border-radius:6px; padding:7px;}
+QComboBox#interface-language {padding:0 6px 0 12px; border-radius:7px;}
+QComboBox#interface-language:hover {background:#282a31; border-color:#656976;}
+QComboBox#interface-language:focus {border-color:#a5cbbb;}
+QComboBox#interface-language::drop-down {subcontrol-origin:padding; subcontrol-position:top right; width:28px; border:0; background:transparent;}
 QComboBox QAbstractItemView {background:#25262d; selection-background-color:#3a4540;}
 QProgressBar {background:#222329; border:1px solid #383a45; border-radius:6px; text-align:center; color:#eceef0;}
 QProgressBar::chunk {background:#466658; border-radius:5px;}
@@ -68,6 +73,8 @@ QMenu::item {padding:9px 28px 9px 12px;}
 QMenu::item:selected {background:#3a3e47;}
 QPushButton::menu-indicator {width:0;}
 """
+
+STYLE += 'QComboBox#interface-language::down-arrow {image:url("' + icon_path().with_name('chevron-down.svg').as_posix() + '");width:12px;height:12px;}'
 
 PATHS = {
     "file": '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/>',
