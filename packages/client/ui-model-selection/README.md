@@ -29,7 +29,7 @@ Mount this plugin alongside `ui-conversation` and the commands package; the comp
 
 ### Model and effort
 
-The provider dropdown lists configured providers first, preserving registration order within each readiness group. The model dropdown shows only the selected provider’s models. A fresh chat with an unconfigured deployment default selects the first configured provider when its directory loads; explicit session choices remain intact. The menu shows model and effort names only; catalog descriptions remain available to other consumers. The `/model` popup applies the selected model's default effort; the composer can then choose any advertised effort. An adapter without reasoning metadata leaves the Effort row absent; there is no arbitrary effort input.
+The provider dropdown lists only configured providers. Providers requiring setup or with unknown readiness remain available in Models settings. The model dropdown shows only the selected provider’s models. A fresh chat with an unconfigured deployment default selects the first configured provider when its directory loads; explicit session choices remain intact. The menu shows model and effort names only; catalog descriptions remain available to other consumers. The `/model` popup applies the selected model's default effort; the composer can then choose any advertised effort. An adapter without reasoning metadata leaves the Effort row absent; there is no arbitrary effort input.
 
 ### Unroutable sessions
 
