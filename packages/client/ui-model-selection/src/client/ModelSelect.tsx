@@ -259,7 +259,8 @@ export function ModelSelect(
   }
 
   return (
-    <div ref={rootRef} className={css.root} onKeyDown={onRootKeyDown} onBlur={onBlur}>
+    <div ref={rootRef} className={css.root} onKeyDown={onRootKeyDown} onBlur={onBlur}
+      data-kotoba-provider={state.current?.provider ?? ''} data-kotoba-model={state.current?.model ?? ''}>
       <button
         ref={triggerRef}
         type="button"

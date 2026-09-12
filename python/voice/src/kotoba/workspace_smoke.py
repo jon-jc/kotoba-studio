@@ -16,6 +16,7 @@ def verify(window):
     state = {"phase": "boot", "pending": False, "done": False}
     evidence = {}
     window.voice.set_locale("en")
+    window.open_sidebar()
     timer = QTimer(window)
     timer.setInterval(150)
     deadline = QTimer(window)

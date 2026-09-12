@@ -23,6 +23,7 @@ from .local_models_ui import LocalModelsPage
 from .design import outline_icon
 from .code_view import SourceTabs, ElidedPath, SourceIcons
 from .motion import Reveal, web_script, system_reduced_motion
+from .agent_workbench import AgentWorkbench
 
 
 class LocalPage(QWebEnginePage):
@@ -123,13 +124,14 @@ class Workspace(QMainWindow):
         main.setSpacing(0)
         side = top
         self.stack = QStackedWidget()
-        self.web = QWebEngineView()
-        self.browser_profile = QWebEngineProfile("KotobaHarness", self.web)
-        self.browser_profile.setPersistentStoragePath(str(self.voice.home / "browser"))
-        self.browser_profile.setCachePath(str(self.voice.home / "browser-cache"))
-        self.web.setPage(LocalPage(self.browser_profile, self.web))
-        self.web.setStyleSheet("background:#191a1e")
-        self.stack.addWidget(self.web)
+        self.chat_profiles = []
+        self.chats = AgentWorkbench(self.voice.preferences, self.create_chat_view, self)
+        self.web = self.chats.active['view']
+        self.chats.active_changed.connect(self.select_chat_view)
+        self.chats.created.connect(self.prepare_chat_view)
+        self.chats.history_requested.connect(self.open_sidebar)
+        self.chats.navigation_changed.connect(self.sync_chat_navigation)
+        self.stack.addWidget(self.chats)
         self.stack.addWidget(QWidget())  # Legacy voice navigation index; voice now lives in the dock.
         self.stack.addWidget(self.files_page())
         self.stack.addWidget(QWidget())
@@ -210,7 +212,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         status.addWidget(self.locale_scope)
         status.addSpacing(18)
-        status.addWidget(QLabel("Kotoba Studio  0.6.8"))
+        status.addWidget(QLabel("Kotoba Studio  0.7.0"))
         outer.addWidget(statusbar)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(self.selected_panel)
@@ -248,6 +250,47 @@ class Workspace(QMainWindow):
                 (self.source_tabs.tabs.currentWidget() or self.tree).setFocus()
         self.selected_panel(self.stack.currentIndex())
 
+    def create_chat_view(self, identity):
+        view = QWebEngineView()
+        profile = QWebEngineProfile('KotobaHarness' if identity == 'primary' else 'Kotoba-' + identity, self)
+        suffix = '' if identity == 'primary' else '/chats/' + identity
+        profile.setPersistentStoragePath(str(self.voice.home / ('browser' + suffix)))
+        profile.setCachePath(str(self.voice.home / ('browser-cache' + suffix)))
+        self.chat_profiles.append(profile)
+        self.browser_profile = self.chat_profiles[0]
+        view.setPage(LocalPage(profile, view))
+        view.destroyed.connect(profile.deleteLater)
+        view.setStyleSheet('background:#191a1e')
+        return view
+
+    def select_chat_view(self, view):
+        self.web = view
+        # A delayed voice paste must never cross into a newly selected chat.
+        self.pending_handoff = None
+        self.sidebar_attempts = 0
+        self.sidebar_timer.stop()
+
+    def prepare_chat_view(self, view):
+        self.sync_motion()
+        self.sync_chat_locale(self.voice.locale)
+        self.sync_chat_navigation()
+
+    def sync_chat_navigation(self):
+        mode = 'history' if self.chats.history else 'agents'
+        source = 'document.documentElement.dataset.kotobaNavigation=' + json.dumps(mode) + ";document.dispatchEvent(new Event('kotoba:navigation'));"
+        for entry in self.chats.entries:
+            page = entry['view'].page()
+            scripts = page.scripts()
+            for previous in scripts.find('kotoba-navigation'):
+                scripts.remove(previous)
+            script = QWebEngineScript()
+            script.setName('kotoba-navigation')
+            script.setInjectionPoint(QWebEngineScript.DocumentReady)
+            script.setWorldId(QWebEngineScript.MainWorld)
+            script.setSourceCode(source)
+            scripts.insert(script)
+            page.runJavaScript(source)
+
     def selected_panel(self, index):
         for i, button in enumerate(self.nav):
             button.setChecked(not self.voice.isHidden() if i == 1 else not self.terminal_dock.isHidden() if i == 3 else i == index)
@@ -255,6 +298,7 @@ class Workspace(QMainWindow):
     def open_sidebar(self):
         """Return to the retained chat page and expand its existing sidebar."""
         self.show_panel(0)
+        self.chats.set_history(True)
         self.sidebar_attempts = 50
         self.expand_sidebar()
 
@@ -328,11 +372,12 @@ class Workspace(QMainWindow):
         script.setRunsOnSubFrames(False)
         source = web_script(reduced or system_reduced_motion())
         script.setSourceCode(source)
-        scripts = self.web.page().scripts()
-        for previous in scripts.find("kotoba-motion"):
-            scripts.remove(previous)
-        scripts.insert(script)
-        self.web.page().runJavaScript(source)
+        for entry in self.chats.entries:
+            scripts = entry['view'].page().scripts()
+            for previous in scripts.find("kotoba-motion"):
+                scripts.remove(previous)
+            scripts.insert(script)
+            entry['view'].page().runJavaScript(source)
 
     def sync_chat_locale(self, locale):
         script = QWebEngineScript()
@@ -342,14 +387,17 @@ class Workspace(QMainWindow):
         script.setRunsOnSubFrames(False)
         source = "document.documentElement.dataset.kotobaLocale=" + json.dumps(locale) + ";document.dispatchEvent(new Event('kotoba:locale'));"
         script.setSourceCode(source)
-        scripts = self.web.page().scripts()
-        for previous in scripts.find("kotoba-language"):
-            scripts.remove(previous)
-        scripts.insert(script)
-        self.web.page().runJavaScript(source)
+        for entry in self.chats.entries:
+            scripts = entry['view'].page().scripts()
+            for previous in scripts.find("kotoba-language"):
+                scripts.remove(previous)
+            scripts.insert(script)
+            entry['view'].page().runJavaScript(source)
 
     def apply_locale(self, locale):
         """Update shell labels without rebuilding web, terminal, or file state."""
+        self.chats.set_locale(locale)
+        self.sync_chat_navigation()
         self.reduce_motion.setText("Reduce motion" if locale == "en" else "動きを減らす")
         self.sidebar_button.setToolTip("Open workspace sidebar" if locale == "en" else "ワークスペースのサイドバーを開く")
         self.sidebar_button.setAccessibleName(self.sidebar_button.toolTip())
@@ -693,8 +741,7 @@ class Workspace(QMainWindow):
         match = re.search(r"http://127\.0\.0\.1:\d+(?:/\?token=[A-Za-z0-9_-]+)?", self.output)
         if match and self.url is None:
             self.url = QUrl(match.group())
-            self.web.page().origin = self.url
-            self.web.load(self.url)
+            self.chats.load(self.url)
             self.voice.runtime_url = self.url.toString()
             self.voice.refresh_routes()
             self.set_health("connected")
@@ -775,6 +822,7 @@ class Workspace(QMainWindow):
         if self.tray is not None:
             self.tray.hide()
         self.voice.close()
+        self.chats.shutdown()
         self.local_models.stop_engine()
         for process in (self.console_process, self.backend):
             if process.state() != QProcess.NotRunning:

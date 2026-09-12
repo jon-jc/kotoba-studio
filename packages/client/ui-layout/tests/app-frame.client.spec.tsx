@@ -15,6 +15,7 @@ import type { SessionId } from '@deepseek-ai/dsh-session/types'
 const useResource = (() => ({ status: 'none' as const, value: undefined, failure: undefined, reload: () => {} })) as GlobalStandardProps['useResource']
 let selectedSession: SessionId | undefined
 let selectedSessionTitle: string | undefined
+let selectedSessionRunning = false
 let workspacesReady = true
 type AttentionSnapshot = Parameters<Parameters<AppFrameProps['useSessionPendingInteraction']>[0]>[0]
 const noAttention: AttentionSnapshot = new Map()
@@ -79,7 +80,7 @@ function mountFrame(windowWidth = frameWidth) {
     ids: selectedSession === undefined ? [] : [selectedSession],
     byId: selectedSession === undefined ? {} : {
       [selectedSession]: {
-        id: selectedSession, displayTitle: 'Test', running: false, blank: false, updatedAt: 1,
+        id: selectedSession, displayTitle: 'Test', running: selectedSessionRunning, blank: false, updatedAt: 1,
         ...(selectedSessionTitle === undefined ? {} : { title: selectedSessionTitle }),
       },
     },
@@ -137,7 +138,11 @@ function drag(handle: Element, fromX: number, toX: number): void {
   pointer(handle, 'pointerup', toX)
 }
 
+let originalNavigation: string | undefined
 beforeEach(() => {
+  originalNavigation = document.documentElement.dataset.kotobaNavigation
+  delete document.documentElement.dataset.kotobaNavigation
+  selectedSessionRunning = false
   originalTitle = document.title
   frameWidth = 1920
   selectedSession = 's-test' as SessionId
@@ -171,6 +176,8 @@ afterEach(() => {
     cleanup()
   } finally {
     for (const restore of restoreProperties.splice(0).reverse()) restore()
+    if (originalNavigation === undefined) delete document.documentElement.dataset.kotobaNavigation
+    else document.documentElement.dataset.kotobaNavigation = originalNavigation
     document.title = originalTitle
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
@@ -179,6 +186,34 @@ afterEach(() => {
 })
 
 describe('AppFrame', () => {
+  it('replaces the web sidebar with the desktop roster while retaining history navigation', () => {
+    const { frame } = mountFrame()
+    const original = tracks(frame)
+    act(() => {
+      document.documentElement.dataset.kotobaNavigation = 'agents'
+      document.dispatchEvent(new Event('kotoba:navigation'))
+    })
+    expect(tracks(frame)[0]).toBe(0)
+    expect(frame.dataset.kotobaRoster).toBe('true')
+    act(() => {
+      document.documentElement.dataset.kotobaNavigation = 'history'
+      document.dispatchEvent(new Event('kotoba:navigation'))
+    })
+    expect(tracks(frame)).toEqual(original)
+    expect(frame.dataset.kotobaRoster).toBeUndefined()
+  })
+  it('projects the selected session activity for independent desktop views', () => {
+    selectedSession = 'parallel-a' as SessionId
+    selectedSessionRunning = true
+    const { frame, rerenderFrame } = mountFrame()
+    expect(frame.dataset.kotobaSession).toBe('parallel-a')
+    expect(frame.dataset.kotobaRunning).toBe('true')
+    selectedSessionRunning = false
+    selectedSession = undefined
+    rerenderFrame()
+    expect(frame.dataset.kotobaSession).toBe('')
+    expect(frame.dataset.kotobaRunning).toBe('false')
+  })
   it('localizes the product title without a configured build title', () => {
     mountFrame()
     expect(document.title).toBe('DSH Local Build')

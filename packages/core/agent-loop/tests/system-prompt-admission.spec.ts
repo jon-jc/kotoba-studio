@@ -305,4 +305,32 @@ describe('prepared-route prompt admission', () => {
     expect(systemTexts(h.capable.requests[1]!)).toHaveLength(2)
     expect(h.agent.session.snapshotEvents().filter(event => event.type === 'user/message')).toHaveLength(2)
   })
+
+  it('runs two session providers concurrently without crossing their prompts or cancellation', async () => {
+    const h = await harness()
+    const second = await h.ctx.agentLoop.create(SessionId('parallel-review'), { provider: 'plain', model: 'review-model' })
+    const arrived = new Set<string>()
+    const release = Promise.withResolvers<undefined>()
+    h.ctx.on('llm/stream', async function* (request, next) {
+      arrived.add(request.provider)
+      await release.promise
+      yield* next()
+    })
+    const firstRun = send(h.agent, 'implementation-only instruction')
+    const secondRun = send(second, 'review-only instruction')
+    try {
+      await expect.poll(() => arrived.size).toBe(2)
+      expect(arrived).toEqual(new Set(['capable', 'plain']))
+      h.agent.cancel({ kind: 'user' })
+    } finally {
+      release.resolve(undefined)
+      await Promise.all([firstRun, secondRun])
+    }
+    expect(h.plain.requests).toHaveLength(1)
+    expect(h.plain.requests[0]).toMatchObject({ provider: 'plain', model: 'review-model' })
+    const review = JSON.stringify(second.session.snapshotEvents())
+    expect(review).toContain('review-only instruction')
+    expect(review).not.toContain('implementation-only instruction')
+    expect(second.session.snapshotEvents().some(event => event.type === 'assistant/message')).toBe(true)
+  })
 })

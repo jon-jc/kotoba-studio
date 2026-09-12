@@ -126,6 +126,16 @@ export function AppFrame({
     const current = s.current
     return current === undefined ? undefined : s.byId[current]?.title
   })
+  const desktopSession = useSessions(s => s.current ?? '')
+  const desktopRunning = useSessions(s => s.current === undefined ? false : s.byId[s.current]?.running === true)
+  const desktopSessionsReady = useSessions(s => s.phase === 'ready')
+  const [desktopRoster, setDesktopRoster] = useState(() => document.documentElement.dataset.kotobaNavigation === 'agents')
+  useEffect(() => {
+    const update = () => { setDesktopRoster(document.documentElement.dataset.kotobaNavigation === 'agents') }
+    document.addEventListener('kotoba:navigation', update)
+    update()
+    return () => { document.removeEventListener('kotoba:navigation', update) }
+  }, [])
   const frameRef = useRef<HTMLDivElement | null>(null)
   const viewport = panels.viewportWidth
 
@@ -193,10 +203,14 @@ export function AppFrame({
   return (
     <div
       ref={frameRef}
+      data-kotoba-session={desktopSession}
+      data-kotoba-running={desktopRunning ? 'true' : 'false'}
+      data-kotoba-sessions-ready={desktopSessionsReady ? 'true' : 'false'}
+      data-kotoba-roster={desktopRoster || undefined}
       className={css.frame}
       style={{
         gridTemplateColumns:
-          `${cols.sidebar}px minmax(0, 1fr) ${cols.rightbar}px`,
+          `${desktopRoster ? 0 : cols.sidebar}px minmax(0, 1fr) ${cols.rightbar}px`,
       }}
       data-sidebar-collapsed={sidebarCollapsed || undefined}
       data-rightbar-collapsed={cols.rightbar === 0 || undefined}
@@ -239,7 +253,7 @@ export function AppFrame({
         {renderSlot('shell.overlay', {})}
       </div>
       {/* The collapsed rail is fixed-width: no resize handle while closed. */}
-      {!sidebarCollapsed && <DragHandle side="sidebar" left={cols.sidebar} onStart={onSidebarStart} onDrag={onSidebarDrag} onEnd={onDragEnd} />}
+      {!desktopRoster && !sidebarCollapsed && <DragHandle side="sidebar" left={cols.sidebar} onStart={onSidebarStart} onDrag={onSidebarDrag} onEnd={onDragEnd} />}
       {panels.rightbarShown && !panels.rightbarFullscreen && normal.rightbar > 0 && (
         <DragHandle side="rightbar" left={viewport - normal.rightbar} onStart={onRightbarStart} onDrag={onRightbarDrag} onEnd={onDragEnd} />
       )}
