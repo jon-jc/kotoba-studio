@@ -73,8 +73,8 @@ class FleetWorkspace(QWidget):
 
     def set_locale(self, locale):
         self.locale = locale
-        self.title.setText(self.tr("From idea to reviewed work.", "アイデアを、レビューできる成果へ。"))
-        self.description.setText(self.tr("Build with Codex, Claude Code, OpenCode or Pi using your own account. Keep every task in its own worktree, then dictate, review and hand off from one workspace.", "お使いのアカウントで Codex、Claude Code、OpenCode、Pi を活用。タスクごとに作業ツリーを分け、音声入力からレビュー、引き継ぎまでひとつの場所で。"))
+        self.title.setText(self.tr("Your words. Your agents. Your workspace.", "ことばから、エージェントとつくる。"))
+        self.description.setText(self.tr("Speak or type in English or Japanese. Build with your coding agents, review their work, and turn meeting notes into your team's next steps—all in Kotoba Studio.", "日本語でも、英語でも。声やテキストでエージェントと開発し、変更をレビュー。会議のメモをチームの次の一歩へ。Kotoba Studio で、ひとつにつながるワークフロー。"))
         self.retry.setText(self.tr("Open workspace", "ワークスペースを開く"))
         for key, (en, ja) in {"accounts": ("Agent accounts", "エージェントのアカウント"), "api": ("API chat", "API チャット"), "voice": ("Dictate", "音声入力"), "handoff": ("Team handoff", "引き継ぎ"), "messaging": ("Messages", "メッセージ")}.items():
             self.buttons[key].setText(self.tr(en, ja))

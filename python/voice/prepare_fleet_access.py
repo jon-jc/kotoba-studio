@@ -132,3 +132,56 @@ def prepare_access(root, replace_once):
         path = root / relative
         source = path.read_text(encoding='utf-8').replace('auto.components.settings.orcaAccount.description', 'auto.components.settings.orcaAccount.artifactsDescription').replace('Share work instantly and reach your desktop from Orca Mobile wherever you are.', 'Publish HTML and Markdown files, then manage every shared link from Orca.')
         path.write_text(source, encoding='utf-8', newline='\n')
+    # Retire upstream promotions without changing coding-agent sign-in or CLI execution.
+    patch('src/shared/feature-tips.ts',
+          '(tip) => !args.seenTipIds.has(tip.id) && !completedTipIds.has(tip.id)',
+          "(tip) => tip.id !== 'orca-cli' && !args.seenTipIds.has(tip.id) && !completedTipIds.has(tip.id)")
+    patch('src/renderer/src/components/feature-tips/feature-tip-modal-state.ts',
+          '  const modalTipId = isFeatureTipId(args.modalData.tipId)',
+          "  if (args.modalData.tipId === 'orca-cli') return null\n  const modalTipId = isFeatureTipId(args.modalData.tipId)")
+    patch('src/renderer/src/components/feature-tips/FeatureTipsModal.tsx',
+          '  const markCurrentTipSeen = (): void => {',
+          "  useEffect(() => {\n    if (isOpen && !currentTip) closeModal()\n  }, [isOpen, currentTip, closeModal])\n\n  const markCurrentTipSeen = (): void => {")
+    patch('src/renderer/src/hooks/settings-navigation-capability-sections.ts',
+          "...(showDesktopOnlySettings\n      ? [\n          {\n            id: 'orca-account',",
+          "...(false && showDesktopOnlySettings\n      ? [\n          {\n            id: 'orca-account',")
+    patch('src/renderer/src/components/settings/settings-setup-workflow-section-renderers.tsx',
+          '  return model.showDesktopOnlySettings ? (\n    <SettingsSection\n      id="orca-account"',
+          '  return false && model.showDesktopOnlySettings ? (\n    <SettingsSection\n      id="orca-account"')
+    patch('src/renderer/src/store/slices/ui/ui-slice-settings-actions.ts',
+          '      set({ settingsNavigationTarget: target })',
+          "      set({ settingsNavigationTarget: target.pane === 'orca-account'\n        ? { pane: 'accounts', repoId: null } : target })")
+    path = root / 'src/renderer/src/app-shell/AppRootSurfaces.tsx'
+    source = path.read_text(encoding='utf-8')
+    start_marker = 'const UnexpectedSignoutCard = lazy(() =>'
+    if start_marker in source:
+        start = source.index(start_marker)
+        end = source.index('\n)', start) + 2
+        source = source[:start] + source[end:]
+        start = source.rfind('        <Suspense', 0, source.index('<UnexpectedSignoutCard />'))
+        end = source.index('</Suspense>', start) + len('</Suspense>')
+        source = source[:start] + source[end:]
+        path.write_text(source, encoding='utf-8', newline='\n')
+    shutil.copyfile(Path(__file__).with_name('fleet_promotions.test.ts'), root / 'src/shared/kotoba-promotions.test.ts')
+    # Retain upstream coverage, updating only expectations for the retired promotion.
+    for relative in ['src/shared/feature-tips.test.ts', 'src/renderer/src/components/feature-tips/feature-tip-modal-state.test.ts']:
+        path = root / relative
+        source = path.read_text(encoding='utf-8')
+        source = source.replace("expect(tips.map((tip) => tip.id)).toEqual(['orca-cli', 'cmd-j-palette', 'voice-dictation'])",
+                                "expect(tips.map((tip) => tip.id)).toEqual(['cmd-j-palette', 'voice-dictation'])")
+        source = source.replace("expect(tips.map((tip) => tip.id)).toEqual(['orca-cli', 'cmd-j-palette'])",
+                                "expect(tips.map((tip) => tip.id)).toEqual(['cmd-j-palette'])")
+        source = source.replace('falls back to the CLI tip', 'falls back to the command palette tip')
+        source = source.replace("expect(tip?.id).toBe('orca-cli')", "expect(tip?.id).toBe('cmd-j-palette')")
+        path.write_text(source, encoding='utf-8', newline='\n')
+    path = root / 'src/renderer/src/hooks/useSettingsNavigationMetadata.test.ts'
+    source = path.read_text(encoding='utf-8')
+    source = source.replace("      'orca-account',\n", '')
+    source = source.replace("      'mobile'\n", "      'automations',\n      'artifacts'\n")
+    source = source.replace('places Mobile under Set Up instead of its own sidebar group', 'omits the retired mobile section')
+    source = source.replace("expect(sections.find((section) => section.id === 'mobile')?.group).toBe('setup')",
+                            "expect(sections.find((section) => section.id === 'mobile')).toBeUndefined()")
+    source = source.replace('places the Orca account in Set Up on desktop only', 'omits the Orca cloud account on desktop and web')
+    source = source.replace("expect(account?.group).toBe('setup')\n    expect(account?.searchEntries[0]?.title).toBe('Orca account')",
+                            "expect(account).toBeUndefined()\n    expect(desktopSections.some((section) => section.id === 'accounts')).toBe(true)")
+    path.write_text(source, encoding='utf-8', newline='\n')

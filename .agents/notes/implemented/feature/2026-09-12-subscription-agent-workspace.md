@@ -45,3 +45,7 @@ Mobile navigation, appearance entry, pairing IPC registration, desktop push star
 A persistent left rail separates primary tools, collaboration and configuration. The desktop header contains only the current surface, project picker, command search and language. Hidden compatibility buttons retain the bridge contract while the duplicate Fleet action bar is removed. Remote-context and failure notices remain visible. The native runtime shares the desktop neutral palette and reduced-motion-aware transitions. Connections offers separate actions for subscription accounts, API providers and local models. Voice closes without destroying drafts; API navigation does not stop other sessions.
 
 Focused desktop checks cover header geometry at 1024 pixels in English and Japanese, direct API navigation, retained voice drafts, account navigation from Code and project labels across locale changes. Windows Graphics Capture verifies the composed shell.
+
+## Product cleanup (0.11.1)
+
+Kotoba suppresses automatic and explicitly requested Orca CLI promotion tips. The Orca Account navigation, page and unexpected-signout promotion are removed; stale account links route to AI Provider Accounts, retaining coding-agent sign-in. The desktop introduction now describes bilingual voice, agent development and meeting handoffs. Voice selectors share aligned heights, padding and custom arrows. Focused promotion tests and the packaged access smoke cover the removed surfaces and retained account navigation.
