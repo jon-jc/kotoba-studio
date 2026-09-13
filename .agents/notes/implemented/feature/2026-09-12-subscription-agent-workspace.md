@@ -49,3 +49,7 @@ Focused desktop checks cover header geometry at 1024 pixels in English and Japan
 ## Product cleanup (0.11.1)
 
 Kotoba suppresses automatic and explicitly requested Orca CLI promotion tips. The Orca Account navigation, page and unexpected-signout promotion are removed; stale account links route to AI Provider Accounts, retaining coding-agent sign-in. The desktop introduction now describes bilingual voice, agent development and meeting handoffs. Voice selectors share aligned heights, padding and custom arrows. Focused promotion tests and the packaged access smoke cover the removed surfaces and retained account navigation.
+
+## Sidebar and Windows Codex discovery (0.11.2)
+
+The help menu omits upstream feedback, milestones, onboarding, documentation, changelog and social links. Its feedback dialog is no longer prefetched. Windows agent discovery includes valid executables in the desktop Codex version cache, preserving explicit PATH installs. Startup and Refresh append discovered directories so terminal launch and detection agree. Lookup is bounded, ignores incomplete downloads and does not execute binaries. Tests cover empty GUI PATH, updated installs, redirected LocalAppData, selection precedence and menu removal.

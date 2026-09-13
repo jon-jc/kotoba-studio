@@ -162,7 +162,8 @@ def prepare_access(root, replace_once):
         end = source.index('</Suspense>', start) + len('</Suspense>')
         source = source[:start] + source[end:]
         path.write_text(source, encoding='utf-8', newline='\n')
-    shutil.copyfile(Path(__file__).with_name('fleet_promotions.test.ts'), root / 'src/shared/kotoba-promotions.test.ts')
+    (root / 'src/shared/kotoba-promotions.test.ts').unlink(missing_ok=True)
+    shutil.copyfile(Path(__file__).with_name('fleet_promotions.test.ts'), root / 'src/renderer/src/components/feature-tips/kotoba-promotions.test.ts')
     # Retain upstream coverage, updating only expectations for the retired promotion.
     for relative in ['src/shared/feature-tips.test.ts', 'src/renderer/src/components/feature-tips/feature-tip-modal-state.test.ts']:
         path = root / relative
