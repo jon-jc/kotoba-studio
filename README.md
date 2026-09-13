@@ -2,9 +2,9 @@
 
 # Kotoba Studio · ことば
 
-**Speak naturally. Review clearly. Build with AI.**
+**Your coding agents. One place to build.**
 
-Windows x64 · 0.9.0
+Windows x64 · 0.10.0
 
 [English](#english) · [日本語](#japanese)
 
@@ -13,6 +13,20 @@ A Windows desktop workspace for Japanese and English voice input, AI conversatio
 [Get started](#run) · [Voice and local models](python/voice/README.md) · [Windows packaging](python/voice/WINDOWS.md) · [日本語](#japanese)
 
 <a id="english"></a>
+
+## Start with your coding-agent subscription
+
+**Agents is the main workspace.** Run Codex, Claude Code, OpenCode or Pi through its installed CLI and sign-in. Use the subscriptions or credentials supported by that agent; one provider's subscription does not grant access to another. Open **Agent accounts** to manage supported connections.
+
+Add a project, create a worktree for a task, and launch an agent. Concurrent tasks stay in the left sidebar, with one selected at a time. Terminals, changes, review and account switching use Orca's complete desktop implementation inside Kotoba's window. Split layouts remain optional. **API chat** is a secondary route to the full Harness and its configured providers.
+
+The selected local worktree follows you into Code and Voice. Review dictated text before adding it to an empty native agent-chat draft; terminal-only agents can use paste-at-cursor dictation. Team handoffs and LINE-first messaging remain in the same application. Each external CLI manages its own permissions; **Access** opens the controls for the current workspace.
+
+See [the subscription-agent workflow](python/voice/AGENTS_WORKFLOW.md) for setup, retained Orca workflows and validation limits. The screenshots below document the earlier API-chat and voice surfaces, which remain available.
+
+![Kotoba Studio 0.10.0: choose a subscription agent](assets/screenshots/subscription-workspace-en.png)
+
+The current embedded Agents onboarding detects locally installed CLIs. This screenshot does not establish account sign-in or model access; no agent instruction has been sent.
 
 ## One workspace, from voice to action
 
@@ -32,7 +46,7 @@ The desktop combines persistent chat, a voice dock, a file explorer, a code view
 
 These screenshots show the running 0.7.3 app with **OpenAI → GPT-6 Astra** selected in chat and voice. The provider dropdown lists only configured providers; the adjacent model dropdown shows models for the selected provider. Chat and voice drafts are manually entered, unsent examples, not transcription results or generated responses.
 
-### Multiple agents, independent conversations
+### API chats, independent conversations
 
 Use **+ New agent** or **Ctrl+T** to open another retained chat. Choose its provider and model in its own composer: OpenAI, Claude, Kimi, DeepSeek, and local routes can work in parallel. The left-hand chat list keeps one conversation visible at a time. Select a chat to make it the destination for reviewed voice input. Rows show the model, running activity, and background completion, with the full provider/model in the tooltip. Double-click a row to name the task. **Ctrl+Tab** and **Ctrl+Shift+Tab** switch chats. Closing a view leaves saved sessions and running agents on the host; confirm before discarding a view with an unsent draft. Separate browser storage preserves each open view's session selection across restarts. Agents sharing a workspace can edit the same files; use separate folders for conflicting work.
 
@@ -54,10 +68,10 @@ Browse files, compare tabs, and search when you need it. Click **Code** again, u
 
 ## Start on Windows
 
-The desktop build is **Kotoba Studio 0.9.0**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.9.0-Setup.exe` from your build output. The installer includes the desktop application, agent runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
+The desktop build is **Kotoba Studio 0.10.0**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.10.0-Setup.exe` from your build output. The installer includes the subscription-agent workspace, full Harness runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
 
-1. **Choose a folder.** Give the agent a working directory for the task.
-2. **Connect a model.** Open **··· → Routing** to configure an API provider, or choose Configure later and open Local models. Register a local model, then select Kotoba Local in the chat composer.
+1. **Open Agents.** Add a project, connect an installed coding agent in Agent accounts, and create a task in its own worktree.
+2. **Optionally use API chat.** Open **··· → Routing** to configure an API provider, or choose Configure later and open Local models. Register a local model, then select Kotoba Local in the chat composer.
 3. **Choose what to hear.** Open Voice Studio and select the audio source, speech language, and transcription model.
 4. **Review, then act.** Record or import audio, correct the transcript, and use **Add to chat** to append it to the available conversation draft. Send when you are ready.
 
@@ -115,6 +129,8 @@ For the underlying agent system, see [architecture](docs/architecture.md), [deve
 
 ## Open-source foundations
 
+The subscription-agent workspace reuses the pinned [Orca](https://github.com/stablyai/orca) desktop runtime, account management, worktrees and review interface under its MIT license. [Integration details](python/voice/AGENTS_WORKFLOW.md) describe the build overlay and external-service boundaries.
+
 Kotoba Studio builds on the actual [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) runtime and plugin architecture. Audio capture and saved-phrase integration draw from [OpenWhispr](https://github.com/OpenWhispr/openwhispr); native local inference uses [llama.cpp](https://github.com/ggml-org/llama.cpp). Upstream identifiers remain where needed for compatibility, provider selection, and attribution.
 
 [MIT license](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md) · [Bundled licenses](python/voice/THIRD_PARTY_LICENSES)
@@ -124,6 +140,18 @@ Kotoba Studio builds on the actual [DeepSeek Harness](https://github.com/deepsee
 <a id="japanese"></a>
 
 ## 日本語 — 声から、開発へ。
+
+### サブスクリプションのエージェントを、開発の中心に
+
+起動後は **エージェント** がメイン画面になります。Codex、Claude Code、OpenCode、Pi を、それぞれの CLI とログインで利用できます。各エージェントが対応するサブスクリプションや認証情報が必要です。**エージェントのアカウント** から接続を設定してください。
+
+プロジェクトを追加し、タスクごとに作業ツリーを作成してエージェントを起動します。並行するタスクは左の一覧にまとまり、一度にひとつを表示します。Orca の実際のデスクトップ実装を Kotoba 内に組み込み、ターミナル、変更差分、レビュー、アカウント切り替えを利用できます。分割表示は任意です。従来の Harness は **API チャット** から利用できます。
+
+選択したローカルの作業ツリーはコード・音声画面と共有されます。音声は確認後、空のネイティブチャット下書きへ挿入します。ターミナル形式のエージェントではカーソル位置への貼り付けを利用してください。各 CLI の権限はそのエージェントが管理します。[設定と対応範囲](python/voice/AGENTS_WORKFLOW.md)をご覧ください。
+
+![Kotoba Studio 0.10.0：エージェントを選ぶ初期設定](assets/screenshots/subscription-workspace-ja.png)
+
+この画面は、組み込まれたエージェント画面がローカルの CLI を検出した状態です。アカウント認証やモデルへのアクセスを確認した画像ではなく、指示も送信していません。
 
 Kotoba Studio は、日本語と英語の音声入力、AI エージェント、開発作業を一つにまとめた Windows デスクトップアプリです。ローカルモデルやクラウド API を選び、複数のエージェントを独立したチャットで動かせます。音声で伝えた内容は、送信前に確認・編集できます。
 
@@ -165,7 +193,7 @@ Kotoba Studio は、日本語と英語の音声入力、AI エージェント、
 
 ### Windows で始める
 
-現在のデスクトップ版は **0.9.0**、Windows x64 向けの未署名の開発者プレビューです。[Windows パッケージ作成ガイド](python/voice/WINDOWS.md)に従って `Kotoba-Studio-0.9.0-Setup.exe` を作成できます。インストーラーには、デスクトップアプリ、エージェントの実行環境、音声キャプチャー、CPU 推論エンジンが含まれます。モデルの重みは別途ダウンロードするか、手元のファイルを登録してください。
+現在のデスクトップ版は **0.10.0**、Windows x64 向けの未署名の開発者プレビューです。[Windows パッケージ作成ガイド](python/voice/WINDOWS.md)に従って `Kotoba-Studio-0.10.0-Setup.exe` を作成できます。インストーラーには、サブスクリプションのエージェント用ワークスペース、Harness 実行環境、音声キャプチャー、CPU 推論エンジンが含まれます。モデルの重みは別途ダウンロードするか、手元のファイルを登録してください。
 
 1. **作業フォルダーを選ぶ。** エージェントが作業するフォルダーを指定します。
 2. **モデルを接続する。** **··· → 接続** で OpenAI、Anthropic Claude、Kimi、DeepSeek、またはカスタムの接続先を設定します。ローカルで使う場合は **ローカル AI** で GGUF モデルを登録してエンジンを起動し、会話の入力欄で **Kotoba Local** を選びます。Ollama と LM Studio にも接続できます。

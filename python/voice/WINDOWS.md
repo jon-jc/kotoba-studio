@@ -1,11 +1,11 @@
 # Kotoba Studio for Windows
 
-The installer is `python/voice/dist/Kotoba-Studio-0.9.0-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes Python, Qt WebEngine, the complete matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
+The installer is `python/voice/dist/Kotoba-Studio-0.10.0-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes the embedded Orca/Electron agent workspace, Python, Qt WebEngine, the matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
 
 ## Try the application
 
 1. Install and launch **Kotoba Studio** on Windows 11 x64.
-2. Complete workspace onboarding. Configure a key now or select **Configure later**.
+2. Open **Agents**, then **Agent accounts**, to configure an installed coding agent's own sign-in. Add a project and create a worktree per task. See [subscription agents](AGENTS_WORKFLOW.md). API chat remains available separately.
 3. In **Workspace**, choose a working folder. **Routing → Open full Kotoba Studio settings** opens the original Models panel, including **Add provider** and **Add a custom provider**. Supply the provider's endpoint, key, and model as applicable.
 4. In **Voice**, select 日本語 or English, then expand **Audio settings** to choose Parakeet for English, Kotoba Whisper for Japanese, or another supported model. **モデルを準備 / Download / warm model** downloads and loads the local speech model.
 5. Select a microphone, system audio, or an application by window title. Press Record, then Transcribe. Short dictation ends after 60 seconds; use Meetings & notes for longer sessions. Application capture includes the selected process's children; browser tabs may share processes. An unavailable source fails explicitly.
@@ -39,6 +39,8 @@ The **···** menu includes **Reduce motion / 動きを減らす**, saved acros
 Closing the main window keeps the app in the system tray when available. Use the tray menu to restore the workspace, open Voice Studio, or quit. Quit stops the owned runtime and local engine; active recording or processing must finish first. The installer assigns the same Kotoba Studio icon and Windows application identity to the Start menu and optional desktop shortcuts. Re-pin an older Python shortcut from the updated Start menu entry if Windows retains its previous icon.
 
 ## Build
+
+Initialize `integrations/orca` with `git submodule update --init integrations/orca`. On Windows, use a short disposable path and run `python python/voice/prepare_fleet_runtime.py --checkout C:/kotoba-orca-build`. This applies the pinned overlay, installs dependencies, builds the full desktop runtime, and runs upstream packaged-runtime probes. It publishes `dist-exe/fleet` only after verification. `--skip-install` reuses already rebuilt dependencies. Do not use the source submodule itself as the build checkout. Visual Studio C++ build tools, Node, pnpm, and network access are required.
 
 The PowerShell console initializes UTF-8 before reading its first command and decodes output across chunk boundaries, preserving Japanese text. The Windows test executes Japanese commands and checks their output and persistent session state.
 
