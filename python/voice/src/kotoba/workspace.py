@@ -189,7 +189,7 @@ class Workspace(QMainWindow):
         self.web = self.chats.active['view']
         self.chats.active_changed.connect(self.select_chat_view)
         self.chats.created.connect(self.prepare_chat_view)
-        self.chats.history_requested.connect(self.open_sidebar)
+        self.chats.history_requested.connect(self.open_chat_history)
         self.chats.navigation_changed.connect(self.sync_chat_navigation)
         self.stack.addWidget(self.chats)
         self.stack.addWidget(QWidget())  # Legacy voice navigation index; voice now lives in the dock.
@@ -440,6 +440,11 @@ class Workspace(QMainWindow):
         if self.stack.currentWidget() == self.workflow:
             self.workflow.navigate("sidebar")
             return
+        self.open_chat_history()
+
+    def open_chat_history(self):
+        """API history stays with its retained API client, independent of Agents."""
+        self.stack.setCurrentWidget(self.chats)
         self.chats.set_history(True)
         self.sidebar_attempts = 50
         self.expand_sidebar()

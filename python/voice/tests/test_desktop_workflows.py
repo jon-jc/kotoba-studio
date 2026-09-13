@@ -760,3 +760,16 @@ def test_accounts_from_code_and_project_label_after_language_change(workspace, m
     window.voice.set_locale('ja')
     assert window.project_button.toolTip() == str(tmp_path)
     assert window.project_button.text() == tmp_path.name[:30]
+
+def test_api_history_does_not_redirect_to_subscription_agents(workspace, monkeypatch):
+    from kotoba.fleet_runtime import FleetRuntime
+    window = workspace
+    monkeypatch.setattr(FleetRuntime, 'available', property(lambda self: True))
+    monkeypatch.setattr(window.workflow.runtime, 'start', lambda: None)
+    monkeypatch.setattr(window, 'expand_sidebar', lambda: None)
+    window.workflow_tool('api')
+    retained_view = window.web
+    window.chats.history_requested.emit()
+    assert window.stack.currentWidget() is window.chats
+    assert window.chats.history is True and window.web is retained_view
+    assert window.api_button.isChecked()
