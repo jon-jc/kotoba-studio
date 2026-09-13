@@ -7,6 +7,7 @@ import html
 import json
 import time
 import uuid
+from urllib.parse import urlsplit
 from decimal import Decimal
 import httpx
 
@@ -32,6 +33,20 @@ class PlatformAdapter:
 
     def close(self):
         self.client.close()
+
+    def configure_line_webhook(self, endpoint, register=False):
+        """Test a user-owned receiver before optionally registering it with LINE."""
+        parsed = urlsplit(endpoint)
+        if (self.platform != "line" or parsed.scheme != "https" or not parsed.hostname
+                or parsed.username or parsed.password or parsed.query or parsed.fragment or len(endpoint) > 500):
+            raise MessagingError("Enter a valid public HTTPS webhook URL. / 公開 HTTPS Webhook URL を入力してください。")
+        result = self.request("POST", "/v2/bot/channel/webhook/test", body={"endpoint": endpoint})
+        if not isinstance(result, dict) or result.get("success") is not True:
+            raise MessagingError("LINE could not reach the receiver. Start the gateway and check your HTTPS tunnel and channel secret. / ゲートウェイを開始し、HTTPS トンネルとシークレットを確認してください。")
+        if register:
+            self.request("PUT", "/v2/bot/channel/webhook/endpoint", body={"endpoint": endpoint})
+            return self.request("GET", "/v2/bot/channel/webhook/endpoint")
+        return {}
 
     def request(self, method, path, *, body=None, params=None, sending=False, headers=None):
         token = self.credentials["token"]

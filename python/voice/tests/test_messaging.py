@@ -15,6 +15,44 @@ from kotoba.messaging_gateway import line_app, LineReceiver, GatewayWorker, Mess
 USER = "U" + "a" * 32
 
 
+def test_line_registration_tests_receiver_before_changing_endpoint():
+    calls = []
+    endpoint = "https://kotoba.example/line/fixture"
+    def transport(request):
+        calls.append((request.method, request.url.path))
+        if request.method in ("POST", "PUT"):
+            assert json.loads(request.content) == {"endpoint": endpoint}
+        return httpx.Response(200, json={"success": True} if request.method == "POST" else {"active": False})
+    adapter = PlatformAdapter(config(), {"token": "fixture"}, httpx.MockTransport(transport))
+    try:
+        assert adapter.configure_line_webhook(endpoint, True)["active"] is False
+        assert calls == [("POST", "/v2/bot/channel/webhook/test"), ("PUT", "/v2/bot/channel/webhook/endpoint"), ("GET", "/v2/bot/channel/webhook/endpoint")]
+        calls.clear()
+        assert adapter.configure_line_webhook(endpoint) == {}
+        assert calls == [("POST", "/v2/bot/channel/webhook/test")]
+    finally:
+        adapter.close()
+
+
+@pytest.mark.parametrize("response", [{"success": False}, {}, []])
+def test_line_failed_verification_never_changes_endpoint(response):
+    calls = []
+    def transport(request):
+        calls.append(request.method)
+        return httpx.Response(200, json=response)
+    adapter = PlatformAdapter(config(), {"token": "fixture"}, httpx.MockTransport(transport))
+    try:
+        with pytest.raises(MessagingError):
+            adapter.configure_line_webhook("https://kotoba.example/line/fixture", True)
+        assert calls == ["POST"]
+        for endpoint in ["http://kotoba.example/line/x", "https://user:password@kotoba.example/x", "https://kotoba.example/x?secret=a", "https://kotoba.example/" + "x" * 500]:
+            with pytest.raises(MessagingError):
+                adapter.configure_line_webhook(endpoint, True)
+        assert calls == ["POST"]
+    finally:
+        adapter.close()
+
+
 def config(platform="line"):
     user = {"line": USER, "slack": "U123", "discord": "123", "telegram": "123"}[platform]
     return dict(platform=platform, name=platform, users=[user], targets=[], channel="C123" if platform == "slack" else "456" if platform == "discord" else "",
