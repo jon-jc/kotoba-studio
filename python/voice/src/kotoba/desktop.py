@@ -118,6 +118,7 @@ class Window(QMainWindow):
             self.snippet_error = str(error)
         self.engine = SpeechEngine(self.home / "models")
         self.harness = HarnessSession(self.home / "harness")
+        self.isolated_reply = False
         self.config = SpeechConfig()
         self.api_key = ""
         self.provider = self.preferences.value("voice/provider", "deepseek-official")
@@ -302,7 +303,7 @@ class Window(QMainWindow):
         self.locale_button = switch
         side.addWidget(switch)
         switch.setVisible(not self.embedded)
-        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.8.0", "muted"))
+        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.9.0", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
         content.setSpacing(12)
@@ -503,7 +504,7 @@ class Window(QMainWindow):
         self.conversation.setPlainText("Ask the voice agent to work on your reviewed instruction." if en else "確認した指示を音声エージェントに送信できます。")
         agent_page = QWidget()
         agent_layout = QVBoxLayout(agent_page)
-        agent_layout.setContentsMargins(0, 8, 0, 0)
+        agent_layout.setContentsMargins(0, 9, 0, 0)
         self.route_label = self.label(self.provider + " · " + self.model, "route")
         self.route_label.hide()
         agent_layout.addWidget(self.route_label)
@@ -523,7 +524,7 @@ class Window(QMainWindow):
         self.tabs.addTab(self.activity, "Activity" if en else "実行ログ")
         lab = QWidget()
         lab_layout = QVBoxLayout(lab)
-        lab_layout.setContentsMargins(0, 8, 0, 0)
+        lab_layout.setContentsMargins(0, 9, 0, 0)
         self.reference = QPlainTextEdit()
         self.reference.setPlaceholderText(self.t("reference"))
         lab_layout.addWidget(self.reference)
@@ -853,6 +854,7 @@ class Window(QMainWindow):
         self.work(lambda emit: self.engine.transcribe(audio, config), self.transcribed)
 
     def transcribed(self, result):
+        self.isolated_reply = False
         self.last_transcript = result
         self.draft.setPlainText(result.text)
         for widget, text in zip(self.metrics, (f"{result.duration_seconds:.1f}s", f"{result.latency_seconds:.2f}s", f"{result.real_time_factor:.2f}×")):
@@ -873,17 +875,24 @@ class Window(QMainWindow):
             return
         workspace, model, key, provider = self.workspace, self.model, self.api_key, self.provider
         key_ref = route["key_ref"]
+        isolated = self.isolated_reply
         def run(emit):
             started = perf_counter()
             def notify(notification):
                 params = notification.payload
                 event = params.get("event", {})
                 emit(str(event.get("type", notification.method)))
-            result = self.harness.run(text, workspace, model, key, notify, provider=provider, key_ref=key_ref)
+            session = HarnessSession(self.home / "harness") if isolated else self.harness
+            try:
+                result = session.run(text, workspace, model, key, notify, provider=provider, key_ref=key_ref)
+            finally:
+                if isolated:
+                    session.close()
             return text, result, perf_counter() - started
         self.work(run, self.responded)
 
     def responded(self, payload):
+        self.isolated_reply = False
         text, result, latency = payload
         if not any(entry["kind"] == "turn" for entry in self.entries):
             self.conversation.clear()
@@ -933,6 +942,7 @@ class Window(QMainWindow):
         self.work(lambda emit: self.harness.close(), lambda _: self.reset_session())
 
     def reset_session(self):
+        self.isolated_reply = False
         self.entries = []
         self.last_transcript = None
         self.last_reply = ""

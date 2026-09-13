@@ -47,6 +47,11 @@ class Workspace(QMainWindow):
         self.shutdown_complete = False
         self.tray_notice_shown = False
         self.voice = VoiceWindow(embedded=True)
+        from .messaging_store import MessagingStore
+        from .messaging_gateway import MessagingGateway
+        self.messaging = MessagingGateway(MessagingStore(self.voice.home), self)
+        self.messaging_shutdown_requested = False
+        self.messaging.changed.connect(self.messaging_shutdown_changed)
         self.setWindowTitle("Kotoba Studio · ことば")
         self.setWindowIcon(QIcon(str(icon_path())))
         self.resize(1536, 960)
@@ -79,6 +84,21 @@ class Workspace(QMainWindow):
         self.voice.busy_changed.connect(lambda busy: self.access_button.setEnabled(not busy and self.backend.state() == QProcess.Running))
         self.apply_locale(self.voice.locale)
         self.start_backend()
+        self.messaging_unread = 0
+        self.messaging_timer = QTimer(self)
+        self.messaging_timer.setInterval(2000)
+        self.messaging_timer.timeout.connect(self.update_messaging_badge)
+        self.messaging_timer.start()
+
+    def update_messaging_badge(self):
+        unread = sum(self.messaging.store.unread().values())
+        label = "Messaging" if self.voice.locale == "en" else "メッセージ"
+        self.messaging_action.setText(label + (f" · {unread}" if unread else ""))
+        if self.tray is not None:
+            self.tray.setToolTip("Kotoba Studio" + (f" · {unread} " + ("unread messages" if self.voice.locale == "en" else "件の未読メッセージ") if unread else ""))
+            if unread > self.messaging_unread and self.voice.preferences.value("messaging/notify", False, type=bool) and QApplication.activeWindow() is None:
+                self.tray.showMessage("Kotoba Studio", f"{unread} " + ("unread messages in Messaging" if self.voice.locale == "en" else "件の未読メッセージがあります"), QSystemTrayIcon.Information, 4000)
+        self.messaging_unread = unread
 
     def build(self):
         root = QWidget()
@@ -164,6 +184,8 @@ class Workspace(QMainWindow):
             action = self.workspace_menu.addAction(outline_icon(("routing", "plugins", "models")[index - 4]), "")
             action.triggered.connect(lambda checked=False, i=index: self.show_panel(i))
             self.workspace_actions.append(action)
+        self.messaging_action = self.workspace_menu.addAction("Messaging / メッセージ")
+        self.messaging_action.triggered.connect(self.open_messaging)
         self.team_action = self.workspace_menu.addAction("Team handoffs / チームの引き継ぎ")
         self.team_action.triggered.connect(lambda: self.voice.open_collaboration())
         self.workspace_menu.addSeparator()
@@ -216,7 +238,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         status.addWidget(self.locale_scope)
         status.addSpacing(18)
-        status.addWidget(QLabel("Kotoba Studio  0.8.0"))
+        status.addWidget(QLabel("Kotoba Studio  0.9.0"))
         outer.addWidget(statusbar)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(self.selected_panel)
@@ -342,6 +364,9 @@ class Workspace(QMainWindow):
         team = QListWidgetItem("Team handoffs" if self.voice.locale == "en" else "チームの引き継ぎ")
         team.setData(Qt.UserRole, "team")
         actions.addItem(team)
+        messaging = QListWidgetItem("Messaging · LINE / Slack / Discord / Telegram" if self.voice.locale == "en" else "メッセージ · LINE / Slack / Discord / Telegram")
+        messaging.setData(Qt.UserRole, "messaging")
+        actions.addItem(messaging)
         actions.setCurrentRow(0)
         layout.addWidget(actions)
         def filter_actions(text):
@@ -356,7 +381,9 @@ class Workspace(QMainWindow):
             if item is not None and not item.isHidden():
                 target = item.data(Qt.UserRole)
                 dialog.accept()
-                if target == "team":
+                if target == "messaging":
+                    self.open_messaging()
+                elif target == "team":
                     self.voice.open_collaboration()
                 else:
                     self.show_panel(target)
@@ -801,6 +828,17 @@ class Workspace(QMainWindow):
         if reason in (QSystemTrayIcon.Trigger, QSystemTrayIcon.DoubleClick):
             self.restore_from_tray()
 
+    def open_messaging(self):
+        from .messaging_ui import MessagingDialog
+        dialog = MessagingDialog(self)
+        dialog.exec()
+        dialog.deleteLater()
+
+    def messaging_shutdown_changed(self):
+        if self.messaging_shutdown_requested and not self.messaging.running:
+            self.messaging_shutdown_requested = False
+            QTimer.singleShot(0, self.request_quit)
+
     def request_quit(self):
         self.exit_requested = True
         self.close()
@@ -830,8 +868,14 @@ class Workspace(QMainWindow):
                 message = "Still running in the system tray. Use the tray menu to open or quit." if self.voice.locale == "en" else "トレイで実行中です。トレイのメニューから開くか終了できます。"
                 self.tray.showMessage("Kotoba Studio", message, QSystemTrayIcon.Information, 4000)
             return
+        if self.messaging.running:
+            self.messaging_shutdown_requested = True
+            self.messaging.stop()
+            event.ignore()
+            return
         if self.tray is not None:
             self.tray.hide()
+        self.messaging_timer.stop()
         self.voice.close()
         self.chats.shutdown()
         self.local_models.stop_engine()
