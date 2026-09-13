@@ -37,11 +37,11 @@ QPushButton#command-center {background:#24252c; color:#a3a6b2; border-color:#363
 QPlainTextEdit, QTextBrowser, QLineEdit {background:#202127; border:1px solid #383a45; border-radius:8px; padding:12px; selection-background-color:#455951;}
 QPlainTextEdit:focus, QLineEdit:focus {border-color:#718a7e;}
 QSpinBox {background:#222329; border:1px solid #383a45; border-radius:6px; padding:7px;}
-QComboBox {background:#222329; border:1px solid #383a45; border-radius:7px; padding:7px 32px 7px 12px;}
+QComboBox {background:#222329; border:1px solid #383a45; border-radius:7px; padding:7px 4px 7px 12px;}
 QComboBox::drop-down {subcontrol-origin:padding; subcontrol-position:top right; width:28px; border:0; background:transparent;}
 QComboBox:hover {background:#282a31; border-color:#656976;}
 QComboBox:focus {border-color:#a5cbbb;}
-QComboBox#interface-language {padding:0 32px 0 12px; border-radius:7px;}
+QComboBox#interface-language {padding:0 4px 0 12px; border-radius:7px;}
 QComboBox#interface-language:hover {background:#282a31; border-color:#656976;}
 QComboBox#interface-language:focus {border-color:#a5cbbb;}
 QComboBox#interface-language::drop-down {subcontrol-origin:padding; subcontrol-position:top right; width:28px; border:0; background:transparent;}
