@@ -25,6 +25,9 @@ def main():
         if not binary.is_file():
             parser.error(f"Build the required runtime first: {binary}")
     local_engine = root / "dist-exe" / "llama"
+    fleet = root / "dist-exe" / "fleet"
+    if not (fleet / "manifest.json").is_file():
+        parser.error("Run python python/voice/prepare_fleet_runtime.py first.")
     if not (local_engine / "llama-server.exe").is_file():
         parser.error("Run python python/voice/prepare_local_runtime.py first.")
     environment = os.environ.copy()
@@ -49,6 +52,7 @@ def main():
     for binary in binaries:
         shutil.copy2(binary, runtime / binary.name)
     shutil.copytree(local_engine, runtime / "llama", dirs_exist_ok=True)
+    shutil.copytree(fleet, runtime / "fleet", dirs_exist_ok=True)
     licenses = output / "licenses"
     licenses.mkdir(exist_ok=True)
     for name in ("LICENSE", "THIRD_PARTY_NOTICES.md"):

@@ -82,6 +82,7 @@ class Workspace(QMainWindow):
         self.voice.draft_handoff.connect(self.handoff_draft)
         self.voice.busy_changed.connect(lambda busy: self.locale_toggle.setEnabled(not busy))
         self.voice.busy_changed.connect(lambda busy: self.access_button.setEnabled(not busy and self.backend.state() == QProcess.Running))
+        self.voice.busy_changed.connect(lambda busy: self.workflow_context(self.workflow.current_path) if not busy and self.workflow.current_path else None)
         self.apply_locale(self.voice.locale)
         self.start_backend()
         self.messaging_unread = 0
@@ -162,6 +163,12 @@ class Workspace(QMainWindow):
         self.stack.addWidget(self.plugins_page())
         self.local_models = LocalModelsPage(self)
         self.stack.addWidget(self.local_models)
+        from .fleet_workspace import FleetWorkspace
+        self.workflow = FleetWorkspace(self.voice.home, self)
+        self.workflow.tool_requested.connect(self.workflow_tool)
+        self.workflow.context_changed.connect(self.workflow_context)
+        self.workflow.runtime.state.connect(lambda _: self.selected_panel(self.stack.currentIndex()))
+        self.stack.addWidget(self.workflow)
         self.nav_keys = ["◈  Workspace / 会話", "◉  Voice / 音声", "⌘  Code / コード", "›_  Terminal", "⇄  Routing / 接続", "⊞  Plugins", "▣  Local models"]
         self.nav = []
         for index, icon in enumerate(("chat", "mic", "code", "terminal", "routing", "plugins", "models")):
@@ -238,7 +245,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         status.addWidget(self.locale_scope)
         status.addSpacing(18)
-        status.addWidget(QLabel("Kotoba Studio  0.9.0"))
+        status.addWidget(QLabel("Kotoba Studio  0.10.0"))
         outer.addWidget(statusbar)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(self.selected_panel)
@@ -259,6 +266,11 @@ class Workspace(QMainWindow):
             self.selected_panel(self.stack.currentIndex())
 
     def show_panel(self, index):
+        if index == 0 and self.workflow.runtime.available:
+            self.stack.setCurrentWidget(self.workflow)
+            self.workflow.runtime.start()
+            self.selected_panel(0)
+            return
         if index == 1:
             self.voice.setVisible(self.voice.isHidden())
             self.voice.preferences.setValue("ui/voice_dock", not self.voice.isHidden())
@@ -271,7 +283,10 @@ class Workspace(QMainWindow):
                 self.editor_area.setSizes([max(300, self.height() - 330), 230])
                 self.command.setFocus()
         else:
-            self.stack.setCurrentIndex(0 if index == 2 and self.stack.currentIndex() == 2 else index)
+            if index == 2 and self.stack.currentIndex() == 2:
+                self.show_panel(0)
+                return
+            self.stack.setCurrentIndex(index)
             if self.stack.currentIndex() == 2:
                 (self.source_tabs.tabs.currentWidget() or self.tree).setFocus()
         self.selected_panel(self.stack.currentIndex())
@@ -318,12 +333,20 @@ class Workspace(QMainWindow):
             page.runJavaScript(source)
 
     def selected_panel(self, index):
+        in_workflow = self.stack.currentWidget() == self.workflow
+        self.access_button.setEnabled(self.workflow.state == "ready" if in_workflow else self.url is not None)
+        self.access_button.setToolTip(("Agent CLI permissions" if self.voice.locale == "en" else "エージェント CLI の権限") if in_workflow else ("API harness permissions" if self.voice.locale == "en" else "API ハーネスの権限"))
+        if index == self.stack.indexOf(self.workflow):
+            index = 0
         for i, button in enumerate(self.nav):
             button.setChecked(not self.voice.isHidden() if i == 1 else not self.terminal_dock.isHidden() if i == 3 else i == index)
 
     def open_sidebar(self):
         """Return to the retained chat page and expand its existing sidebar."""
         self.show_panel(0)
+        if self.stack.currentWidget() == self.workflow:
+            self.workflow.runtime.request("navigate", "sidebar")
+            return
         self.chats.set_history(True)
         self.sidebar_attempts = 50
         self.expand_sidebar()
@@ -435,6 +458,7 @@ class Workspace(QMainWindow):
     def apply_locale(self, locale):
         """Update shell labels without rebuilding web, terminal, or file state."""
         self.chats.set_locale(locale)
+        self.workflow.set_locale(locale)
         self.sync_chat_navigation()
         self.reduce_motion.setText("Reduce motion" if locale == "en" else "動きを減らす")
         self.sidebar_button.setToolTip("Open workspace sidebar" if locale == "en" else "ワークスペースのサイドバーを開く")
@@ -463,6 +487,10 @@ class Workspace(QMainWindow):
         names = ("Chat", "Voice", "Code", "Terminal", "Routing", "Plugins", "Local AI") if locale == "en" else ("会話", "音声", "コード", "ターミナル", "接続", "プラグイン", "ローカル AI")
         for button, name in zip(self.nav, names):
             button.setText(name)
+        if self.workflow.runtime.available:
+            self.nav[0].setText("Agents" if locale == "en" else "エージェント")
+            self.nav[0].setAccessibleName(self.nav[0].text())
+            self.nav[0].setToolTip("Subscription agents and worktrees" if locale == "en" else "サブスクリプションのエージェントと作業ツリー")
         self.more_button.setToolTip("Models, routing & plugins" if locale == "en" else "モデル・接続・プラグイン")
         self.more_button.setAccessibleName(self.more_button.toolTip())
         for action, name in zip(self.workspace_actions, names[4:]):
@@ -486,6 +514,9 @@ class Workspace(QMainWindow):
             self.set_health(self.health_key)
 
     def open_access(self):
+        if self.stack.currentWidget() == self.workflow:
+            self.workflow.runtime.request("navigate", "permissions")
+            return
         if self.url is None or self.voice.job is not None or self.voice.stream is not None:
             return
         from .access_ui import AccessDialog
@@ -504,6 +535,9 @@ class Workspace(QMainWindow):
             self.access_button.setEnabled(False)
 
     def handoff_draft(self, text):
+        if self.stack.currentWidget() == self.workflow:
+            self.workflow.draft(text)
+            return
         QApplication.clipboard().setText(text)
         self.stack.setCurrentIndex(0)
         self.web.setFocus()
@@ -741,6 +775,9 @@ class Workspace(QMainWindow):
     def choose_workspace(self):
         path = QFileDialog.getExistingDirectory(self, "Workspace / 作業フォルダー", self.voice.workspace)
         if path:
+            if self.stack.currentWidget() == self.workflow:
+                self.workflow.add_project(path)
+                return
             self.voice.workspace = path
             self.files.setRootPath(path)
             self.tree.setRootIndex(self.files.index(path))
@@ -768,6 +805,33 @@ class Workspace(QMainWindow):
         else:
             self.backend.start(str(runtime), args)
         QTimer.singleShot(60000, self.startup_deadline)
+        if self.workflow.runtime.available:
+            self.show_panel(0)
+
+    def workflow_context(self, path):
+        if self.voice.job is not None:
+            return
+        self.voice.workspace = path
+        self.files.setRootPath(path)
+        self.tree.setRootIndex(self.files.index(path))
+        self.path_label.setText(Path(path).name or path)
+        self.path_label.setToolTip(path)
+        self.source_tabs.set_workspace(path)
+
+    def workflow_tool(self, tool):
+        if self.workflow.current_path:
+            self.workflow_context(self.workflow.current_path)
+        if tool == "accounts":
+            self.workflow.runtime.request("navigate", "accounts")
+        elif tool == "api":
+            self.stack.setCurrentIndex(0)
+            self.selected_panel(0)
+        elif tool == "voice":
+            self.show_panel(1)
+        elif tool == "handoff":
+            self.voice.open_collaboration()
+        elif tool == "messaging":
+            self.open_messaging()
 
     def startup_deadline(self):
         if self.url is None and self.backend.state() != QProcess.NotRunning:
@@ -876,6 +940,7 @@ class Workspace(QMainWindow):
         if self.tray is not None:
             self.tray.hide()
         self.messaging_timer.stop()
+        self.workflow.shutdown()
         self.voice.close()
         self.chats.shutdown()
         self.local_models.stop_engine()

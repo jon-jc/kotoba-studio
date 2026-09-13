@@ -13,6 +13,7 @@ def workspace(tmp_path, monkeypatch):
     app = QApplication.instance() or QApplication([])
     monkeypatch.setattr(desktop, "sources", lambda: [])
     monkeypatch.setattr(Workspace, "start_backend", lambda self: None)
+    monkeypatch.setattr("kotoba.fleet_runtime.fleet_location", lambda: tmp_path / "missing-runtime")
     window = Workspace()
     original_clipboard = app.clipboard().text()
     original_quit_policy = app.quitOnLastWindowClosed()
@@ -56,6 +57,38 @@ def test_top_right_locale_preserves_work_and_persists(workspace):
     assert not window.locale_toggle.isEnabled()
     window.voice.busy(False)
     assert window.locale_toggle.isEnabled()
+
+
+def test_subscription_workspace_is_primary_and_code_returns_to_it(workspace, monkeypatch):
+    from kotoba.fleet_runtime import FleetRuntime
+    window = workspace
+    monkeypatch.setattr(FleetRuntime, "available", property(lambda self: True))
+    commands = []
+    monkeypatch.setattr(window.workflow.runtime, "start", lambda: None)
+    monkeypatch.setattr(window.workflow.runtime, "request", lambda operation, value: commands.append((operation, value)))
+    window.show_panel(0)
+    assert window.stack.currentWidget() is window.workflow
+    window.open_sidebar()
+    assert commands[-1] == ("navigate", "sidebar")
+    window.show_panel(2)
+    window.show_panel(2)
+    assert window.stack.currentWidget() is window.workflow
+    window.open_access()
+    assert commands[-1] == ("navigate", "permissions")
+    window.workflow_tool("api")
+    assert window.stack.currentWidget() is window.chats
+
+
+def test_voice_context_waits_for_active_job(workspace, tmp_path):
+    window = workspace
+    previous = window.voice.workspace
+    window.voice.job = object()
+    window.workflow.current_path = str(tmp_path)
+    window.workflow_context(str(tmp_path))
+    assert window.voice.workspace == previous
+    window.voice.job = None
+    window.voice.busy_changed.emit(False)
+    assert window.voice.workspace == str(tmp_path)
 
 
 def test_parallel_chat_views_keep_independent_storage_and_focus(workspace):

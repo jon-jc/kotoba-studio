@@ -1,4 +1,10 @@
-# Two upstream foundations
+# Upstream foundations
+
+## Orca: subscription agents in one Kotoba window
+
+`integrations/orca` pins Orca 1.4.197 at `8641b3af0970b030cebbc263233585cc1ef83a4b` (MIT, Lovecast Inc.). Kotoba builds the complete Electron renderer, native account/CLI services, PTY runtime, worktrees, review, plugins and relay resources. The Windows window is hosted inside the Qt workspace; this is not the reduced web-client account API. See [the workflow and overlay contract](../python/voice/AGENTS_WORKFLOW.md). The original license ships in `python/voice/THIRD_PARTY_LICENSES/Orca.txt` and the runtime bundle.
+
+Orca の完全なデスクトップ実装を固定リビジョンからビルドし、Windows 版 Kotoba の同じウィンドウに組み込みます。アカウント、作業ツリー、ターミナル、レビューの実装を再利用し、MIT ライセンスを保持します。
 
 DeepSeek Harness is the parent repository and the complete agent runtime. `openwhispr/` is a git submodule pinned to OpenWhispr `c6a871db1b8ada646eb728d3592431ecc8c17723`. Clone this project with `git clone --recurse-submodules` or run `git submodule update --init`. OpenWhispr remains an independently buildable desktop foundation with its original license and update history.
 
