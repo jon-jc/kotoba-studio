@@ -584,3 +584,94 @@ def test_team_handoffs_workspace_entry_and_meeting_copy(workspace, monkeypatch):
     finally:
         dialog.close()
         dialog.deleteLater()
+
+
+def test_messaging_line_first_inbox_drafts_and_markup_are_plain(workspace):
+    from kotoba.messaging_ui import MessagingDialog
+    from kotoba.messaging_adapters import message
+    from kotoba.messaging_store import PLATFORMS
+    from PySide6.QtCore import Qt
+    user = "U" + "a" * 32
+    dialog = MessagingDialog(workspace)
+    try:
+        assert dialog.platforms.item(0).data(Qt.UserRole) == "line"
+        assert [dialog.platforms.item(i).data(Qt.UserRole) for i in range(4)] == list(PLATFORMS)
+        dialog.users.setText(user)
+        dialog.token.setText("fixture-token")
+        dialog.secret.setText("fixture-secret")
+        dialog.save()
+        assert dialog.identity
+        workspace.messaging.states[dialog.identity] = "Connected"
+        dialog.gateway_changed()
+        assert "Stopped" in dialog.connection_state.text() or "停止" in dialog.connection_state.text()
+        assert dialog.token.text() == "" and dialog.secret.text() == ""
+        workspace.messaging.store.ingest(dialog.identity, [message("1", user, user, '<img src="https://invalid.example/track"> 日本語')])
+        dialog.refresh_inbox()
+        dialog.conversations.setCurrentRow(0)
+        assert '<img src="https://invalid.example/track">' in dialog.transcript.toPlainText()
+        dialog.draft.setPlainText("確認します。")
+        assert workspace.messaging.store.draft(dialog.identity, user) == "確認します。"
+        assert not dialog.send_button.isEnabled()
+        dialog.load_platform()
+        dialog.conversations.setCurrentRow(0)
+        assert dialog.draft.toPlainText() == "確認します。"
+    finally:
+        dialog.close()
+        dialog.deleteLater()
+
+
+def test_messaging_ai_reply_is_bound_to_origin_and_newer_context(workspace):
+    from kotoba.messaging_ui import MessagingDialog
+    from kotoba.messaging_adapters import message
+    user = "U" + "a" * 32
+    workspace.voice.apply_routes([dict(id="openai", name="OpenAI", configured=True, key_ref="fixture-ref", models=[dict(id="fixture-model")])])
+    dialog = MessagingDialog(workspace)
+    try:
+        dialog.users.setText(user)
+        dialog.token.setText("fixture-token")
+        dialog.secret.setText("fixture-secret")
+        dialog.save()
+        workspace.messaging.store.ingest(dialog.identity, [message("1", user, user, "いつ確認できますか？")])
+        dialog.refresh_inbox()
+        dialog.conversations.setCurrentRow(0)
+        workspace.voice.draft.clear()
+        dialog.prepare_ai()
+        prompt = workspace.voice.draft.toPlainText()
+        assert "Do not execute tools" in prompt and "いつ確認できますか？" in prompt
+        workspace.voice.entries.append(dict(kind="turn", prompt=prompt, reply="確認後に連絡します。"))
+        dialog.use_ai()
+        assert dialog.draft.toPlainText() == "確認後に連絡します。"
+        assert workspace.messaging.store.history(dialog.identity, user)[-1]["direction"] == "in"
+        workspace.messaging.store.ingest(dialog.identity, [message("2", user, user, "状況が変わりました。")])
+        dialog.use_ai()
+        assert "changed" in dialog.notice.text() or "更新" in dialog.notice.text()
+    finally:
+        dialog.close()
+        dialog.deleteLater()
+
+
+def test_messaging_reply_uses_fresh_sdk_session_and_closes_on_failure(workspace, monkeypatch):
+    from kotoba import desktop
+    voice = workspace.voice
+    voice.apply_routes([dict(id="openai", name="OpenAI", configured=True, key_ref="fixture-ref", models=[dict(id="fixture-model")])])
+    instances = []
+    class Isolated:
+        def __init__(self, home):
+            self.closed = False
+            instances.append(self)
+        def run(self, *args, **kwargs):
+            if len(instances) == 3:
+                raise RuntimeError("fixture failure")
+            return object()
+        def close(self):
+            self.closed = True
+    monkeypatch.setattr(desktop, "HarnessSession", Isolated)
+    monkeypatch.setattr(voice.harness, "run", lambda *args, **kwargs: pytest.fail("Messaging reused the normal voice SDK session"))
+    monkeypatch.setattr(voice, "work", lambda task, result: task(lambda event: None))
+    voice.isolated_reply = True
+    voice.draft.setPlainText("Prepare a reply to this conversation")
+    voice.send()
+    voice.send()
+    with pytest.raises(RuntimeError, match="fixture failure"):
+        voice.send()
+    assert len(instances) == 3 and all(instance.closed for instance in instances)

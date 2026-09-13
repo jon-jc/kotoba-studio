@@ -54,7 +54,7 @@
 
 ## 在 Windows 上开始
 
-桌面版本为 **Kotoba Studio 0.8.0**，是面向 Windows x64 的未签名开发预览版。从构建输出安装 `Kotoba-Studio-0.8.0-Setup.exe`。安装包包含桌面应用、智能体运行时、音频捕获助手和 CPU 推理引擎。语音与语言模型权重单独提供。构建和验证安装包的方法见 [Windows 指南](python/voice/WINDOWS.md)。
+桌面版本为 **Kotoba Studio 0.9.0**，是面向 Windows x64 的未签名开发预览版。从构建输出安装 `Kotoba-Studio-0.9.0-Setup.exe`。安装包包含桌面应用、智能体运行时、音频捕获助手和 CPU 推理引擎。语音与语言模型权重单独提供。构建和验证安装包的方法见 [Windows 指南](python/voice/WINDOWS.md)。
 
 1. **选择文件夹。** 为任务指定智能体的工作目录。
 2. **连接模型。** 在 **··· → Routing** 中配置 API 提供方，或选择 Configure later 后打开 Local models。注册本地模型后，在聊天输入框中选择 Kotoba Local。
@@ -80,6 +80,14 @@ Voice Studio 的 **Agent → Ask voice agent** 还提供独立的智能体会话
 ## 听写与会议笔记
 
 启用 **Desktop dictation**，通过 **Ctrl+Shift+Space** 向当前应用听写。打开 **Meetings & notes** 选择窗口并按需加入麦克风，保存带时间戳的转录、标记重点并保留可搜索的开发笔记。重点保留原文；AI 跟进从经审阅的草稿开始。模型、捕获边界、隐私和限制见[语音工作流指南](python/voice/VOICE.md)。
+
+## LINE 优先的消息中心
+
+从 **··· → Messaging** 连接 LINE、Slack、Discord 和 Telegram。保存本地收件箱、会话名称和草稿，审阅投递状态，并通过所选语音智能体准备回复。英日回复偏好和团队交接连接整个工作流。LINE 需要用户提供公开 HTTPS Webhook；消息与 AI 请求均需明确发送。参见[设置与平台限制](python/voice/WINDOWS.md#messaging-hub)。
+
+![Kotoba Studio 0.9.0：已选择 LINE 的消息收件箱](assets/screenshots/messaging-inbox-en.png)
+
+这个 0.9.0 原生界面预览使用虚构的手动消息和未发送的草稿。网关已停止，不是实际 LINE 账户连接的证据。
 
 ## 英日团队交接
 
@@ -143,13 +151,21 @@ Kotoba Studio は、日本語と英語の音声入力、AI エージェント、
 
 画像は 0.7.3 の実際のアプリ画面です。会話と音声エージェントには **OpenAI → GPT-6 Astra** を選択しています。プロバイダーの一覧には設定済みの接続先のみを表示し、隣のモデル一覧からその接続先のモデルを選べます。チャットと音声欄の文章は手入力した未送信の例であり、文字起こし結果や AI の生成結果ではありません。
 
+### LINE を先頭に、メッセージをまとめる
+
+**··· → メッセージ** から LINE、Slack、Discord、Telegram を設定できます。受信トレイ・会話名・下書き・送信状態を端末に保存し、英語と日本語の返信を音声エージェントに依頼できます。LINE には利用者側の公開 HTTPS Webhook が必要です。受信では自動実行せず、返信は確認して送信します。[設定と制約](python/voice/WINDOWS.md#messaging-hub)をご確認ください。
+
+![Kotoba Studio 0.9.0：LINE を先頭にした日本語の接続設定](assets/screenshots/messaging-line-ja.png)
+
+この画面は 0.9.0 の手動設定例です。認証情報はテスト用で、ゲートウェイは停止中です。実際の LINE 接続を示す画像ではありません。
+
 ### 英語と日本語のチームで引き継ぐ
 
 **··· → チームの引き継ぎ** で、原文・用語・両言語の要約・決定事項・担当者をまとめられます。会議からコピーし、選択した音声エージェントへの依頼を確認して送信した後、JSON の応答を未確認の下書きとして取り込みます。共有はコピーまたは Markdown の書き出しで行います。データはこの端末に保存され、自動翻訳や遠隔同期はありません。
 
 ### Windows で始める
 
-現在のデスクトップ版は **0.8.0**、Windows x64 向けの未署名の開発者プレビューです。[Windows パッケージ作成ガイド](python/voice/WINDOWS.md)に従って `Kotoba-Studio-0.8.0-Setup.exe` を作成できます。インストーラーには、デスクトップアプリ、エージェントの実行環境、音声キャプチャー、CPU 推論エンジンが含まれます。モデルの重みは別途ダウンロードするか、手元のファイルを登録してください。
+現在のデスクトップ版は **0.9.0**、Windows x64 向けの未署名の開発者プレビューです。[Windows パッケージ作成ガイド](python/voice/WINDOWS.md)に従って `Kotoba-Studio-0.9.0-Setup.exe` を作成できます。インストーラーには、デスクトップアプリ、エージェントの実行環境、音声キャプチャー、CPU 推論エンジンが含まれます。モデルの重みは別途ダウンロードするか、手元のファイルを登録してください。
 
 1. **作業フォルダーを選ぶ。** エージェントが作業するフォルダーを指定します。
 2. **モデルを接続する。** **··· → 接続** で OpenAI、Anthropic Claude、Kimi、DeepSeek、またはカスタムの接続先を設定します。ローカルで使う場合は **ローカル AI** で GGUF モデルを登録してエンジンを起動し、会話の入力欄で **Kotoba Local** を選びます。Ollama と LM Studio にも接続できます。

@@ -1,6 +1,6 @@
 # Kotoba Studio for Windows
 
-The installer is `python/voice/dist/Kotoba-Studio-0.8.0-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes Python, Qt WebEngine, the complete matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
+The installer is `python/voice/dist/Kotoba-Studio-0.9.0-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes Python, Qt WebEngine, the complete matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
 
 ## Try the application
 
@@ -79,3 +79,30 @@ Imports check the source/glossary fingerprint, response fields, and exact source
 ワークスペースの **··· → チームの引き継ぎ**、または **Ctrl+K** から開きます。会議のメモ画面の **バイリンガル引き継ぎ** は、選択した会議を独立した引き継ぎにコピーします。その後の会議の変更はコピーに反映されません。原文・用語集、英語と日本語の要約、担当者・期限・進捗を記録し、両言語の内容を確認できます。
 
 AI アシスタントで依頼を作成すると、音声エージェントの下書きに追加されます。この画面を閉じてプロバイダーとモデルを選び、依頼を確認して送信してください。JSON の応答を引き継ぎ画面に貼り付け、未確認の下書きとして取り込みます。自動翻訳ではなく手動の受け渡しです。引用の一致は意味や翻訳精度の保証ではありません。担当者、期日、否定表現、不確かな点を照合してから共有してください。共有はコピーまたは Markdown の書き出しで行い、自動送信・遠隔同期はありません。
+
+## Messaging hub
+
+Open **··· → Messaging** or find **Messaging** in **Ctrl+K**. LINE appears first, followed by Slack, Discord, and Telegram. Each platform has one saved connection, an inbox, searchable local history, persistent reply drafts, local conversation names, and explicit delivery status. Double-click a conversation to name it locally. Unread badges persist across restarts; optional desktop notifications show only a count, not message content. Connections run together while the gateway is started, including while Kotoba is in the tray. Start is manual after each application launch; closing the hub leaves the gateway running. Quitting Kotoba stops its owned listener and network worker.
+
+Save credentials and an explicit allowed-sender list in **Connection**, enable the connection, and press **Start gateway**. Startup reads bot identity and checks access without sending a test message. Credentials use Windows user-bound DPAPI encryption; history and drafts are ordinary local SQLite data. Another Kotoba process cannot run the same gateway or change its configuration while it is active. Stop the gateway before changing settings. Remove connection deletes its credentials and local records, not remote messages.
+
+| Platform | Setup and receive behavior |
+| --- | --- |
+| LINE | Create a [LINE Messaging API channel](https://developers.line.biz/en/docs/messaging-api/building-bot/). Enter the channel access token, channel secret and allowed `U…` user IDs. Groups also require their allowed group/room IDs. Configure your own public HTTPS tunnel or reverse proxy to forward to `127.0.0.1:8768` (the port is editable). Save its HTTPS origin and use **Copy webhook URL**. Register that URL in LINE Developers, start the gateway and verify the webhook. Kotoba verifies HMAC-SHA256 over the raw body, bounds the body size, and deduplicates messages before acknowledging. Replies use push messages and can consume the LINE plan quota. Kotoba does not supply or deploy the public HTTPS endpoint. |
+| Slack | Install a bot with `chat:write` and the appropriate channel history scope; invite it to the configured channel. Set its bot token, channel ID and allowed member IDs. Kotoba polls new top-level messages every 65 seconds, following pagination without advancing the checkpoint past unprocessed pages. Thread replies are not imported. |
+| Discord | Configure a bot with Message Content Intent, View Channel, Read Message History and Send Messages. Supply a channel ID and allowed member IDs. New text is polled every five seconds. A Discord thread can be connected through its own channel ID. |
+| Telegram | Create a bot with BotFather, enter its token and numeric allowed-user IDs. Groups additionally require chat IDs. Long polling preserves separate topic conversations. An existing webhook is reported instead of automatically replaced. The initial connection may receive pending updates. |
+
+Slack and Discord start with new messages after their initial checkpoint. All adapters are text-only: attachments, voice messages, reactions, edits, and remote deletions are not synchronized. The application is not a replacement for each platform's full client.
+
+Choose a conversation, type a reply, and press **Send**. Enter inserts a newline. Replies are limited to 1900 UTF-16 units so a reply fits all supported text endpoints; emoji can count twice. The durable outbox records queued, sending, sent, failed, and uncertain states. Sent means the platform API accepted the request, not that the recipient read or received it. A network timeout or crash during sending leaves an uncertain result; Kotoba never automatically retries it. Check the remote conversation before **Recover failed reply** and explicit resending. LINE sends carry a request retry key. Incoming bot messages are ignored where the platform exposes that flag; incoming content never automatically starts an agent.
+
+Set a configured provider, model and reply language for each platform. **Prepare AI reply** puts a request into the existing Voice agent draft, after confirmation before replacing another draft. Close Messaging, review and run the request in Voice, then return and use **Use AI reply**. Messaging reply requests use a fresh SDK session that is closed after the turn, including on failure; they do not reuse the ordinary Voice conversation. The imported text remains a draft and the conversation must still match the captured context. The prompt asks for no tools, but the selected agent retains its existing access policy. Cloud submission happens only when you send the request to that provider. Replies, translation quality and live account permissions have not been verified against customer credentials; automated checks use isolated fixtures and a real local LINE listener.
+
+**Export conversation** writes up to the latest 200 local messages with delivery labels. **Create team handoff** copies that same context into the English–Japanese handoff workflow. Exported copies are independent and do not receive future conversation changes.
+
+### 日本で使うための LINE 設定
+
+**··· → メッセージ** を開くと、LINE が先頭に表示されます。LINE 公式アカウントで Messaging API を有効にし、アクセストークン、チャンネルシークレット、許可するユーザー ID を登録してください。グループではグループ ID も許可します。公開 HTTPS トンネルをこの端末の LINE ポートに接続し、その HTTPS の接続先を保存します。**Webhook URL をコピー** で取得した URL を LINE Developers に登録し、ゲートウェイを開始してから検証してください。トンネルの作成・配備は利用者が行います。
+
+返信は確認してから **送信** します。受信だけでは AI やパソコン操作を実行しません。AI への依頼は音声エージェントの下書きで確認・実行し、生成結果を受信トレイの下書きに戻してから送信します。英語・日本語・両言語の返信を依頼でき、会話をチームの引き継ぎにもコピーできます。送信結果が不明な場合は自動再送せず、相手側の会話を確認してください。LINE の返信はプッシュ送信で通数を消費する場合があります。テキストのみ対応し、添付・音声・編集・削除の同期は行いません。
