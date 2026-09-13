@@ -1,3 +1,6 @@
 [submodule "integrations/openwhispr"]
 	path = integrations/openwhispr
 	url = https://github.com/OpenWhispr/openwhispr.git
+[submodule "integrations/orca"]
+	path = integrations/orca
+	url = https://github.com/stablyai/orca.git
