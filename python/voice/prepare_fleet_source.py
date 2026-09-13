@@ -52,6 +52,9 @@ def prepare(root):
     replace_once(root, "src/renderer/src/app-shell/app-window-chrome.ts",
         "export const hasCustomTitleBar = shouldRenderDesktopWindowChrome({",
         "export const hasCustomTitleBar = false && shouldRenderDesktopWindowChrome({")
+    replace_once(root, "src/renderer/src/app-shell/AppRootSurfaces.tsx",
+        "{onboardingGate.onboarding && onboardingGate.shouldRender ? (",
+        "{activeView !== 'settings' && onboardingGate.onboarding && onboardingGate.shouldRender ? (")
     replace_once(root, "src/shared/default-global-settings.ts", "    theme: 'system',", "    theme: 'dark',")
     replace_once(root, "src/shared/default-global-settings.ts", "    rightSidebarOpenByDefault: true,", "    rightSidebarOpenByDefault: false,")
     replace_once(root, "src/shared/constants.ts", "    rightSidebarOpen: true,", "    rightSidebarOpen: false,")

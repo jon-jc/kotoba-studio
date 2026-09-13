@@ -1,6 +1,6 @@
 # Kotoba Studio for Windows
 
-The installer is `python/voice/dist/Kotoba-Studio-0.10.0-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes the embedded Orca/Electron agent workspace, Python, Qt WebEngine, the matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
+The installer is `python/voice/dist/Kotoba-Studio-0.10.1-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes the embedded Orca/Electron agent workspace, Python, Qt WebEngine, the matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
 
 ## Try the application
 
@@ -108,3 +108,7 @@ Set a configured provider, model and reply language for each platform. **Prepare
 **··· → メッセージ** を開くと、LINE が先頭に表示されます。LINE 公式アカウントで Messaging API を有効にし、アクセストークン、チャンネルシークレット、許可するユーザー ID を登録してください。グループではグループ ID も許可します。公開 HTTPS トンネルをこの端末の LINE ポートに接続し、その HTTPS の接続先を保存します。ゲートウェイを開始して **HTTPS 接続をテスト** を押します。**テストして LINE に登録** は到達確認後にチャンネルの Webhook URL を置き換えます。その後、LINE Developers で **Webhook の利用** を有効にしてください。反映に最大 1 分かかる場合があります。LINE の登録 API のアドレスは受信用 URL ではありません。トンネルの作成・配備は利用者が行います。
 
 返信は確認してから **送信** します。受信だけでは AI やパソコン操作を実行しません。AI への依頼は音声エージェントの下書きで確認・実行し、生成結果を受信トレイの下書きに戻してから送信します。英語・日本語・両言語の返信を依頼でき、会話をチームの引き継ぎにもコピーできます。送信結果が不明な場合は自動再送せず、相手側の会話を確認してください。LINE の返信はプッシュ送信で通数を消費する場合があります。テキストのみ対応し、添付・音声・編集・削除の同期は行いません。
+
+### Embedded agent display verification
+
+The hidden agent smoke checks IPC and project context, but cannot detect a black embedded surface. On Windows, install the optional `windows-capture` package in your test environment and run `python python/voice/smoke_fleet_display.py --runtime dist-exe/fleet --output tmp/agent-display`. This opens an inactive test window with a disposable profile, captures the actual composed window, and checks Accounts, resize, and hide/show restoration. Inspect the images before shipping. Do not publish captures containing detected personal account labels. No provider turn or sign-in is submitted.

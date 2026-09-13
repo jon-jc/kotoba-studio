@@ -92,6 +92,7 @@ class FleetWorkspace(QWidget):
         }
         self.status.setText(self.tr(*messages[state]))
         self.retry.setEnabled(state != "starting")
+        self.buttons["accounts"].setEnabled(state == "ready")
         if state != "ready":
             self.timer.stop()
             self.current_path = ""
@@ -104,11 +105,46 @@ class FleetWorkspace(QWidget):
             self.container.deleteLater()
         self.foreign_window = QWindow.fromWinId(int(handle))
         self.container = QWidget.createWindowContainer(self.foreign_window, self)
+        self.container.setAttribute(Qt.WA_NativeWindow)
         self.container.setFocusPolicy(Qt.StrongFocus)
         self.pages.addWidget(self.container)
         self.pages.setCurrentWidget(self.container)
+        QTimer.singleShot(0, self.present)
         self.timer.start()
         self.poll()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        QTimer.singleShot(0, self.present)
+
+    def hideEvent(self, event):
+        if self.container is not None and self.runtime.address:
+            self.runtime.request("present", "hidden")
+        super().hideEvent(event)
+
+    def present(self):
+        if self.container is not None and self.isVisible() and self.runtime.address:
+            self.runtime.request("present", "", self.present_result)
+
+    def present_result(self, accepted):
+        if accepted is True and self.container is not None and self.foreign_window is not None:
+            # Electron restores its former top-level screen position on show.
+            # Our native container owns the child coordinates, including on restore.
+            self.foreign_window.setGeometry(self.container.rect().adjusted(0, 0, 1, 0))
+            QTimer.singleShot(0, self.fit_surface)
+        elif accepted is not True:
+            self.context.setText(self.tr("Could not display the agent workspace. Switch to API chat or reopen Agents to retry.", "エージェント画面を表示できませんでした。API チャットに切り替えるか、エージェント画面を開き直してください。"))
+
+    def fit_surface(self):
+        if self.container is not None and self.foreign_window is not None:
+            self.foreign_window.setGeometry(self.container.rect())
+
+    def navigate(self, target):
+        self.runtime.request("navigate", target, self.navigation_result)
+
+    def navigation_result(self, accepted):
+        if accepted is not True:
+            self.context.setText(self.tr("Could not open this agent page. Reopen Agents and try again.", "エージェントのページを開けませんでした。エージェント画面を開き直して再試行してください。"))
 
     def poll(self):
         if not self.runtime.address or self.pending:

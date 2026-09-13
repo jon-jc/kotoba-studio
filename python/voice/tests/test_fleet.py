@@ -80,6 +80,63 @@ def test_unready_runtime_rejects_drafts_without_queuing(application, tmp_path):
     assert result == [None] and runtime.requests == {}
 
 
+def test_workspace_presents_only_an_attached_visible_runtime(application, tmp_path, monkeypatch):
+    from kotoba.fleet_workspace import FleetWorkspace
+    workspace = FleetWorkspace(tmp_path)
+    calls = []
+    monkeypatch.setattr(workspace.runtime, "request", lambda *args: calls.append(args))
+    monkeypatch.setattr(workspace, "isVisible", lambda: True)
+    workspace.present()
+    assert calls == []
+    workspace.runtime.address = "123"
+    workspace.container = object()
+    workspace.present()
+    assert calls[0][:2] == ("present", "")
+    monkeypatch.setattr(workspace, "isVisible", lambda: False)
+    workspace.present()
+    assert len(calls) == 1
+    workspace.runtime.address = None
+    workspace.container = None
+    workspace.deleteLater()
+
+
+def test_account_navigation_reports_failure_and_waits_for_runtime(application, tmp_path, monkeypatch):
+    from kotoba.fleet_workspace import FleetWorkspace
+    workspace = FleetWorkspace(tmp_path)
+    assert not workspace.buttons["accounts"].isEnabled()
+    workspace.set_state("ready")
+    assert workspace.buttons["accounts"].isEnabled()
+    calls = []
+    def request(operation, target, callback):
+        calls.append((operation, target))
+        callback(False)
+    monkeypatch.setattr(workspace.runtime, "request", request)
+    workspace.navigate("accounts")
+    assert calls == [("navigate", "accounts")]
+    assert "Could not open" in workspace.context.text()
+    workspace.set_locale("ja")
+    workspace.navigation_result(None)
+    assert "開けません" in workspace.context.text()
+    workspace.set_state("failed")
+    assert not workspace.buttons["accounts"].isEnabled()
+    workspace.deleteLater()
+
+
+def test_present_reanchors_and_repaints_the_foreign_surface(application, tmp_path):
+    from PySide6.QtCore import QRect
+    from kotoba.fleet_workspace import FleetWorkspace
+    workspace = FleetWorkspace(tmp_path)
+    geometries = []
+    workspace.container = SimpleNamespace(rect=lambda: QRect(0, 0, 1040, 680))
+    workspace.foreign_window = SimpleNamespace(setGeometry=geometries.append)
+    workspace.present_result(True)
+    workspace.fit_surface()
+    assert geometries == [QRect(0, 0, 1041, 680), QRect(0, 0, 1040, 680)]
+    workspace.container = None
+    workspace.foreign_window = None
+    workspace.deleteLater()
+
+
 def test_remote_or_missing_worktree_never_becomes_local_context(application, tmp_path):
     from kotoba.fleet_workspace import FleetWorkspace
     workspace = FleetWorkspace(tmp_path)
