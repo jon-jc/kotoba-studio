@@ -82,6 +82,8 @@ def prepare(root):
     for icon in ("icon.png", "icon-dev.png", "app-icons/orca-watercolor.png", "app-icons/orca-blue.png"):
         shutil.copyfile(mark, root / "resources" / icon)
     shutil.copyfile(Path(__file__).with_name("assets") / "kotoba.svg", root / "resources/logo.svg")
+    shutil.copyfile(Path(__file__).with_name("fleet_workspace.css"), root / "src/renderer/src/assets/kotoba-workspace.css")
+    replace_once(root, "src/renderer/src/main.tsx", "import './web/kotoba-fleet'", "import './web/kotoba-fleet'\nimport './assets/kotoba-workspace.css'")
     from prepare_fleet_access import prepare_access
     prepare_access(root, replace_once)
 

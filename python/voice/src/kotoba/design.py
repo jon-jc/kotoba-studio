@@ -7,7 +7,7 @@ from .branding import icon_path
 
 STYLE = """
 QMainWindow, QDialog { background:#191a1e; }
-QWidget { color:#e7e7eb; font-family:"Yu Gothic UI"; font-size:13px; }
+QWidget { color:#e7e7eb; font-family:"Segoe UI", "Yu Gothic UI"; font-size:13px; }
 QLabel#brand {font-size:22px; font-weight:600;}
 QLabel#muted {color:#a0a2ad; font-size:12px;}
 QLabel#micro {color:#9396a3; font-size:11px;}
@@ -76,7 +76,39 @@ QPushButton::menu-indicator {width:0;}
 
 STYLE += 'QComboBox#interface-language::down-arrow {image:url("' + icon_path().with_name('chevron-down.svg').as_posix() + '");width:12px;height:12px;}'
 
+STYLE += """
+QFrame#workspace-rail {background:#131416; border-right:1px solid #2b2d31;}
+QFrame#workspace-header {background:#191a1e; border-bottom:1px solid #2b2d31;}
+QFrame#connection-card {background:#1e2025; border:1px solid #32363e; border-radius:12px;}
+QFrame#rail-divider {background:#2c2e32; border:0;}
+QLabel#workspace-title {font-size:14px; font-weight:600; color:#ededef;}
+QPushButton#workspace-brand {background:transparent; border:0; border-radius:10px; padding:0;}
+QPushButton#workspace-brand:hover {background:#26282d;}
+QPushButton#workspace-brand:focus {border:1px solid #8da99a;}
+QPushButton#workspace-project {background:transparent; border:0; color:#979ba5; padding:6px 10px; font-size:12px;}
+QPushButton#workspace-project:hover {background:#24262b; color:#e5e7eb;}
+QToolButton#workspace-tool {background:transparent; color:#959aa5; border:1px solid transparent; border-radius:9px; padding:3px 0; font-size:11px;}
+QToolButton#workspace-tool:hover {background:#23252a; color:#f1f2f4;}
+QToolButton#workspace-tool:checked {background:#2b2e34; color:#fafafa; border-color:#3a3e45;}
+QToolButton#workspace-tool[unread="true"] {border-left:2px solid #a5cbbb; color:#dcebe3;}
+QToolButton#workspace-tool:focus {border-color:#91b09f;}
+QToolButton#workspace-tool:disabled {color:#606570;}
+QToolButton#workspace-tool::menu-indicator {image:none; width:0;}
+QPushButton#command-center {background:transparent; border:1px solid #303238; color:#969ba5; border-radius:8px; padding:5px 12px; font-size:12px;}
+QPushButton#command-center:hover {background:#23252a; color:#e5e7eb; border-color:#444851;}
+QComboBox#interface-language {background:transparent; border:1px solid transparent; color:#b8bdc7; padding:0 6px 0 12px;}
+QComboBox#interface-language:hover {background:#23252a; border-color:#373a42;}
+QFrame#statusbar {background:#191a1e; border-top:1px solid #292c31;}
+"""
+
 PATHS = {
+    "agents": '<circle cx="12" cy="5" r="3"/><circle cx="5" cy="18" r="3"/><circle cx="19" cy="18" r="3"/><path d="m10 8-4 7m8-7 4 7M8 18h8"/>',
+    "shield": '<path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6Z"/><path d="m8 12 3 3 5-6"/>',
+    "account": '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
+    "settings": '<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/>',
+    "messages": '<path d="M3 3h14v12H8l-5 4Z"/><path d="M17 7h4v14l-5-3h-5v-3"/>',
+    "handoff": '<path d="M3 7h15m-4-4 4 4-4 4M21 17H6m4-4-4 4 4 4"/>',
+
     "file": '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/>',
     "chat": '<path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-6 4V6a2 2 0 0 1 2-2Z"/><path d="M7 9h10M7 13h6"/>',
     "mic": '<rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/>',

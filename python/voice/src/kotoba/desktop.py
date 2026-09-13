@@ -96,6 +96,7 @@ class Job(QThread):
 
 class Window(QMainWindow):
     locale_changed = Signal(str)
+    dock_close_requested = Signal()
     busy_changed = Signal(bool)
     draft_handoff = Signal(str)
     model_progress = Signal(object)
@@ -303,7 +304,7 @@ class Window(QMainWindow):
         self.locale_button = switch
         side.addWidget(switch)
         switch.setVisible(not self.embedded)
-        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.10.2", "muted"))
+        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.11.0", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
         content.setSpacing(12)
@@ -421,6 +422,13 @@ class Window(QMainWindow):
         self.new_button.setToolTip(self.t("new"))
         self.new_button.setAccessibleName(self.t("new"))
         header.addWidget(self.new_button)
+        close_panel = QPushButton("×")
+        close_panel.setObjectName("ghost")
+        close_panel.setFixedSize(30, 30)
+        close_panel.setToolTip("Close voice panel" if en else "音声パネルを閉じる")
+        close_panel.setAccessibleName(close_panel.toolTip())
+        close_panel.clicked.connect(lambda: self.dock_close_requested.emit())
+        header.addWidget(close_panel)
         layout.addLayout(header)
         self.status = self.label(self.t("ready"), "muted")
         layout.addWidget(self.status)
