@@ -231,6 +231,7 @@ Direct dependencies of the `pyproject.toml` manifests, plus `uv` as the developm
 | [`sounddevice`](https://github.com/spatialaudio/python-sounddevice) | MIT | microphone capture |
 | [`soundfile`](https://github.com/bastibe/python-soundfile) | BSD-3-Clause | voice audio files |
 | [`uvicorn`](https://github.com/Kludex/uvicorn) | BSD-3-Clause | local bridge server |
+| [`websockets`](https://github.com/python-websockets/websockets) | BSD-3-Clause | native live voice transport; bundled license in `python/voice/THIRD_PARTY_LICENSES/websockets.txt` |
 | [`uv`](https://github.com/astral-sh/uv) | MIT / Apache-2.0 | development workflow tool |
 
 ## First-party native packages

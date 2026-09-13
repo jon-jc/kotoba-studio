@@ -773,3 +773,121 @@ def test_api_history_does_not_redirect_to_subscription_agents(workspace, monkeyp
     assert window.stack.currentWidget() is window.chats
     assert window.chats.history is True and window.web is retained_view
     assert window.api_button.isChecked()
+
+
+def test_live_voice_survives_locale_rebuild_without_duplicate_widget_ownership(workspace):
+    from PySide6.QtWidgets import QApplication
+    window = workspace
+    panel = window.voice.live_voice
+    panel.prompt.setPlainText("Keep this draft 日本語")
+    panel.messages = {"a": ("user", "Hello"), "b": ("assistant", "こんにちは")}
+    for locale in ("en", "ja", "en"):
+        window.voice.set_locale(locale)
+        assert window.voice.live_voice is panel
+        assert window.voice.live_scroll.widget() is panel
+        window.voice.voice_modes.setCurrentIndex(1)
+        window.show()
+        window.voice.show()
+        QApplication.processEvents()
+        assert panel.prompt.toPlainText() == "Keep this draft 日本語"
+    assert panel.prompt.placeholderText() == "Add a prompt to this conversation…"
+    assert "Hello" in panel.transcript.toPlainText()
+
+
+def test_live_voice_controls_keep_text_and_speech_together_and_stop_on_hide(workspace, monkeypatch):
+    import threading
+    from PySide6.QtCore import QObject, Signal
+    from kotoba import live_voice_ui
+    from kotoba.live_voice import Playback
+    class Session(QObject):
+        event = Signal(str, object)
+        finished = Signal()
+        def __init__(self, protocol, key, device, parent):
+            super().__init__(parent)
+            self.protocol = protocol
+            self.ready = threading.Event()
+            self.stopping = threading.Event()
+            self.capture = False
+            self.playback = Playback()
+            self.level = 0
+            self.sent = []
+        def start(self):
+            self.ready.set()
+            self.event.emit("ready", None)
+        def stop(self):
+            self.stopping.set()
+            self.capture = False
+        def microphone(self, enabled):
+            self.capture = enabled
+        def enqueue(self, kind, value=None):
+            self.sent.append((kind, value))
+            return True
+    monkeypatch.setattr(live_voice_ui, "LiveVoice", Session)
+    window = workspace
+    window.voice.set_locale("en")
+    panel = window.voice.live_voice
+    window.voice.voice_modes.setCurrentIndex(1)
+    window.show()
+    window.voice.show()
+    panel.key.setText("test-session-key")
+    panel.start_call()
+    session = panel.session
+    assert session and not session.capture
+    assert panel.mic.isEnabled() and not window.voice.record_button.isEnabled()
+    assert not window.locale_toggle.isEnabled()
+    window.voice.busy(False)
+    assert not window.voice.record_button.isEnabled()
+    unexpected = []
+    window.voice.work(lambda emit: unexpected.append("started"), unexpected.append)
+    assert window.voice.job is None and not unexpected
+    panel.mic_pressed()
+    assert session.capture
+    panel.mic_released()
+    assert not session.capture
+    panel.prompt.setPlainText("Explain this change in Japanese.")
+    panel.send_text()
+    assert session.sent == [("text", "Explain this change in Japanese.")]
+    panel.receive("transcript", ("a", "assistant", "了解", False))
+    panel.receive("transcript", ("a", "assistant", "了解しました。", True))
+    assert panel.transcript.toPlainText().count("了解") == 1
+    handoffs = []
+    window.voice.draft_handoff.connect(handoffs.append)
+    panel.review_in_chat()
+    assert len(handoffs) == 1 and "了解しました。" in handoffs[0]
+    window.close_voice_panel()
+    assert session.stopping.is_set()
+    session.finished.emit()
+    assert panel.session is None and panel.start.isEnabled()
+    assert not panel.mic.isEnabled() and window.voice.record_button.isEnabled()
+    assert "test-session-key" not in window.voice.preferences.value("live/keys/openai", "")
+    panel.start_call()
+    session = panel.session
+    window.request_quit()
+    assert session.stopping.is_set() and not window.shutdown_complete
+    session.finished.emit()
+    assert window.shutdown_complete
+
+
+def test_live_voice_key_resolution_is_provider_scoped_and_errors_keep_draft(workspace, monkeypatch):
+    from kotoba import live_voice_ui
+    panel = workspace.voice.live_voice
+    panel.key.clear()
+    monkeypatch.setenv("OPENAI_API_KEY", "openai-environment")
+    monkeypatch.setenv("GEMINI_API_KEY", "google-environment")
+    panel.provider.setCurrentIndex(panel.provider.findData("openai"))
+    assert panel.resolve_key() == "openai-environment"
+    monkeypatch.setattr(live_voice_ui, "protect", lambda data, decrypt=False: data[::-1])
+    panel.key.setText("saved-voice-secret")
+    panel.remember.setChecked(True)
+    assert panel.resolve_key() == "saved-voice-secret"
+    assert "saved-voice-secret" not in workspace.voice.preferences.value(panel.key_name())
+    panel.key.clear()
+    assert panel.resolve_key() == "saved-voice-secret"
+    panel.provider.setCurrentIndex(panel.provider.findData("google"))
+    assert panel.resolve_key() == "google-environment"
+    panel.provider.setCurrentIndex(panel.provider.findData("openai"))
+    panel.forget_key()
+    assert panel.resolve_key() == "openai-environment"
+    panel.prompt.setPlainText("Do not discard")
+    panel.receive("error", "auth")
+    assert panel.failed and panel.prompt.toPlainText() == "Do not discard"

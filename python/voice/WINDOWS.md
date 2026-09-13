@@ -1,6 +1,6 @@
 # Kotoba Studio for Windows
 
-The installer is `python/voice/dist/Kotoba-Studio-0.11.2-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes the embedded Orca/Electron agent workspace, Python, Qt WebEngine, the matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
+The installer is `python/voice/dist/Kotoba-Studio-0.12.0-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes the embedded Orca/Electron agent workspace, Python, Qt WebEngine, the matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
 
 ## Try the application
 
@@ -12,9 +12,9 @@ The installer is `python/voice/dist/Kotoba-Studio-0.11.2-Setup.exe` after a succ
 6. Review names, numbers, and intent. Use **Add to chat** to append reviewed text to the available chat draft, or use the voice panel's SDK session with a configured provider and model. Cloud keys entered in the voice settings are session-only.
 7. Explore **Code**, **Terminal**, and **Plugins**. The command console supports PowerShell commands; interactive terminal workflows remain in Harness. Installing external plugins can require separately installed developer tools such as pnpm.
 
-Audio capture remains in memory. Only text you send goes to the model provider. Harness stores submitted conversations in its application data directory. Session exports are explicit. Uninstall preserves user data and downloaded models. The application is an unsigned developer preview; it has not completed code-signing, clean-machine compatibility, security, or production qualification. The upstream Harness version is itself an alpha.
+Audio capture remains in memory. Local dictation sends only reviewed text to the agent; cloud transcription and **Voice → Live conversation** send audio to the selected provider. Live voice also accepts typed prompts in its shared provider session; see [native voice setup](VOICE.md#native-voice-conversations). Harness stores submitted conversations in its application data directory. Session exports are explicit. Uninstall preserves user data and downloaded models. The application is an unsigned developer preview; it has not completed code-signing, clean-machine compatibility, security, or production qualification. The upstream Harness version is itself an alpha.
 
-Japanese/English voice input is supported. The top-right English/Japanese selector updates both the native panels and core embedded chat controls. Extension strings without Japanese translations fall back to English. Windows global paste-at-cursor dictation and durable meeting notes are described in the [voice guide](VOICE.md). Speaker diarization, streaming interruption, and automatic provider failover are not implemented.
+Japanese/English voice input is supported. The top-right English/Japanese selector updates both the native panels and core embedded chat controls. Extension strings without Japanese translations fall back to English. Windows global paste-at-cursor dictation, durable meeting notes and native voice interruption are described in the [voice guide](VOICE.md). Speaker diarization and automatic provider failover are not implemented.
 
 The chat welcome headline is **Create with Kotoba** in English and **ことばを、かたちに。** in Japanese.
 

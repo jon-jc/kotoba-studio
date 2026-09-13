@@ -99,6 +99,7 @@ const PYTHON_METADATA: Record<string, { license: string; repo: string; role: str
   numpy: { license: 'BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0', repo: 'https://github.com/numpy/numpy', role: 'voice signal processing' },
   fastapi: { license: 'MIT', repo: 'https://github.com/fastapi/fastapi', role: 'local OpenWhispr bridge' },
   uvicorn: { license: 'BSD-3-Clause', repo: 'https://github.com/Kludex/uvicorn', role: 'local bridge server' },
+  websockets: { license: 'BSD-3-Clause', repo: 'https://github.com/python-websockets/websockets', role: 'native live voice transport; bundled license in `python/voice/THIRD_PARTY_LICENSES/websockets.txt`' },
   'python-multipart': { license: 'Apache-2.0', repo: 'https://github.com/Kludex/python-multipart', role: 'bridge audio upload parsing' },
   pyinstaller: { license: 'GPL-2.0-or-later WITH Bootloader-exception', repo: 'https://github.com/pyinstaller/pyinstaller', role: 'voice desktop packaging only' },
 }

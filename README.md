@@ -4,11 +4,13 @@
 
 **Your coding agents. One place to build.**
 
-Windows x64 · 0.11.2
+Windows x64 · 0.12.0
 
 [English](#english) · [日本語](#japanese)
 
 A Windows desktop workspace for Japanese and English voice input, AI conversations, and development. Capture an idea from your microphone or an application, turn it into an editable instruction, and work with an agent using local models or cloud APIs.
+
+**Talk and type with your AI.** Voice → Live conversation connects to OpenAI Realtime, Gemini Live, or Grok Voice. Share spoken and typed turns in one session, choose English or Japanese, and move reviewed text into your coding chat. Voice API access is billed separately from coding-agent subscriptions. [Setup and supported behavior](python/voice/VOICE.md#native-voice-conversations).
 
 [Get started](#run) · [Voice and local models](python/voice/README.md) · [Windows packaging](python/voice/WINDOWS.md) · [日本語](#japanese)
 
@@ -74,7 +76,7 @@ A persistent left rail keeps development tools together and separates collaborat
 
 ## Start on Windows
 
-The desktop build is **Kotoba Studio 0.11.2**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.11.2-Setup.exe` from your build output. The installer includes the subscription-agent workspace, full Harness runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
+The desktop build is **Kotoba Studio 0.12.0**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.12.0-Setup.exe` from your build output. The installer includes the subscription-agent workspace, full Harness runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
 
 1. **Open Agents.** Add a project, connect an installed coding agent in Agent accounts, and create a task in its own worktree.
 2. **Optionally use API chat.** Open **Settings → Connections** to configure an API provider, or choose Configure later and open Local models. Register a local model, then select Kotoba Local in the chat composer.
@@ -171,6 +173,8 @@ Kotoba Studio は、日本語と英語の音声入力、AI エージェント、
 
 ### 音声を確認して、次のアクションへ
 
+**話すことも、入力することも。** **音声 → 音声会話** で OpenAI Realtime、Gemini Live、Grok Voice と日本語・英語で会話できます。音声と文字を同じ会話で使い、確認した内容をコーディング用チャットへ追加します。音声 API の利用料金はエージェントのサブスクとは別です。[設定と対応範囲](python/voice/VOICE.md#native-voice-conversations)をご覧ください。
+
 **音声** を開き、マイク、システム音声、アプリの音声、または音声ファイルを選びます。ローカルで文字起こしを行う前に、**音声設定 → モデルを準備** でモデルをダウンロードしてください。英語は NVIDIA Parakeet、日本語は Kotoba-Whisper が初期設定です。ほかの Whisper モデルも選べます。
 
 名前・数字・意図を確認して修正し、**チャットに追加** で選択中の会話の下書きに入れます。内容を確認してから送信してください。デスクトップ音声入力を有効にすると、**Ctrl+Shift+Space** でカーソル位置に入力できます。会議とノートの機能では、時刻付きの文字起こし、重要箇所、検索できるメモを残せます。詳しくは[音声ワークフロー](python/voice/VOICE.md)をご覧ください。
@@ -199,7 +203,7 @@ Kotoba Studio は、日本語と英語の音声入力、AI エージェント、
 
 ### Windows で始める
 
-現在のデスクトップ版は **0.11.2**、Windows x64 向けの未署名の開発者プレビューです。[Windows パッケージ作成ガイド](python/voice/WINDOWS.md)に従って `Kotoba-Studio-0.11.2-Setup.exe` を作成できます。インストーラーには、サブスクリプションのエージェント用ワークスペース、Harness 実行環境、音声キャプチャー、CPU 推論エンジンが含まれます。モデルの重みは別途ダウンロードするか、手元のファイルを登録してください。
+現在のデスクトップ版は **0.12.0**、Windows x64 向けの未署名の開発者プレビューです。[Windows パッケージ作成ガイド](python/voice/WINDOWS.md)に従って `Kotoba-Studio-0.12.0-Setup.exe` を作成できます。インストーラーには、サブスクリプションのエージェント用ワークスペース、Harness 実行環境、音声キャプチャー、CPU 推論エンジンが含まれます。モデルの重みは別途ダウンロードするか、手元のファイルを登録してください。
 
 1. **作業フォルダーを選ぶ。** エージェントが作業するフォルダーを指定します。
 2. **モデルを接続する。** **··· → 接続** で OpenAI、Anthropic Claude、Kimi、DeepSeek、またはカスタムの接続先を設定します。ローカルで使う場合は **ローカル AI** で GGUF モデルを登録してエンジンを起動し、会話の入力欄で **Kotoba Local** を選びます。Ollama と LM Studio にも接続できます。

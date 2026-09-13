@@ -2,6 +2,28 @@
 
 Kotoba Studio adapts [OpenWhispr](https://github.com/OpenWhispr/openwhispr)'s Windows capture, dictation, model registry, and meeting lifecycle patterns to its Python desktop. The complete Harness remains available for reviewed agent instructions. The [upstream documentation](https://docs.openwhispr.com/) is a reference for OpenWhispr; it is not a list of features shipped by Kotoba.
 
+## Native voice conversations
+
+Open **Voice → Live conversation** to speak and type in the same provider session. This is a native speech-to-speech connection; local dictation remains a separate tab. Choose OpenAI Realtime, Gemini Live, or Grok Voice, a conversation language, and a microphone. **Voice settings** contains the voice and editable model ID. Defaults are `gpt-realtime-2.1`, `gemini-3.1-flash-live-preview`, and `grok-voice-latest`; model availability depends on your provider account.
+
+Enter that provider's API key, or use `OPENAI_API_KEY`, `GEMINI_API_KEY`, or `XAI_API_KEY` in the desktop launch environment. These voice credentials are separate from the Harness credential manager and subscription-agent accounts. **Remember key** encrypts a voice key for the current Windows user; **Forget saved key** removes it. Other platforms support session-only keys and environment variables. A supplied key overrides the saved voice key, which overrides the environment. Keys are never included in transcripts or handoffs.
+
+Press **Start conversation**, then **Hold to talk**. Release to send the spoken turn. Use **Send prompt** to add typed instructions to the same conversation and receive a spoken reply. **Hands-free** uses the provider's speech detection; the microphone starts muted and must be explicitly unmuted. Use headphones because this desktop audio path does not implement acoustic echo cancellation. Speaking again interrupts the prior reply. **Stop audio** clears playback; OpenAI and Grok also receive cancellation and a played-duration truncation. Gemini's Stop audio is playback-only, so generation and billing may continue until that turn ends. **End** closes the connection. Closing the panel or app also ends live voice; it does not continue invisibly in the tray.
+
+Live voice sends captured audio and typed prompts to the selected provider and incurs that provider's API charges. It does not require downloaded speech weights and never silently switches providers. Connections have bounded setup timeouts, audio queues, and a 30-minute app limit. Disconnects require an explicit new start; previous prompts and audio are not resent. Audio is held only in memory. Up to 200 transcript entries remain in the panel until a new conversation or app exit. Transcripts may be incomplete when the provider cannot transcribe a turn.
+
+Select transcript text and choose **Review in chat**, or leave the selection empty to transfer the visible conversation. This fills the available coding-chat draft without submitting it. The voice model has no file or command tools; coding actions continue through the selected agent's permissions and review workflow. Providers without a supported native voice adapter can still use reviewed local dictation and the existing reply read-aloud option.
+
+Protocol references: [OpenAI Realtime](https://developers.openai.com/api/docs/guides/realtime-conversations), [Gemini Live](https://ai.google.dev/gemini-api/docs/live-api/capabilities), and [Grok Voice](https://docs.x.ai/developers/rest-api-reference/inference/voice). Keyless tests cover wire messages, interruption, audio bounds, shutdown, credentials, and the native UI. Live account entitlements, paid turns, acoustic quality, and broad microphone compatibility still require testing with your provider and device.
+
+### 音声と文字で、同じ AI と会話する
+
+**音声 → 音声会話** で OpenAI Realtime、Gemini Live、Grok Voice を選び、日本語・英語・自動切替とマイクを設定します。**音声の詳細設定** では声とモデル ID を選べます。音声 API キーは Harness の保存済みキーやエージェントのサブスク認証とは別に設定します。環境変数も利用でき、Windows ではキーをユーザー単位で暗号化して保存・削除できます。
+
+**会話を開始** してから **押している間、話す** を押し、離すと送信します。文字で入力したメッセージも同じ会話に加わり、音声で返答します。ハンズフリーはマイクをオンにすると提供者が発話を検出します。エコー除去は未実装のためヘッドホンを推奨します。**音声を止める** は再生を停止します。OpenAI と Grok には返答の中止も通知しますが、Gemini は再生のみの停止で、生成・課金が続く場合があります。**終了**、パネルを閉じる、アプリを閉じる操作で接続を終了します。
+
+音声・入力内容を選択した提供者に送信し、API の利用料金がかかります。ローカルの音声モデルのダウンロードは不要です。音声は保存せず、最大 200 件の会話テキストをパネルに保持します。会話は最大 30 分で、自動再接続・再送信はしません。テキストを選択して **確認してチャットへ** を押すと、コーディング用チャットの下書きに追加します。選択しない場合は表示中の会話を追加します。自動送信・ファイル操作・コマンド実行は行いません。実際の API の利用権限、音声品質、マイクの互換性は利用者の環境で確認してください。
+
 ## Choose a speech model
 
 In Voice Studio, choose the input language, expand **Audio settings**, and choose **Download / warm model**. Downloads are explicit. Recording and transcription only load existing local weights; missing weights produce an error. Setup displays download progress, received size when available, unpacking, and model loading. Unknown download sizes use an indeterminate bar; older Hugging Face versions may report file counts. Completion appears only after the model loads successfully. No audio is sent during a model download. Hugging Face telemetry is disabled.

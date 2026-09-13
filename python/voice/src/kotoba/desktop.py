@@ -14,7 +14,7 @@ from PySide6.QtGui import QFont, QTextCursor, QIcon
 from PySide6.QtWidgets import (QApplication, QCheckBox, QDialog, QDialogButtonBox,
     QFileDialog, QFormLayout, QFrame, QHBoxLayout, QLabel, QLineEdit, QMainWindow,
     QMessageBox, QPlainTextEdit, QPushButton, QSplitter, QTextBrowser,
-    QVBoxLayout, QWidget, QListWidget, QProgressBar)
+    QVBoxLayout, QWidget, QListWidget, QProgressBar, QScrollArea)
 from PySide6.QtTextToSpeech import QTextToSpeech
 
 from .harness import HarnessSession
@@ -262,8 +262,12 @@ class Window(QMainWindow):
         return label
 
     def build(self):
+        live = getattr(self, "live_voice", None)
+        if live is not None:
+            self.live_scroll.takeWidget()
         if self.embedded:
             self.build_compact()
+            self.add_live_voice(live)
             return
         root = QWidget()
         layout = QHBoxLayout(root)
@@ -304,7 +308,7 @@ class Window(QMainWindow):
         self.locale_button = switch
         side.addWidget(switch)
         switch.setVisible(not self.embedded)
-        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.11.2", "muted"))
+        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.12.0", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
         content.setSpacing(12)
@@ -401,6 +405,24 @@ class Window(QMainWindow):
         content.addWidget(self.label(self.t("privacy"), "muted"))
         layout.addLayout(content, 1)
         self.setCentralWidget(root)
+
+        self.add_live_voice(live)
+
+    def add_live_voice(self, live=None):
+        from .live_voice_ui import LiveVoicePanel
+        dictation = self.takeCentralWidget()
+        self.live_voice = live or LiveVoicePanel(self)
+        self.live_voice.set_locale()
+        live_scroll = QScrollArea()
+        self.live_scroll = live_scroll
+        live_scroll.setWidgetResizable(True)
+        live_scroll.setFrameShape(QFrame.NoFrame)
+        live_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        live_scroll.setWidget(self.live_voice)
+        self.voice_modes = QTabWidget()
+        self.voice_modes.addTab(dictation, "Dictation" if self.locale == "en" else "音声入力")
+        self.voice_modes.addTab(live_scroll, "Live conversation" if self.locale == "en" else "音声会話")
+        self.setCentralWidget(self.voice_modes)
 
     def build_compact(self):
         """Capture first, review second; advanced configuration stays out of the draft."""
@@ -666,7 +688,14 @@ class Window(QMainWindow):
                 self.audio_source.setCurrentIndex(self.audio_source.count() - 1)
 
     def busy(self, value):
+        if hasattr(self, "live_voice") and self.live_voice.session is not None:
+            value = True
         self.busy_changed.emit(value)
+        if hasattr(self, "live_voice"):
+            live_running = self.live_voice.session is not None
+            self.live_voice.setEnabled(not value or live_running)
+            self.voice_modes.setTabEnabled(0, not live_running)
+            self.voice_modes.setTabEnabled(1, not value or live_running)
         for widget in (self.record_button, self.import_button, self.send_button, self.prepare_button,
                        self.settings_button, self.new_button, self.locale_button, self.language, self.speech_model,
                        self.audio_source, self.refresh_sources, self.phrase_button, self.expand_button,
@@ -678,7 +707,7 @@ class Window(QMainWindow):
             self.agent_model.setEnabled(bool(route and route["configured"]))
 
     def work(self, task, result):
-        if self.job is not None:
+        if self.job is not None or self.live_voice.session is not None:
             return
         self.download_progress.hide()
         self.busy(True)
@@ -798,7 +827,7 @@ class Window(QMainWindow):
             self.status.setText(self.t("configure"))
 
     def record(self):
-        if self.job is not None:
+        if self.job is not None or self.live_voice.session is not None:
             return
         if self.stream is not None:
             self.timer.stop()
@@ -967,7 +996,7 @@ class Window(QMainWindow):
         self.set_locale("en" if self.locale == "ja" else "ja")
 
     def set_locale(self, locale):
-        if locale == self.locale or locale not in COPY or self.job is not None or self.stream is not None:
+        if locale == self.locale or locale not in COPY or self.job is not None or self.stream is not None or self.live_voice.session is not None:
             return
         draft, conversation, activity = self.draft.toPlainText(), self.conversation.toPlainText(), self.activity.toPlainText()
         reference, score_text = self.reference.toPlainText(), self.score_label.text()
@@ -1174,6 +1203,11 @@ class Window(QMainWindow):
             self.config = replace(self.config, glossary=glossary.text(), device=device.currentText(), compute_type="float16" if device.currentText() == "cuda" else "int8")
 
     def closeEvent(self, event):
+        if self.live_voice.session is not None:
+            self.live_voice.stop()
+            event.ignore()
+            self.live_voice.session.finished.connect(self.close, Qt.UniqueConnection)
+            return
         if self.job is not None or self.stream is not None:
             self.status.setText(self.t("busy_close"))
             event.ignore()

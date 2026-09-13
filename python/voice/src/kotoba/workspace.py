@@ -312,7 +312,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         self.locale_scope.hide()
         status.addSpacing(18)
-        version = QLabel("Kotoba Studio  0.11.2")
+        version = QLabel("Kotoba Studio  0.12.0")
         version.setObjectName("micro")
         status.addWidget(version)
         content.addWidget(statusbar)
@@ -326,6 +326,7 @@ class Workspace(QMainWindow):
         self.selected_panel(0)
 
     def close_voice_panel(self):
+        self.voice.live_voice.stop()
         self.voice.hide()
         self.selected_panel(self.stack.currentIndex())
 
@@ -1053,6 +1054,14 @@ class Workspace(QMainWindow):
             QTimer.singleShot(0, self.request_quit)
 
     def request_quit(self):
+        session = self.voice.live_voice.session
+        if session is not None:
+            if not getattr(self, "voice_quit_pending", False):
+                self.voice_quit_pending = True
+                session.finished.connect(self.request_quit)
+            self.voice.live_voice.stop()
+            return
+        self.voice_quit_pending = False
         self.exit_requested = True
         self.close()
         if self.shutdown_complete:
@@ -1066,6 +1075,11 @@ class Workspace(QMainWindow):
             return
         if getattr(self.voice, "permission_dialog_active", False):
             event.ignore()
+            return
+        if self.voice.live_voice.session is not None:
+            self.voice.live_voice.stop()
+            event.ignore()
+            self.voice.live_voice.session.finished.connect(self.close, Qt.UniqueConnection)
             return
         if self.voice.job is not None or self.voice.stream is not None or self.local_models.job is not None:
             self.restore_from_tray()
@@ -1162,6 +1176,22 @@ def main():
                     window.stack.setCurrentIndex(6)
                     app.processEvents()
                     window.grab().save(str(screenshot.with_name(screenshot.stem + "-local-models.png")))
+                    window.voice.show()
+                    window.voice.voice_modes.setCurrentIndex(1)
+                    app.processEvents()
+                    live = window.voice.live_voice
+                    live_checks = {
+                        "providers": [live.provider.itemData(i) for i in range(live.provider.count())],
+                        "disconnected": live.session is None,
+                        "microphone_disabled": not live.mic.isEnabled(),
+                        "prompt_available": live.prompt.isEnabled(),
+                    }
+                    window.voice.grab().save(str(screenshot.with_name(screenshot.stem + "-live-voice.png")))
+                    if live_checks["providers"] != ["openai", "google", "xai"] or not all(live_checks[k] for k in ("disconnected", "microphone_disabled", "prompt_available")):
+                        window.request_quit()
+                        app.exit(1)
+                        return
+                    window.close_voice_panel()
                     tray_checks = {}
                     if "--tray-smoke" in sys.argv:
                         tray_checks["available"] = window.tray is not None and window.tray.isVisible()
@@ -1176,7 +1206,7 @@ def main():
                             app.exit(1)
                             return
                     screenshot.with_suffix(".json").write_text(json.dumps({"runtime_ready": True, "locale_toggle": True, "source_highlighting": highlighted,
-                        "chat_locales": evidence, "tray": tray_checks, **state}), encoding="utf-8")
+                        "chat_locales": evidence, "live_voice": live_checks, "tray": tray_checks, **state}), encoding="utf-8")
                     window.request_quit()
                     return
                 window.locale_toggle.setCurrentIndex(window.locale_toggle.findData(locale))
