@@ -304,7 +304,7 @@ class Window(QMainWindow):
         self.locale_button = switch
         side.addWidget(switch)
         switch.setVisible(not self.embedded)
-        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.11.0", "muted"))
+        side.addWidget(self.label("KOTOBA STUDIO\nFull SDK profile · v0.11.1", "muted"))
         layout.addWidget(sidebar)
         content = QVBoxLayout()
         content.setSpacing(12)
@@ -444,6 +444,10 @@ class Window(QMainWindow):
         self.audio_source.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
         self.audio_source.setMinimumContentsLength(12)
         self.audio_source.setAccessibleName("Audio source / 録音元")
+        self.language.setMinimumWidth(108)
+        for selector in (self.language, self.audio_source):
+            selector.setFixedHeight(36)
+        source.setSpacing(8)
         self.refresh_sources = QPushButton("↻")
         self.refresh_sources.setObjectName("ghost")
         self.refresh_sources.setToolTip("Refresh audio sources / 録音元を更新")

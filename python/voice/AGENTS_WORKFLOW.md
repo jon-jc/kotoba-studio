@@ -1,6 +1,6 @@
 # Subscription agents in Kotoba Studio
 
-The Windows 0.11.0 build opens **Agents** as the main workspace. Kotoba hosts the full Orca desktop interface inside its own window, alongside the existing API Harness, English/Japanese voice tools, code viewer and messaging. There is one outer window and one system tray entry.
+The Windows 0.11.1 build opens **Agents** as the main workspace. Kotoba hosts the full Orca desktop interface inside its own window, alongside the existing API Harness, English/Japanese voice tools, code viewer and messaging. There is one outer window and one system tray entry.
 
 ## Start a task
 
@@ -45,7 +45,7 @@ The packaged artifact is checked for native terminal process ownership, dependen
 
 ## 日本語
 
-Windows 版 0.11.0 は **エージェント** を中心に起動します。Orca の完全なデスクトップ実装を Kotoba の同じウィンドウに組み込み、API チャット、日英の音声入力、コード、メッセージ機能を併用できます。
+Windows 版 0.11.1 は **エージェント** を中心に起動します。Orca の完全なデスクトップ実装を Kotoba の同じウィンドウに組み込み、API チャット、日英の音声入力、コード、メッセージ機能を併用できます。
 
 **エージェントのアカウント** で Codex、Claude Code、OpenCode、Pi などの設定を行ってください。各 CLI が対応するログイン、サブスクリプション、認証情報、利用上限に従います。Git プロジェクトを追加し、タスクごとに作業ツリーを作成すると変更を分離できます。作業ツリー自体はセキュリティ上のサンドボックスではありません。
 
