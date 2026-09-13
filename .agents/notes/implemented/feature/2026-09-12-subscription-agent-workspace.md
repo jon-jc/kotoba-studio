@@ -39,3 +39,9 @@ The hidden IPC smoke cannot validate composed pixels. `smoke_fleet_display.py` a
 The overlay replaces the global bypass switch with per-agent Plan, Ask and Workspace editing settings. Codex launch arguments configure its sandbox and escalation; Claude arguments configure native tool approval modes. OpenCode inline configuration sets global and built-in Plan/Build permission maps, retaining environment-file read protection and command approval. Unknown/custom configurations are identified instead of presented as enforced restrictions. Existing sessions and unsupported agents retain their own permission contracts. Exact legacy bypass presets migrate to manual defaults without overwriting custom arguments.
 
 Mobile navigation, appearance entry, pairing IPC registration, desktop push startup and cloud relay startup are disabled in Kotoba. The pinned upstream source is unchanged. Focused tests cover policy mapping, conflicting arguments, configuration preservation and unsupported/custom states; native desktop checks cover settings navigation.
+
+## Unified navigation (0.11.0)
+
+A persistent left rail separates primary tools, collaboration and configuration. The desktop header contains only the current surface, project picker, command search and language. Hidden compatibility buttons retain the bridge contract while the duplicate Fleet action bar is removed. Remote-context and failure notices remain visible. The native runtime shares the desktop neutral palette and reduced-motion-aware transitions. Connections offers separate actions for subscription accounts, API providers and local models. Voice closes without destroying drafts; API navigation does not stop other sessions.
+
+Focused desktop checks cover header geometry at 1024 pixels in English and Japanese, direct API navigation, retained voice drafts, account navigation from Code and project labels across locale changes. Windows Graphics Capture verifies the composed shell.

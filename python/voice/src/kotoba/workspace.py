@@ -11,7 +11,7 @@ from PySide6.QtCore import QProcess, QProcessEnvironment, QTimer, QUrl, Qt, QSiz
 from PySide6.QtGui import QColor, QFont, QTextCursor, QIcon, QShortcut, QKeySequence, QKeyEvent
 from PySide6.QtWidgets import (QApplication, QFileSystemModel, QFileDialog, QFrame, QHBoxLayout, QLabel,
     QLineEdit, QMainWindow, QPlainTextEdit, QPushButton, QSplitter, QStackedWidget,
-    QTreeView, QVBoxLayout, QWidget, QComboBox, QDialog, QListWidget, QListWidgetItem, QMenu, QSystemTrayIcon)
+    QTreeView, QVBoxLayout, QWidget, QToolButton, QComboBox, QDialog, QListWidget, QListWidgetItem, QMenu, QSystemTrayIcon)
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWebEngineCore import QWebEnginePage, QWebEngineProfile, QWebEngineScript
 from .desktop import Window as VoiceWindow, STYLE
@@ -55,7 +55,7 @@ class Workspace(QMainWindow):
         self.setWindowTitle("Kotoba Studio · ことば")
         self.setWindowIcon(QIcon(str(icon_path())))
         self.resize(1536, 960)
-        self.setMinimumSize(1180, 780)
+        self.setMinimumSize(1024, 720)
         self.setStyleSheet(STYLE)
         self.backend = QProcess(self)
         self.backend.setProcessChannelMode(QProcess.MergedChannels)
@@ -78,6 +78,7 @@ class Workspace(QMainWindow):
         self.reveals = [Reveal(widget, lambda: not (self.reduce_motion.isChecked() or system_reduced_motion()))
                         for widget in (self.voice, self.terminal_dock)]
         self.sync_motion()
+        self.voice.dock_close_requested.connect(self.close_voice_panel)
         self.voice.locale_changed.connect(self.apply_locale)
         self.voice.draft_handoff.connect(self.handoff_draft)
         self.voice.busy_changed.connect(lambda busy: self.locale_toggle.setEnabled(not busy))
@@ -95,6 +96,13 @@ class Workspace(QMainWindow):
         unread = sum(self.messaging.store.unread().values())
         label = "Messaging" if self.voice.locale == "en" else "メッセージ"
         self.messaging_action.setText(label + (f" · {unread}" if unread else ""))
+        message_button = self.collaboration_buttons["messaging"]
+        message_button.setToolTip(label + (f" · {unread}" if unread else ""))
+        message_button.setAccessibleName(message_button.toolTip())
+        if message_button.property("unread") != bool(unread):
+            message_button.setProperty("unread", bool(unread))
+            message_button.style().unpolish(message_button)
+            message_button.style().polish(message_button)
         if self.tray is not None:
             self.tray.setToolTip("Kotoba Studio" + (f" · {unread} " + ("unread messages" if self.voice.locale == "en" else "件の未読メッセージ") if unread else ""))
             if unread > self.messaging_unread and self.voice.preferences.value("messaging/notify", False, type=bool) and QApplication.activeWindow() is None:
@@ -106,53 +114,82 @@ class Workspace(QMainWindow):
         outer = QVBoxLayout(root)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
-        titlebar = QFrame()
-        titlebar.setObjectName("titlebar")
-        top = QHBoxLayout(titlebar)
-        top.setContentsMargins(16, 8, 14, 8)
-        self.sidebar_button = QPushButton("Kotoba Studio")
+        shell = QHBoxLayout()
+        shell.setContentsMargins(0, 0, 0, 0)
+        shell.setSpacing(0)
+        outer.addLayout(shell, 1)
+        self.rail = QFrame()
+        self.rail.setObjectName("workspace-rail")
+        self.rail.setFixedWidth(76)
+        side = QVBoxLayout(self.rail)
+        side.setContentsMargins(8, 8, 8, 10)
+        side.setSpacing(5)
+        shell.addWidget(self.rail)
+        self.sidebar_button = QPushButton()
         self.sidebar_button.setIcon(self.windowIcon())
-        self.sidebar_button.setIconSize(QSize(26, 26))
-        self.sidebar_button.setObjectName("ghost")
-        self.sidebar_button.setStyleSheet("font-weight:600;font-size:15px;color:#e8e8ec;padding:4px 2px")
+        self.sidebar_button.setIconSize(QSize(28, 28))
+        self.sidebar_button.setFixedSize(60, 44)
+        self.sidebar_button.setObjectName("workspace-brand")
         self.sidebar_button.clicked.connect(self.open_sidebar)
-        top.addWidget(self.sidebar_button)
-        top.addSpacing(28)
+        side.addWidget(self.sidebar_button)
+        side.addSpacing(12)
+        content = QVBoxLayout()
+        content.setContentsMargins(0, 0, 0, 0)
+        content.setSpacing(0)
+        shell.addLayout(content, 1)
+        titlebar = QFrame()
+        titlebar.setObjectName("workspace-header")
+        titlebar.setFixedHeight(56)
+        top = QHBoxLayout(titlebar)
+        top.setContentsMargins(20, 8, 18, 8)
+        top.setSpacing(14)
+        self.view_title = QLabel()
+        self.view_title.setObjectName("workspace-title")
+        top.addWidget(self.view_title)
+        self.project_button = QPushButton()
+        self.project_button.setObjectName("workspace-project")
+        self.project_button.setIcon(outline_icon("folder"))
+        self.project_button.setMaximumWidth(230)
+        self.project_button.clicked.connect(self.choose_workspace)
+        top.addWidget(self.project_button)
+        top.addStretch(1)
         self.command_center = QPushButton()
         self.command_center.setObjectName("command-center")
-        self.command_center.setMaximumWidth(360)
-        self.command_center.setMinimumWidth(220)
+        self.command_center.setFixedHeight(32)
+        self.command_center.setMinimumWidth(190)
+        self.command_center.setMaximumWidth(270)
         self.command_center.clicked.connect(self.command_palette)
-        top.addWidget(self.command_center, 1)
-        top.addStretch()
-        self.access_button = QPushButton("Access / アクセス")
-        self.access_button.setObjectName("ghost")
-        self.access_button.setEnabled(False)
-        self.access_button.clicked.connect(self.open_access)
-        top.addWidget(self.access_button)
-        self.voice_toggle = QPushButton()
-        self.voice_toggle.clicked.connect(lambda: self.show_panel(1))
-        self.voice_toggle.hide()
+        top.addWidget(self.command_center)
         self.locale_toggle = QComboBox()
         self.locale_toggle.setObjectName("interface-language")
-        self.locale_toggle.setFixedHeight(34)
-        self.locale_toggle.setMinimumWidth(100)
+        self.locale_toggle.setFixedSize(108, 32)
         self.locale_toggle.setAccessibleName("Interface language / 表示言語")
         self.locale_toggle.addItem("English", "en")
         self.locale_toggle.addItem("日本語", "ja")
         self.locale_toggle.currentIndexChanged.connect(self.change_locale)
-        outer.addWidget(titlebar)
+        top.addWidget(self.locale_toggle)
+        content.addWidget(titlebar)
         main = QHBoxLayout()
         main.setContentsMargins(0, 0, 0, 0)
         main.setSpacing(0)
-        side = top
+        self.access_button = QToolButton()
+        self.access_button.setObjectName("workspace-tool")
+        self.access_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.access_button.setIcon(outline_icon("shield"))
+        self.access_button.setIconSize(QSize(19, 19))
+        self.access_button.setFixedSize(60, 48)
+        self.access_button.setEnabled(False)
+        self.access_button.clicked.connect(self.open_access)
+        self.voice_toggle = QPushButton()
+        self.voice_toggle.clicked.connect(lambda: self.show_panel(1))
+        self.voice_toggle.hide()
         self.stack = QStackedWidget()
         self.chat_profiles = []
         self.chats = AgentWorkbench(self.voice.preferences, self.create_chat_view, self)
         self.web = self.chats.active['view']
         self.chats.active_changed.connect(self.select_chat_view)
         self.chats.created.connect(self.prepare_chat_view)
-        self.chats.history_requested.connect(self.open_sidebar)
+        self.chats.history_requested.connect(self.open_chat_history)
         self.chats.navigation_changed.connect(self.sync_chat_navigation)
         self.stack.addWidget(self.chats)
         self.stack.addWidget(QWidget())  # Legacy voice navigation index; voice now lives in the dock.
@@ -171,12 +208,13 @@ class Workspace(QMainWindow):
         self.stack.addWidget(self.workflow)
         self.nav_keys = ["◈  Workspace / 会話", "◉  Voice / 音声", "⌘  Code / コード", "›_  Terminal", "⇄  Routing / 接続", "⊞  Plugins", "▣  Local models"]
         self.nav = []
-        for index, icon in enumerate(("chat", "mic", "code", "terminal", "routing", "plugins", "models")):
-            button = QPushButton()
+        for index, icon in enumerate(("agents", "mic", "code", "terminal", "routing", "plugins", "models")):
+            button = QToolButton()
+            button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
             button.setIcon(outline_icon(icon))
-            button.setIconSize(QSize(17, 17))
-            button.setObjectName("activity")
-            button.setMinimumSize(86, 34)
+            button.setIconSize(QSize(20, 20))
+            button.setObjectName("workspace-tool")
+            button.setFixedSize(60, 50)
             button.setCheckable(True)
             button.clicked.connect(lambda checked=False, i=index: self.show_panel(i))
             if index < 4:
@@ -185,6 +223,41 @@ class Workspace(QMainWindow):
                 button.setParent(titlebar)
                 button.hide()
             self.nav.append(button)
+            if index == 0:
+                self.api_button = QToolButton()
+                self.api_button.setObjectName("workspace-tool")
+                self.api_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+                self.api_button.setIcon(outline_icon("chat"))
+                self.api_button.setFixedSize(60, 50)
+                self.api_button.setCheckable(True)
+                self.api_button.clicked.connect(lambda: self.workflow_tool("api"))
+                side.addWidget(self.api_button)
+        separator = QFrame()
+        separator.setObjectName("rail-divider")
+        separator.setFixedHeight(1)
+        side.addSpacing(8)
+        side.addWidget(separator)
+        side.addSpacing(8)
+        self.collaboration_buttons = {}
+        for key, icon in (("messaging", "messages"), ("handoff", "handoff")):
+            button = QToolButton()
+            button.setObjectName("workspace-tool")
+            button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+            button.setIcon(outline_icon(icon))
+            button.setFixedSize(60, 50)
+            button.clicked.connect(lambda checked=False, tool=key: self.workflow_tool(tool))
+            self.collaboration_buttons[key] = button
+            side.addWidget(button)
+        side.addStretch(1)
+        self.accounts_button = QToolButton()
+        self.accounts_button.setObjectName("workspace-tool")
+        self.accounts_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.accounts_button.setIcon(outline_icon("account"))
+        self.accounts_button.setFixedSize(60, 48)
+        self.accounts_button.setEnabled(False)
+        self.accounts_button.clicked.connect(self.open_agent_accounts)
+        side.addWidget(self.accounts_button)
+        side.addWidget(self.access_button)
         self.workspace_menu = QMenu(self)
         self.workspace_actions = []
         for index in (4, 5, 6):
@@ -200,20 +273,14 @@ class Workspace(QMainWindow):
         self.reduce_motion.setCheckable(True)
         self.reduce_motion.setChecked(self.voice.preferences.value("ui/reduced_motion", False, type=bool))
         self.reduce_motion.toggled.connect(self.sync_motion)
-        self.more_button = QPushButton("···")
-        self.more_button.setObjectName("ghost")
-        self.more_button.setFixedSize(38, 34)
+        self.more_button = QToolButton()
+        self.more_button.setObjectName("workspace-tool")
+        self.more_button.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.more_button.setIcon(outline_icon("settings"))
+        self.more_button.setFixedSize(60, 48)
+        self.more_button.setPopupMode(QToolButton.InstantPopup)
         self.more_button.setMenu(self.workspace_menu)
         side.addWidget(self.more_button)
-        folder = QPushButton()
-        folder.setIcon(outline_icon("folder"))
-        folder.setIconSize(QSize(18, 18))
-        folder.setObjectName("ghost")
-        folder.setFixedSize(38, 34)
-        folder.setToolTip("Open folder / フォルダーを開く")
-        folder.clicked.connect(self.choose_workspace)
-        side.addWidget(folder)
-        side.addWidget(self.locale_toggle)
         self.workbench = QSplitter(Qt.Horizontal)
         self.workbench.setChildrenCollapsible(False)
         self.editor_area = QSplitter(Qt.Vertical)
@@ -231,11 +298,11 @@ class Workspace(QMainWindow):
         self.workbench.setSizes([1040, 420])
         self.voice.hide()
         main.addWidget(self.workbench, 1)
-        outer.addLayout(main, 1)
+        content.addLayout(main, 1)
         statusbar = QFrame()
         statusbar.setObjectName("statusbar")
         status = QHBoxLayout(statusbar)
-        status.setContentsMargins(14, 5, 16, 5)
+        status.setContentsMargins(18, 3, 18, 3)
         self.health_key = "starting"
         self.health = QLabel()
         self.health.setStyleSheet("color:#a4b7ad;font-size:11px")
@@ -243,10 +310,12 @@ class Workspace(QMainWindow):
         status.addStretch()
         self.locale_scope = QLabel()
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
-        status.addWidget(self.locale_scope)
+        self.locale_scope.hide()
         status.addSpacing(18)
-        status.addWidget(QLabel("Kotoba Studio  0.10.2"))
-        outer.addWidget(statusbar)
+        version = QLabel("Kotoba Studio  0.11.0")
+        version.setObjectName("micro")
+        status.addWidget(version)
+        content.addWidget(statusbar)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(self.selected_panel)
         for sequence, callback in (("Ctrl+K", self.command_palette), ("Ctrl+Shift+V", lambda: self.show_panel(1)),
@@ -255,6 +324,10 @@ class Workspace(QMainWindow):
             shortcut = QShortcut(QKeySequence(sequence), self)
             shortcut.activated.connect(callback)
         self.selected_panel(0)
+
+    def close_voice_panel(self):
+        self.voice.hide()
+        self.selected_panel(self.stack.currentIndex())
 
     def record_shortcut(self):
         if self.voice.global_dictation.enabled:
@@ -338,8 +411,28 @@ class Workspace(QMainWindow):
         self.access_button.setToolTip(("Agent CLI permissions" if self.voice.locale == "en" else "エージェント CLI の権限") if in_workflow else ("API harness permissions" if self.voice.locale == "en" else "API ハーネスの権限"))
         if index == self.stack.indexOf(self.workflow):
             index = 0
+        self.accounts_button.setEnabled(self.workflow.state == "ready")
+        self.routing_accounts_button.setEnabled(self.workflow.state == "ready")
+        self.api_button.setChecked(self.stack.currentWidget() == self.chats)
+        titles = {0: ("API chat", "API 会話"), 2: ("Code", "コード"), 4: ("Connections", "接続"), 5: ("Plugins", "プラグイン"), 6: ("Local models", "ローカルモデル")}
+        title = ("Agents", "エージェント") if in_workflow else titles.get(self.stack.currentIndex(), ("Workspace", "ワークスペース"))
+        self.view_title.setText(title[self.voice.locale == "ja"])
+        project = self.workflow.current_path if in_workflow else self.voice.workspace
+        self.project_button.setText((Path(project).name or project)[:30] if project else ("Open project" if self.voice.locale == "en" else "プロジェクトを開く"))
+        self.project_button.setToolTip(project or ("Choose a project" if self.voice.locale == "en" else "プロジェクトを選択"))
         for i, button in enumerate(self.nav):
-            button.setChecked(not self.voice.isHidden() if i == 1 else not self.terminal_dock.isHidden() if i == 3 else i == index)
+            active = i == index
+            if i == 0:
+                active = in_workflow or (not self.workflow.runtime.available and self.stack.currentWidget() == self.chats)
+            elif i == 1:
+                active = not self.voice.isHidden()
+            elif i == 3:
+                active = not self.terminal_dock.isHidden()
+            button.setChecked(active)
+
+    def open_agent_accounts(self):
+        self.show_panel(0)
+        self.workflow.navigate("accounts")
 
     def open_sidebar(self):
         """Return to the retained chat page and expand its existing sidebar."""
@@ -347,6 +440,11 @@ class Workspace(QMainWindow):
         if self.stack.currentWidget() == self.workflow:
             self.workflow.navigate("sidebar")
             return
+        self.open_chat_history()
+
+    def open_chat_history(self):
+        """API history stays with its retained API client, independent of Agents."""
+        self.stack.setCurrentWidget(self.chats)
         self.chats.set_history(True)
         self.sidebar_attempts = 50
         self.expand_sidebar()
@@ -384,6 +482,10 @@ class Workspace(QMainWindow):
             item = QListWidgetItem(translate(key, self.voice.locale))
             item.setData(Qt.UserRole, index)
             actions.addItem(item)
+        for key, en, ja in (("accounts", "Agent accounts", "エージェントのアカウント"), ("api", "API chat", "API 会話"), ("access", "Access settings", "アクセス設定"), ("project", "Open project", "プロジェクトを開く")):
+            item = QListWidgetItem(ja if self.voice.locale == "ja" else en)
+            item.setData(Qt.UserRole, key)
+            actions.addItem(item)
         team = QListWidgetItem("Team handoffs" if self.voice.locale == "en" else "チームの引き継ぎ")
         team.setData(Qt.UserRole, "team")
         actions.addItem(team)
@@ -404,7 +506,15 @@ class Workspace(QMainWindow):
             if item is not None and not item.isHidden():
                 target = item.data(Qt.UserRole)
                 dialog.accept()
-                if target == "messaging":
+                if target == "accounts":
+                    self.open_agent_accounts()
+                elif target == "api":
+                    self.workflow_tool("api")
+                elif target == "access":
+                    self.open_access()
+                elif target == "project":
+                    self.choose_workspace()
+                elif target == "messaging":
                     self.open_messaging()
                 elif target == "team":
                     self.voice.open_collaboration()
@@ -457,6 +567,8 @@ class Workspace(QMainWindow):
 
     def apply_locale(self, locale):
         """Update shell labels without rebuilding web, terminal, or file state."""
+        for widget, en, ja in self.connection_copy:
+            widget.setText(ja if locale == "ja" else en)
         self.chats.set_locale(locale)
         self.workflow.set_locale(locale)
         self.sync_chat_navigation()
@@ -464,7 +576,20 @@ class Workspace(QMainWindow):
         self.sidebar_button.setToolTip("Open workspace sidebar" if locale == "en" else "ワークスペースのサイドバーを開く")
         self.sidebar_button.setAccessibleName(self.sidebar_button.toolTip())
         self.locale_toggle.blockSignals(True)
-        self.access_button.setText("Access ▾" if locale == "en" else "アクセス ▾")
+        self.access_button.setText("Access" if locale == "en" else "アクセス")
+        self.accounts_button.setText("Accounts" if locale == "en" else "アカウント")
+        self.accounts_button.setToolTip("Connect agent accounts" if locale == "en" else "エージェントのアカウントを接続")
+        self.api_button.setText("API chat" if locale == "en" else "API 会話")
+        self.api_button.setToolTip("Chats with your configured API providers" if locale == "en" else "設定済みの API プロバイダーとの会話")
+        self.api_button.setAccessibleName(self.api_button.text())
+        self.collaboration_buttons["messaging"].setText("Messages" if locale == "en" else "メッセージ")
+        self.collaboration_buttons["handoff"].setText("Handoffs" if locale == "en" else "引き継ぎ")
+        for button in self.collaboration_buttons.values():
+            button.setToolTip(button.text())
+            button.setAccessibleName(button.text())
+        self.more_button.setText("Settings" if locale == "en" else "設定")
+        self.project_button.setText("Open project" if locale == "en" else "プロジェクトを開く")
+        self.project_button.setToolTip("Choose the project for this workspace" if locale == "en" else "このワークスペースのプロジェクトを選択")
         self.locale_toggle.setCurrentIndex(self.locale_toggle.findData(locale))
         self.locale_toggle.blockSignals(False)
         self.locale_scope.setText(translate("scope", locale))
@@ -484,7 +609,7 @@ class Workspace(QMainWindow):
         for button, key in zip(self.nav, self.nav_keys):
             button.setToolTip(translate(key, locale))
             button.setAccessibleName(translate(key, locale))
-        names = ("Chat", "Voice", "Code", "Terminal", "Routing", "Plugins", "Local AI") if locale == "en" else ("会話", "音声", "コード", "ターミナル", "接続", "プラグイン", "ローカル AI")
+        names = ("Chat", "Voice", "Code", "Terminal", "Connections", "Plugins", "Local AI") if locale == "en" else ("会話", "音声", "コード", "ターミナル", "接続", "プラグイン", "ローカル AI")
         for button, name in zip(self.nav, names):
             button.setText(name)
         if self.workflow.runtime.available:
@@ -510,6 +635,7 @@ class Workspace(QMainWindow):
                     widget.setPlaceholderText(translate(key, locale))
                 else:
                     widget.setText(translate(key, locale))
+        self.selected_panel(self.stack.currentIndex())
         if self.health_key:
             self.set_health(self.health_key)
 
@@ -590,7 +716,7 @@ class Workspace(QMainWindow):
         header = QHBoxLayout()
         self.code_title = QLabel()
         self.code_title.setStyleSheet("font-size:20px;font-weight:600;color:#e8ecea")
-        header.addWidget(self.code_title)
+        self.code_title.hide()
         header.addStretch()
         self.code_find = QPushButton()
         self.code_find.setObjectName("ghost")
@@ -599,7 +725,7 @@ class Workspace(QMainWindow):
         self.code_folder = QPushButton()
         self.code_folder.setIcon(outline_icon("folder"))
         self.code_folder.clicked.connect(self.choose_workspace)
-        header.addWidget(self.code_folder)
+        self.code_folder.hide()
         self.code_close = QPushButton()
         self.code_close.setObjectName("ghost")
         self.code_close.clicked.connect(lambda: self.show_panel(0))
@@ -717,28 +843,49 @@ class Workspace(QMainWindow):
         scrollbar.setValue(scrollbar.maximum())
 
     def routing_page(self):
-        widget, layout = self.panel("Model routing / モデル接続", "The full Kotoba Studio Models settings manage provider routes, credentials, endpoints, model discovery, and per-session selection.")
-        for title, text in [
-            ("01   Add a provider", "Open Workspace → Settings → Models. Add DeepSeek or another supported provider, or configure a compatible gateway with its endpoint and model ID."),
-            ("02   Connect credentials", "Store each API key through Kotoba Studio's credential manager. Keep separate keys per provider. This app does not put credentials into source or session exports."),
-            ("03   Choose the route", "Choose a provider/model in the chat composer. Voice can use DeepSeek or Kotoba Local. Open Local models to load a GGUF file or connect Ollama / LM Studio."),
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.setContentsMargins(40, 32, 40, 32)
+        layout.setSpacing(18)
+        self.connection_copy = []
+        def label(en, ja, kind="muted"):
+            text = QLabel(en)
+            text.setObjectName(kind)
+            text.setWordWrap(True)
+            self.connection_copy.append((text, en, ja))
+            return text
+        layout.addWidget(label("Connect your AI", "AI を接続", "hero"))
+        layout.addWidget(label("Choose how you want to work. Each connection stays independent.", "使い方に合わせて接続を選択します。それぞれの接続は独立して管理されます。"))
+        for icon, title, title_ja, description, description_ja, action, action_ja, callback in [
+            ("account", "Subscription agents", "サブスクリプションのエージェント", "Use your Codex, Claude Code, OpenCode or Pi account for project work.", "Codex・Claude Code・OpenCode・Pi のアカウントでプロジェクトを進めます。", "Manage agent accounts", "エージェントのアカウントを管理", self.open_agent_accounts),
+            ("routing", "API providers", "API プロバイダー", "Connect API keys, discover models, and choose a provider in each chat.", "API キーを接続してモデルを取得し、チャットごとにプロバイダーを選択します。", "Configure API providers", "API プロバイダーを設定", lambda: self.open_settings("models")),
+            ("models", "Local models", "ローカルモデル", "Load a GGUF model or connect a local Ollama or LM Studio server.", "GGUF モデルを読み込むか、ローカルの Ollama・LM Studio に接続します。", "Open local models", "ローカルモデルを開く", lambda: self.show_panel(6)),
         ]:
-            frame = QFrame()
-            frame.setObjectName("metric")
-            box = QVBoxLayout(frame)
-            box.addWidget(QLabel(title))
-            description = QLabel(text)
-            description.setWordWrap(True)
-            description.setStyleSheet("color:#a5a8b5;padding:8px")
-            box.addWidget(description)
-            layout.addWidget(frame)
-        open_workspace = QPushButton("Open full Kotoba Studio settings  →")
-        open_workspace.clicked.connect(lambda: self.open_settings("models"))
-        layout.addWidget(open_workspace)
-        voice_settings = QPushButton("Voice-direct API settings / 音声API設定")
-        voice_settings.clicked.connect(self.voice.settings)
-        layout.addWidget(voice_settings)
-        layout.addStretch()
+            card = QFrame()
+            card.setObjectName("connection-card")
+            box = QHBoxLayout(card)
+            box.setContentsMargins(22, 20, 22, 20)
+            details = QVBoxLayout()
+            details.setSpacing(8)
+            heading = label(title, title_ja)
+            heading.setStyleSheet("font-size:15px;font-weight:600;color:#e8eaef")
+            details.addWidget(heading)
+            details.addWidget(label(description, description_ja))
+            box.addLayout(details, 1)
+            button = QPushButton(action)
+            button.setIcon(outline_icon(icon))
+            button.clicked.connect(callback)
+            self.connection_copy.append((button, action, action_ja))
+            if icon == "account":
+                self.routing_accounts_button = button
+            box.addWidget(button)
+            layout.addWidget(card)
+        audio = QPushButton()
+        self.connection_copy.append((audio, "Voice model and agent settings", "音声モデルとエージェントの設定"))
+        audio.setObjectName("ghost")
+        audio.clicked.connect(self.voice.settings)
+        layout.addWidget(audio, 0, Qt.AlignLeft)
+        layout.addStretch(1)
         return widget
 
     def plugins_page(self):
@@ -817,6 +964,8 @@ class Workspace(QMainWindow):
         self.path_label.setText(Path(path).name or path)
         self.path_label.setToolTip(path)
         self.source_tabs.set_workspace(path)
+        self.project_button.setText((Path(path).name or path)[:30])
+        self.project_button.setToolTip(path)
 
     def workflow_tool(self, tool):
         if self.workflow.current_path:

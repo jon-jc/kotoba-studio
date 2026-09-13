@@ -1,12 +1,12 @@
 # Kotoba Studio for Windows
 
-The installer is `python/voice/dist/Kotoba-Studio-0.10.2-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes the embedded Orca/Electron agent workspace, Python, Qt WebEngine, the matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
+The installer is `python/voice/dist/Kotoba-Studio-0.11.0-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes the embedded Orca/Electron agent workspace, Python, Qt WebEngine, the matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
 
 ## Try the application
 
 1. Install and launch **Kotoba Studio** on Windows 11 x64.
 2. Open **Agents**, then **Agent accounts**, to configure an installed coding agent's own sign-in. Add a project and create a worktree per task. See [subscription agents](AGENTS_WORKFLOW.md). API chat remains available separately.
-3. In **Workspace**, choose a working folder. **Routing → Open full Kotoba Studio settings** opens the original Models panel, including **Add provider** and **Add a custom provider**. Supply the provider's endpoint, key, and model as applicable.
+3. In **Workspace**, choose a working folder. **Settings → Connections → Configure API providers** opens the original Models panel, including **Add provider** and **Add a custom provider**. Supply the provider's endpoint, key, and model as applicable.
 4. In **Voice**, select 日本語 or English, then expand **Audio settings** to choose Parakeet for English, Kotoba Whisper for Japanese, or another supported model. **モデルを準備 / Download / warm model** downloads and loads the local speech model.
 5. Select a microphone, system audio, or an application by window title. Press Record, then Transcribe. Short dictation ends after 60 seconds; use Meetings & notes for longer sessions. Application capture includes the selected process's children; browser tabs may share processes. An unavailable source fails explicitly.
 6. Review names, numbers, and intent. Use **Add to chat** to append reviewed text to the available chat draft, or use the voice panel's SDK session with a configured provider and model. Cloud keys entered in the voice settings are session-only.
@@ -18,7 +18,7 @@ Japanese/English voice input is supported. The top-right English/Japanese select
 
 The chat welcome headline is **Create with Kotoba** in English and **ことばを、かたちに。** in Japanese.
 
-Click the top-left **Kotoba Studio** icon or name to return to chat and open its workspace sidebar from any panel. Open code tabs, terminal output, and voice drafts remain available when you return to those panels.
+Click the top-left **Kotoba Studio** icon to return to Agents and open its workspace sidebar from any panel. Open code tabs, terminal output, and voice drafts remain available when you return to those panels.
 
 ## Code workspace
 
@@ -32,7 +32,7 @@ The voice panel tabs and closed dropdowns keep their selection while scrolling. 
 
 ## Motion and recovery
 
-The **···** menu includes **Reduce motion / 動きを減らす**, saved across launches. Voice and terminal panels fade in briefly; chat buttons and popups use short transitions. The Windows animation preference also suppresses native reveals, and embedded chat respects the system reduced-motion preference. Panels remain immediately usable during transitions. Access settings includes **Reload** after connection or revision errors. Recording keeps its Stop control available while the voice dock is reopened.
+The **Settings** menu includes **Reduce motion / 動きを減らす**, saved across launches. Voice and terminal panels fade in briefly; chat buttons and popups use short transitions. The Windows animation preference also suppresses native reveals, and embedded chat respects the system reduced-motion preference. Panels remain immediately usable during transitions. Access settings includes **Reload** after connection or revision errors. Recording keeps its Stop control available while the voice dock is reopened.
 
 ## System tray
 

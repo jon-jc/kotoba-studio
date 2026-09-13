@@ -1,0 +1,42 @@
+/* Kotoba's embedded workspace shares the desktop's restrained neutral surfaces. */
+:root.dark {
+  --background: #191a1e;
+  --foreground: #e9eaed;
+  --card: #1e2025;
+  --card-foreground: #e9eaed;
+  --popover: #22252a;
+  --popover-foreground: #eceef1;
+  --secondary: #25282e;
+  --secondary-foreground: #d9dde4;
+  --muted: #25282e;
+  --muted-foreground: #9ba2ae;
+  --accent: #2b2f36;
+  --accent-foreground: #f0f2f5;
+  --border: #30333a;
+  --input: #363b44;
+  --ring: #9bb7a8;
+  --sidebar: #14161a;
+  --sidebar-foreground: #c5cad3;
+  --sidebar-accent: #252930;
+  --sidebar-accent-foreground: #f0f2f5;
+  --sidebar-border: #292d34;
+  --worktree-sidebar: #14161a;
+  --worktree-sidebar-foreground: #c5cad3;
+  --worktree-sidebar-accent: #252930;
+  --worktree-sidebar-accent-foreground: #f0f2f5;
+  --worktree-sidebar-border: #292d34;
+}
+body { -webkit-font-smoothing: antialiased; }
+button, [role="tab"], [role="menuitem"], input, textarea {
+  transition: background-color 130ms ease, border-color 130ms ease, color 130ms ease;
+}
+button:focus-visible, [role="tab"]:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.titlebar, .titlebar-left { background: var(--sidebar); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; }
+}
+html[data-kotoba-motion="off"] *, html[data-kotoba-motion="off"] *::before,
+html[data-kotoba-motion="off"] *::after { animation: none !important; transition: none !important; }

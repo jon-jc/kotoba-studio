@@ -708,3 +708,68 @@ def test_messaging_reply_uses_fresh_sdk_session_and_closes_on_failure(workspace,
     with pytest.raises(RuntimeError, match="fixture failure"):
         voice.send()
     assert len(instances) == 3 and all(instance.closed for instance in instances)
+
+def test_quiet_header_and_left_navigation_fit_both_languages(workspace):
+    from PySide6.QtWidgets import QApplication
+    window = workspace
+    window.resize(1024, 760)
+    window.show()
+    for locale in ('en', 'ja'):
+        window.voice.set_locale(locale)
+        QApplication.processEvents()
+        assert window.rail.width() == 76
+        assert window.rail.isAncestorOf(window.nav[0])
+        assert window.rail.isAncestorOf(window.access_button)
+        assert not window.rail.isAncestorOf(window.locale_toggle)
+        controls = [window.view_title, window.project_button, window.command_center, window.locale_toggle]
+        for left, right in zip(controls, controls[1:]):
+            assert left.geometry().right() < right.geometry().left()
+        assert window.locale_toggle.geometry().right() < window.locale_toggle.parentWidget().width()
+        assert not any(button.isVisible() for button in window.workflow.buttons.values())
+
+
+def test_direct_api_navigation_and_voice_close_keep_work(workspace, monkeypatch):
+    from kotoba.fleet_runtime import FleetRuntime
+    window = workspace
+    monkeypatch.setattr(FleetRuntime, 'available', property(lambda self: True))
+    monkeypatch.setattr(window.workflow.runtime, 'start', lambda: None)
+    window.show_panel(0)
+    assert window.nav[0].isChecked() and not window.api_button.isChecked()
+    window.api_button.click()
+    assert window.stack.currentWidget() is window.chats
+    assert window.api_button.isChecked() and not window.nav[0].isChecked()
+    window.voice.draft.setPlainText('明日のレビュー / review tomorrow')
+    window.show_panel(1)
+    window.voice.dock_close_requested.emit()
+    assert window.voice.isHidden() and not window.nav[1].isChecked()
+    assert window.voice.draft.toPlainText() == '明日のレビュー / review tomorrow'
+
+
+def test_accounts_from_code_and_project_label_after_language_change(workspace, monkeypatch, tmp_path):
+    from kotoba.fleet_runtime import FleetRuntime
+    window = workspace
+    monkeypatch.setattr(FleetRuntime, 'available', property(lambda self: True))
+    monkeypatch.setattr(window.workflow.runtime, 'start', lambda: None)
+    calls = []
+    monkeypatch.setattr(window.workflow, 'navigate', calls.append)
+    window.workflow.current_path = str(tmp_path)
+    window.workflow_context(str(tmp_path))
+    window.show_panel(2)
+    window.open_agent_accounts()
+    assert window.stack.currentWidget() is window.workflow and calls == ['accounts']
+    window.voice.set_locale('ja')
+    assert window.project_button.toolTip() == str(tmp_path)
+    assert window.project_button.text() == tmp_path.name[:30]
+
+def test_api_history_does_not_redirect_to_subscription_agents(workspace, monkeypatch):
+    from kotoba.fleet_runtime import FleetRuntime
+    window = workspace
+    monkeypatch.setattr(FleetRuntime, 'available', property(lambda self: True))
+    monkeypatch.setattr(window.workflow.runtime, 'start', lambda: None)
+    monkeypatch.setattr(window, 'expand_sidebar', lambda: None)
+    window.workflow_tool('api')
+    retained_view = window.web
+    window.chats.history_requested.emit()
+    assert window.stack.currentWidget() is window.chats
+    assert window.chats.history is True and window.web is retained_view
+    assert window.api_button.isChecked()

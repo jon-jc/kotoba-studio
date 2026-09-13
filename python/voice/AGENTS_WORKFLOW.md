@@ -1,6 +1,6 @@
 # Subscription agents in Kotoba Studio
 
-The Windows 0.10.2 build opens **Agents** as the main workspace. Kotoba hosts the full Orca desktop interface inside its own window, alongside the existing API Harness, English/Japanese voice tools, code viewer and messaging. There is one outer window and one system tray entry.
+The Windows 0.11.0 build opens **Agents** as the main workspace. Kotoba hosts the full Orca desktop interface inside its own window, alongside the existing API Harness, English/Japanese voice tools, code viewer and messaging. There is one outer window and one system tray entry.
 
 ## Start a task
 
@@ -8,7 +8,7 @@ The Windows 0.10.2 build opens **Agents** as the main workspace. Kotoba hosts th
 2. Add a Git project. Create a workspace/worktree for each task to isolate file edits. A worktree is a separate checkout, not a security sandbox.
 3. Choose an agent for that task and enter its instruction. Other tasks can continue while you select a different row in the left sidebar. Splitting terminals is optional.
 4. Review changes and terminal output in that task. Commit, branch and pull-request actions remain explicit upstream controls.
-5. Use **Dictate** to review English or Japanese speech. **Add to chat** inserts into an empty native chat composer without sending. If no compatible composer is available or it already contains text, the transcript stays in Voice. Use paste-at-cursor dictation for a terminal-based agent.
+5. Use **Voice** to review English or Japanese speech. **Add to chat** inserts into an empty native chat composer without sending. If no compatible composer is available or it already contains text, the transcript stays in Voice. Use paste-at-cursor dictation for a terminal-based agent.
 
 The selected local worktree becomes the root for Kotoba's Code viewer and voice-agent workspace. A running voice job retains its original workspace until completion. Remote worktrees never become local filesystem paths. **API chat** retains independent Harness sessions and workspace selection; it does not pretend to share a subscription-agent transcript. The Kotoba icon returns to Agents and expands its sidebar. Closing Code also returns to Agents.
 
@@ -45,7 +45,7 @@ The packaged artifact is checked for native terminal process ownership, dependen
 
 ## 日本語
 
-Windows 版 0.10.2 は **エージェント** を中心に起動します。Orca の完全なデスクトップ実装を Kotoba の同じウィンドウに組み込み、API チャット、日英の音声入力、コード、メッセージ機能を併用できます。
+Windows 版 0.11.0 は **エージェント** を中心に起動します。Orca の完全なデスクトップ実装を Kotoba の同じウィンドウに組み込み、API チャット、日英の音声入力、コード、メッセージ機能を併用できます。
 
 **エージェントのアカウント** で Codex、Claude Code、OpenCode、Pi などの設定を行ってください。各 CLI が対応するログイン、サブスクリプション、認証情報、利用上限に従います。Git プロジェクトを追加し、タスクごとに作業ツリーを作成すると変更を分離できます。作業ツリー自体はセキュリティ上のサンドボックスではありません。
 
@@ -58,3 +58,11 @@ Windows 版 0.10.2 は **エージェント** を中心に起動します。Orca
 ### エージェントのアクセス
 
 **アクセス → エージェント** で Codex・Claude Code・OpenCode の **計画／承認を求める／ワークスペースの編集** を設定できます。新しいセッションに適用され、既存のセッションの権限は変わりません。各エージェントの実装と制限は設定画面に表示します。Pi など未対応のエージェントは独自の権限設定を使用します。以前の Yolo スイッチと Orca Mobile は削除しました。
+
+## Workspace layout
+
+The left rail keeps Agents, API chat, Voice, Code and Terminal in a fixed order. Messages and Handoffs sit below a divider; Accounts, Access and Settings stay at the bottom. The header contains the current surface, project picker, command search and language. The embedded workspace no longer repeats the same actions in a second toolbar. Settings → Connections separates subscription accounts, API keys and local models. Voice can close without discarding its draft. Ctrl+K opens the command center.
+
+### ワークスペースのレイアウト
+
+左側にエージェント・API 会話・音声・コード・ターミナルを固定配置し、その下にメッセージと引き継ぎをまとめました。アカウント・アクセス・設定は最下部にあります。ヘッダーには現在の画面、プロジェクト、コマンド検索、表示言語だけを表示します。「設定 → 接続」でサブスクリプション、API キー、ローカルモデルを管理できます。音声パネルを閉じても下書きは保持されます。

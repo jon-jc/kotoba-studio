@@ -6,7 +6,7 @@ COPY = {
     "◉  Voice / 音声": ("◉  Voice", "◉  音声"),
     "⌘  Code / コード": ("⌘  Code", "⌘  コード"),
     "›_  Terminal": ("›_  Terminal", "›_  ターミナル"),
-    "⇄  Routing / 接続": ("⇄  Routing", "⇄  モデル接続"),
+    "⇄  Routing / 接続": ("⇄  Connections", "⇄  接続"),
     "⊞  Plugins": ("⊞  Plugins", "⊞  プラグイン"),
     "▣  Local models": ("▣  Local models", "▣  ローカルモデル"),
     "Open workspace…\n作業フォルダー": ("Open workspace…", "作業フォルダーを開く…"),

@@ -22,18 +22,19 @@ class FleetWorkspace(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         bar = QHBoxLayout()
-        bar.setContentsMargins(14, 8, 14, 8)
+        bar.setContentsMargins(16, 0, 16, 0)
         self.context = QLabel()
         self.context.setTextFormat(Qt.PlainText)
-        self.context.setStyleSheet("color:#a7b6ad;font-size:12px;")
+        self.context.setStyleSheet("color:#d3c49e;font-size:12px;padding:10px 0;")
         bar.addWidget(self.context, 1)
+        self.context.hide()
         self.buttons = {}
         for key in ("accounts", "api", "voice", "handoff", "messaging"):
-            button = QPushButton()
+            button = QPushButton(self)
             button.setObjectName("ghost")
             button.clicked.connect(lambda checked=False, tool=key: self.tool_requested.emit(tool))
             self.buttons[key] = button
-            bar.addWidget(button)
+            button.hide()  # Actions live in the unified desktop rail.
         layout.addLayout(bar)
         self.pages = QStackedWidget()
         waiting = QWidget()
@@ -133,6 +134,7 @@ class FleetWorkspace(QWidget):
             self.foreign_window.setGeometry(self.container.rect().adjusted(0, 0, 1, 0))
             QTimer.singleShot(0, self.fit_surface)
         elif accepted is not True:
+            self.context.show()
             self.context.setText(self.tr("Could not display the agent workspace. Switch to API chat or reopen Agents to retry.", "エージェント画面を表示できませんでした。API チャットに切り替えるか、エージェント画面を開き直してください。"))
 
     def fit_surface(self):
@@ -144,6 +146,7 @@ class FleetWorkspace(QWidget):
 
     def navigation_result(self, accepted):
         if accepted is not True:
+            self.context.show()
             self.context.setText(self.tr("Could not open this agent page. Reopen Agents and try again.", "エージェントのページを開けませんでした。エージェント画面を開き直して再試行してください。"))
 
     def poll(self):
@@ -165,6 +168,7 @@ class FleetWorkspace(QWidget):
         if state.get("local") is not True:
             self.current_path = ""
             if path:
+                self.context.show()
                 self.context.setText(self.context.text() + self.tr(" · Remote task; local tools keep their own folder", " · リモートタスク：ローカルツールは個別のフォルダーを使用"))
         # Remote worktrees stay owned by their runtime and never become local file paths.
         if isinstance(path, str) and path != self.current_path and state.get("local") is True and Path(path).is_absolute() and Path(path).is_dir():
@@ -176,6 +180,7 @@ class FleetWorkspace(QWidget):
 
     def project_result(self, accepted):
         if accepted is not True:
+            self.context.show()
             self.context.setText(self.tr("Could not add this project. Open a Git repository or create a workspace in Agents.", "プロジェクトを追加できませんでした。Git リポジトリを開くか、エージェント画面でワークスペースを作成してください。"))
 
     def draft(self, text):
@@ -183,6 +188,7 @@ class FleetWorkspace(QWidget):
 
     def draft_result(self, accepted):
         if accepted is not True:
+            self.context.show()
             self.context.setText(self.tr("Select an agent chat before inserting voice text. Your text remains in Voice.", "音声テキストを挿入する前にエージェントのチャットを選択してください。テキストは音声画面に保持されています。"))
 
     def shutdown(self):

@@ -4,7 +4,7 @@
 
 **Your coding agents. One place to build.**
 
-Windows x64 · 0.10.2
+Windows x64 · 0.11.0
 
 [English](#english) · [日本語](#japanese)
 
@@ -24,7 +24,7 @@ The selected local worktree follows you into Code and Voice. Review dictated tex
 
 See [the subscription-agent workflow](python/voice/AGENTS_WORKFLOW.md) for setup, retained Orca workflows and validation limits. The screenshots below document the earlier API-chat and voice surfaces, which remain available.
 
-![Kotoba Studio 0.10.0: choose a subscription agent](assets/screenshots/subscription-workspace-en.png)
+![Kotoba Studio 0.11.0: unified left navigation and agent setup](assets/screenshots/workspace-shell-en.png)
 
 The current embedded Agents onboarding detects locally installed CLIs. This screenshot does not establish account sign-in or model access; no agent instruction has been sent.
 
@@ -66,12 +66,18 @@ Browse files, compare tabs, and search when you need it. Click **Code** again, u
 
 <a id="run"></a>
 
+## A focused desktop workspace
+
+A persistent left rail keeps development tools together and separates collaboration from configuration. The header stays focused on your current view, project, command search and language. **Settings → Connections** gives subscription accounts, API providers and local models their own clear entry points. Voice and Terminal open only when needed.
+
+![Kotoba Studio 0.11.0: Connections for subscription agents, API providers and local models](assets/screenshots/connections-en.png)
+
 ## Start on Windows
 
-The desktop build is **Kotoba Studio 0.10.2**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.10.2-Setup.exe` from your build output. The installer includes the subscription-agent workspace, full Harness runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
+The desktop build is **Kotoba Studio 0.11.0**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.11.0-Setup.exe` from your build output. The installer includes the subscription-agent workspace, full Harness runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
 
 1. **Open Agents.** Add a project, connect an installed coding agent in Agent accounts, and create a task in its own worktree.
-2. **Optionally use API chat.** Open **··· → Routing** to configure an API provider, or choose Configure later and open Local models. Register a local model, then select Kotoba Local in the chat composer.
+2. **Optionally use API chat.** Open **Settings → Connections** to configure an API provider, or choose Configure later and open Local models. Register a local model, then select Kotoba Local in the chat composer.
 3. **Choose what to hear.** Open Voice Studio and select the audio source, speech language, and transcription model.
 4. **Review, then act.** Record or import audio, correct the transcript, and use **Add to chat** to append it to the available conversation draft. Send when you are ready.
 
@@ -149,7 +155,7 @@ Kotoba Studio builds on the actual [DeepSeek Harness](https://github.com/deepsee
 
 選択したローカルの作業ツリーはコード・音声画面と共有されます。音声は確認後、空のネイティブチャット下書きへ挿入します。ターミナル形式のエージェントではカーソル位置への貼り付けを利用してください。各 CLI の権限はそのエージェントが管理します。[設定と対応範囲](python/voice/AGENTS_WORKFLOW.md)をご覧ください。
 
-![Kotoba Studio 0.10.0：エージェントを選ぶ初期設定](assets/screenshots/subscription-workspace-ja.png)
+![Kotoba Studio 0.11.0：左側に集約したナビゲーションとエージェントの初期設定](assets/screenshots/workspace-shell-ja.png)
 
 この画面は、組み込まれたエージェント画面がローカルの CLI を検出した状態です。アカウント認証やモデルへのアクセスを確認した画像ではなく、指示も送信していません。
 
@@ -193,7 +199,7 @@ Kotoba Studio は、日本語と英語の音声入力、AI エージェント、
 
 ### Windows で始める
 
-現在のデスクトップ版は **0.10.2**、Windows x64 向けの未署名の開発者プレビューです。[Windows パッケージ作成ガイド](python/voice/WINDOWS.md)に従って `Kotoba-Studio-0.10.2-Setup.exe` を作成できます。インストーラーには、サブスクリプションのエージェント用ワークスペース、Harness 実行環境、音声キャプチャー、CPU 推論エンジンが含まれます。モデルの重みは別途ダウンロードするか、手元のファイルを登録してください。
+現在のデスクトップ版は **0.11.0**、Windows x64 向けの未署名の開発者プレビューです。[Windows パッケージ作成ガイド](python/voice/WINDOWS.md)に従って `Kotoba-Studio-0.11.0-Setup.exe` を作成できます。インストーラーには、サブスクリプションのエージェント用ワークスペース、Harness 実行環境、音声キャプチャー、CPU 推論エンジンが含まれます。モデルの重みは別途ダウンロードするか、手元のファイルを登録してください。
 
 1. **作業フォルダーを選ぶ。** エージェントが作業するフォルダーを指定します。
 2. **モデルを接続する。** **··· → 接続** で OpenAI、Anthropic Claude、Kimi、DeepSeek、またはカスタムの接続先を設定します。ローカルで使う場合は **ローカル AI** で GGUF モデルを登録してエンジンを起動し、会話の入力欄で **Kotoba Local** を選びます。Ollama と LM Studio にも接続できます。
