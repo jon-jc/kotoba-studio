@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { getOrderedUnseenFeatureTips } from './feature-tips'
-import { getFeatureTipForModal } from '../renderer/src/components/feature-tips/feature-tip-modal-state'
+import { getOrderedUnseenFeatureTips } from '../../../../shared/feature-tips'
+import { getFeatureTipForModal } from './feature-tip-modal-state'
 
 describe('Kotoba promotion removal', () => {
   it('does not offer the Orca CLI promotion on a fresh profile', () => {

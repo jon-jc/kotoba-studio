@@ -86,6 +86,37 @@ def prepare(root):
     replace_once(root, "src/renderer/src/main.tsx", "import './web/kotoba-fleet'", "import './web/kotoba-fleet'\nimport './assets/kotoba-workspace.css'")
     from prepare_fleet_access import prepare_access
     prepare_access(root, replace_once)
+    from prepare_fleet_sidebar import prepare_sidebar
+    prepare_sidebar(root)
+    shutil.copyfile(Path(__file__).with_name('fleet_windows_codex.ts'), root / 'src/shared/kotoba-windows-codex.ts')
+    shutil.copyfile(Path(__file__).with_name('fleet_windows_codex.test.ts'), root / 'src/shared/kotoba-windows-codex.test.ts')
+    replace_once(root, 'src/shared/system-cli-install-dirs.ts',
+        "import { join } from 'node:path'",
+        "import { join } from 'node:path'\nimport { windowsCodexDirectories } from './kotoba-windows-codex'")
+    replace_once(root, 'src/shared/system-cli-install-dirs.ts',
+        "  if (platform === 'win32') {\n    return []",
+        "  if (platform === 'win32') {\n    return windowsCodexDirectories(platform, homePath)")
+    replace_once(root, 'src/shared/system-cli-install-dirs.ts',
+        "  // Why nothing here: the PATH seed's system block is POSIX-only too, so\n  // Windows installs outside a version manager (`%USERPROFILE%\\.opencode\\bin`)\n  // have never had install-dir coverage in either list. Unchanged, not fixed.",
+        "  // Desktop Codex uses versioned user-local directories absent from GUI PATH.")
+    replace_once(root, 'src/main/startup/configure-process.ts',
+        "import { app } from 'electron'",
+        "import { app } from 'electron'\nimport { windowsCodexDirectories } from '../../shared/kotoba-windows-codex'")
+    replace_once(root, 'src/main/startup/configure-process.ts',
+        "  const currentSegments = currentPath.split(pathDelimiter).filter(Boolean)",
+        "  appendPaths.push(...windowsCodexDirectories())\n  const currentSegments = currentPath.split(pathDelimiter).filter(Boolean)")
+    replace_once(root, 'src/main/ipc/agent-detection-shell-path.ts',
+        "import { hydrateShellPath, mergePathSegments }",
+        "import { windowsCodexDirectories } from '../../shared/kotoba-windows-codex'\nimport { hydrateShellPath, mergePathSegments }")
+    replace_once(root, 'src/main/ipc/agent-detection-shell-path.ts',
+        "    mergePathSegments(hydration.segments)\n  }",
+        "    mergePathSegments(hydration.segments)\n  }\n  const codexDirectories = windowsCodexDirectories()\n  if (codexDirectories.length) {\n    // Preserve explicit shell choices; refresh installs added after app startup.\n    const existing = (process.env.PATH ?? process.env.Path ?? '').split(';').filter(Boolean)\n    mergePathSegments([...existing, ...codexDirectories])\n  }")
+    replace_once(root, 'src/main/preflight/agent-detection.ts',
+        "import { hydrateShellPath, mergePathSegments }",
+        "import { windowsCodexDirectories } from '../../shared/kotoba-windows-codex'\nimport { hydrateShellPath, mergePathSegments }")
+    replace_once(root, 'src/main/preflight/agent-detection.ts',
+        '  const added = hydration.ok ? mergePathSegments(hydration.segments) : []',
+        "  const added = hydration.ok ? mergePathSegments(hydration.segments) : []\n  const codexDirectories = windowsCodexDirectories()\n  if (codexDirectories.length) {\n    const existing = (process.env.PATH ?? process.env.Path ?? '').split(';').filter(Boolean)\n    added.push(...mergePathSegments([...existing, ...codexDirectories]))\n  }")
 
 
 if __name__ == "__main__":
