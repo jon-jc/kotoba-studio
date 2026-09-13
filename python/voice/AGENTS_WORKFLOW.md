@@ -1,6 +1,6 @@
 # Subscription agents in Kotoba Studio
 
-The Windows 0.10.1 build opens **Agents** as the main workspace. Kotoba hosts the full Orca desktop interface inside its own window, alongside the existing API Harness, English/Japanese voice tools, code viewer and messaging. There is one outer window and one system tray entry.
+The Windows 0.10.2 build opens **Agents** as the main workspace. Kotoba hosts the full Orca desktop interface inside its own window, alongside the existing API Harness, English/Japanese voice tools, code viewer and messaging. There is one outer window and one system tray entry.
 
 ## Start a task
 
@@ -25,7 +25,13 @@ The selected local worktree becomes the root for Kotoba's Code viewer and voice-
 | Remote work | Upstream SSH/relay and paired-device implementation; requires explicit remote-host or external-service setup |
 | Team communication | Kotoba's reviewed bilingual handoffs and LINE-first messaging, outside agent transcripts until explicitly transferred |
 
-An upstream screen being retained does not establish that every external service has been tested. Provider sign-ins, paid agent turns, GitHub/Linear actions, SSH hosts and Orca's external mobile/account services need real configured accounts. No test sends a billed model request or publishes a pull request from the test workspace.
+An upstream screen being retained does not establish that every external service has been tested. Provider sign-ins, paid agent turns, GitHub/Linear actions, SSH hosts and external account services need real configured accounts. No test sends a billed model request or publishes a pull request from the test workspace.
+
+## Agent access
+
+Open **Access → Agents** to select Codex, Claude Code or OpenCode and apply **Plan**, **Ask for approval**, or **Workspace editing** to new sessions. The panel explains the native mapping for each agent. Codex uses its sandbox and approval flags; Claude uses its tool approval modes; OpenCode uses permission rules for its built-in Plan and Build agents. Existing sessions retain their permissions. Pi and other unsupported agents use their own controls; this panel does not create an operating-system sandbox for them. Custom launch commands and provider policies can affect behavior.
+
+The old global Yolo switch is removed. Existing exact bypass presets are reset to normal agent defaults; custom arguments remain available for explicit review. Orca Mobile navigation, pairing handlers, push startup and cloud relay startup are disabled in the embedded Kotoba runtime.
 
 ## Integration contract
 
@@ -39,7 +45,7 @@ The packaged artifact is checked for native terminal process ownership, dependen
 
 ## 日本語
 
-Windows 版 0.10.1 は **エージェント** を中心に起動します。Orca の完全なデスクトップ実装を Kotoba の同じウィンドウに組み込み、API チャット、日英の音声入力、コード、メッセージ機能を併用できます。
+Windows 版 0.10.2 は **エージェント** を中心に起動します。Orca の完全なデスクトップ実装を Kotoba の同じウィンドウに組み込み、API チャット、日英の音声入力、コード、メッセージ機能を併用できます。
 
 **エージェントのアカウント** で Codex、Claude Code、OpenCode、Pi などの設定を行ってください。各 CLI が対応するログイン、サブスクリプション、認証情報、利用上限に従います。Git プロジェクトを追加し、タスクごとに作業ツリーを作成すると変更を分離できます。作業ツリー自体はセキュリティ上のサンドボックスではありません。
 
@@ -48,3 +54,7 @@ Windows 版 0.10.1 は **エージェント** を中心に起動します。Orca
 選択したローカル作業ツリーはコード・音声画面にも反映されます。処理中の音声ジョブは元の作業場所を保持します。音声は確認後、空のネイティブチャット下書きに挿入し、自動送信しません。対応する入力欄がない場合や既存の下書きがある場合、音声画面にテキストを保持します。ターミナル形式ではカーソル位置への貼り付けを利用してください。API チャットは独立した Harness セッションと作業場所を維持します。
 
 各 CLI の権限はそのエージェントが管理します。**アクセス** は現在の画面に対応する設定を開きます。名前付きパイプと埋め込みウィンドウは所有プロセスを検証し、プロファイルは Kotoba 内に分離します。テレメトリーと上流アプリの自動更新は無効です。固定ソースと MIT ライセンスを保持し、インストーラーには実行環境と必要なライセンスを含めます。署名、クリーン環境、実際の提供元との接続検証は別途必要です。
+
+### エージェントのアクセス
+
+**アクセス → エージェント** で Codex・Claude Code・OpenCode の **計画／承認を求める／ワークスペースの編集** を設定できます。新しいセッションに適用され、既存のセッションの権限は変わりません。各エージェントの実装と制限は設定画面に表示します。Pi など未対応のエージェントは独自の権限設定を使用します。以前の Yolo スイッチと Orca Mobile は削除しました。
