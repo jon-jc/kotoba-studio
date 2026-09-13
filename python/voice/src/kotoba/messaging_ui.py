@@ -175,6 +175,8 @@ class MessagingDialog(QDialog):
         self.webhook.setReadOnly(True)
         layout.addWidget(self.webhook)
         self.copy_webhook = self.button(layout, "Copy webhook URL", "Webhook URL をコピー", self.copy_webhook_url)
+        self.test_webhook = self.button(layout, "Test HTTPS connection", "HTTPS 接続をテスト", lambda: self.configure_webhook(False))
+        self.register_webhook = self.button(layout, "Test and register with LINE", "テストして LINE に登録", lambda: self.configure_webhook(True))
         self.actions = QHBoxLayout()
         self.button(self.actions, "Save connection", "接続を保存", self.save)
         self.button(self.actions, "Refresh agent choices", "エージェント候補を更新", self.refresh_routes)
@@ -287,6 +289,8 @@ class MessagingDialog(QDialog):
         self.guide.setText(self.tr(*guides[self.platform]))
         self.webhook.setVisible(self.platform == "line")
         self.copy_webhook.setVisible(self.platform == "line")
+        self.test_webhook.setVisible(self.platform == "line")
+        self.register_webhook.setVisible(self.platform == "line")
         self.webhook.setText((config.get("public_url") or "https://YOUR-PUBLIC-HOST").rstrip("/") + "/line/" + (self.identity or self.tr("SAVE-CONNECTION-FIRST", "先に接続を保存")))
         self.draft.clear()
         self.draft_failed = False
@@ -295,6 +299,42 @@ class MessagingDialog(QDialog):
         self.loading = False
         self.refresh_inbox()
         self.gateway_changed()
+
+    def configure_webhook(self, register):
+        config = self.config
+        if self.platform != "line" or not config or not config.get("public_url"):
+            self.notice.setText(self.tr("Save your public HTTPS origin and LINE credentials first. LINE does not provide a shared receiving URL.", "公開 HTTPS の接続先と LINE 認証情報を先に保存してください。受信用 URL は自分で用意します。"))
+            return
+        if not self.gateway.running or self.voice.job is not None:
+            self.notice.setText(self.tr("Start the gateway and wait for the current operation to finish first.", "ゲートウェイを開始し、実行中の処理が完了するまでお待ちください。"))
+            return
+        endpoint = config["public_url"].rstrip("/") + "/line/" + config["id"]
+        if register and QMessageBox.question(self, "LINE", self.tr(
+                "Register this receiver with LINE? This replaces the channel’s current webhook URL:\n",
+                "この受信先を LINE に登録しますか？チャンネルの現在の Webhook URL を置き換えます：\n") + endpoint) != QMessageBox.Yes:
+            return
+        credentials = self.store.credentials(config["id"])
+        from .messaging_adapters import PlatformAdapter
+        def task(emit):
+            adapter = PlatformAdapter(config, credentials)
+            try:
+                info = adapter.configure_line_webhook(endpoint, register)
+                return {"registered": register, "active": info.get("active") is True}
+            finally:
+                adapter.close()
+        self.notice.setText(self.tr("Asking LINE to verify the HTTPS receiver…", "LINE で HTTPS 受信先を検証しています…"))
+        self.voice.work(task, self.webhook_configured)
+
+    def webhook_configured(self, result):
+        from shiboken6 import isValid
+        if not isValid(self):
+            return
+        text = self.tr("LINE connection test passed.", "LINE 接続テストに成功しました。")
+        if result["registered"]:
+            text += self.tr(" Webhook registered; propagation can take one minute.", " Webhook を登録しました。反映に最大 1 分かかる場合があります。")
+        if result["registered"] and not result["active"]:
+            text += self.tr(" Enable Use webhook in LINE Developers to receive messages.", " LINE Developers の「Webhook の利用」を有効にしてください。")
+        self.notice.setText(text)
 
     def populate_routes(self, selected="", model=""):
         self.provider.blockSignals(True)
