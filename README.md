@@ -4,7 +4,7 @@
 
 **Your coding agents. One place to build.**
 
-Windows x64 · 0.10.0
+Windows x64 · 0.10.1
 
 [English](#english) · [日本語](#japanese)
 
@@ -68,7 +68,7 @@ Browse files, compare tabs, and search when you need it. Click **Code** again, u
 
 ## Start on Windows
 
-The desktop build is **Kotoba Studio 0.10.0**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.10.0-Setup.exe` from your build output. The installer includes the subscription-agent workspace, full Harness runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
+The desktop build is **Kotoba Studio 0.10.1**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.10.1-Setup.exe` from your build output. The installer includes the subscription-agent workspace, full Harness runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
 
 1. **Open Agents.** Add a project, connect an installed coding agent in Agent accounts, and create a task in its own worktree.
 2. **Optionally use API chat.** Open **··· → Routing** to configure an API provider, or choose Configure later and open Local models. Register a local model, then select Kotoba Local in the chat composer.
@@ -193,7 +193,7 @@ Kotoba Studio は、日本語と英語の音声入力、AI エージェント、
 
 ### Windows で始める
 
-現在のデスクトップ版は **0.10.0**、Windows x64 向けの未署名の開発者プレビューです。[Windows パッケージ作成ガイド](python/voice/WINDOWS.md)に従って `Kotoba-Studio-0.10.0-Setup.exe` を作成できます。インストーラーには、サブスクリプションのエージェント用ワークスペース、Harness 実行環境、音声キャプチャー、CPU 推論エンジンが含まれます。モデルの重みは別途ダウンロードするか、手元のファイルを登録してください。
+現在のデスクトップ版は **0.10.1**、Windows x64 向けの未署名の開発者プレビューです。[Windows パッケージ作成ガイド](python/voice/WINDOWS.md)に従って `Kotoba-Studio-0.10.1-Setup.exe` を作成できます。インストーラーには、サブスクリプションのエージェント用ワークスペース、Harness 実行環境、音声キャプチャー、CPU 推論エンジンが含まれます。モデルの重みは別途ダウンロードするか、手元のファイルを登録してください。
 
 1. **作業フォルダーを選ぶ。** エージェントが作業するフォルダーを指定します。
 2. **モデルを接続する。** **··· → 接続** で OpenAI、Anthropic Claude、Kimi、DeepSeek、またはカスタムの接続先を設定します。ローカルで使う場合は **ローカル AI** で GGUF モデルを登録してエンジンを起動し、会話の入力欄で **Kotoba Local** を選びます。Ollama と LM Studio にも接続できます。

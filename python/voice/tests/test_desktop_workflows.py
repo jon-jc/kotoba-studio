@@ -65,7 +65,7 @@ def test_subscription_workspace_is_primary_and_code_returns_to_it(workspace, mon
     monkeypatch.setattr(FleetRuntime, "available", property(lambda self: True))
     commands = []
     monkeypatch.setattr(window.workflow.runtime, "start", lambda: None)
-    monkeypatch.setattr(window.workflow.runtime, "request", lambda operation, value: commands.append((operation, value)))
+    monkeypatch.setattr(window.workflow.runtime, "request", lambda operation, value, callback=None: commands.append((operation, value)))
     window.show_panel(0)
     assert window.stack.currentWidget() is window.workflow
     window.open_sidebar()

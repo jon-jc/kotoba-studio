@@ -245,7 +245,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         status.addWidget(self.locale_scope)
         status.addSpacing(18)
-        status.addWidget(QLabel("Kotoba Studio  0.10.0"))
+        status.addWidget(QLabel("Kotoba Studio  0.10.1"))
         outer.addWidget(statusbar)
         self.setCentralWidget(root)
         self.stack.currentChanged.connect(self.selected_panel)
@@ -345,7 +345,7 @@ class Workspace(QMainWindow):
         """Return to the retained chat page and expand its existing sidebar."""
         self.show_panel(0)
         if self.stack.currentWidget() == self.workflow:
-            self.workflow.runtime.request("navigate", "sidebar")
+            self.workflow.navigate("sidebar")
             return
         self.chats.set_history(True)
         self.sidebar_attempts = 50
@@ -515,7 +515,7 @@ class Workspace(QMainWindow):
 
     def open_access(self):
         if self.stack.currentWidget() == self.workflow:
-            self.workflow.runtime.request("navigate", "permissions")
+            self.workflow.navigate("permissions")
             return
         if self.url is None or self.voice.job is not None or self.voice.stream is not None:
             return
@@ -822,7 +822,7 @@ class Workspace(QMainWindow):
         if self.workflow.current_path:
             self.workflow_context(self.workflow.current_path)
         if tool == "accounts":
-            self.workflow.runtime.request("navigate", "accounts")
+            self.workflow.navigate("accounts")
         elif tool == "api":
             self.stack.setCurrentIndex(0)
             self.selected_panel(0)

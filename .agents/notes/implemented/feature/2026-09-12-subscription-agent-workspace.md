@@ -27,3 +27,9 @@ The desktop contains two agent engines with different account and permission con
 ## Verification and limits
 
 Focused tests cover bundle path confinement, environment filtering, foreign replies/windows, stale context, draft rejection, primary navigation and busy-job workspace retention. A hidden Windows smoke boots the packaged native window, adds a disposable Git project, reads its selected worktree and rejects an unavailable draft. Paid provider turns, remote hosts, account setup and external publishing are not exercised. The embedded runtime currently targets Windows x64; signing, clean-machine qualification and broad external-service coverage remain separate release work.
+
+## Embedded display correction (0.10.1)
+
+Qt adopting the HWND did not update Electron's hidden-window compositor state. The fixed `present` operation reveals only an already-attached, visible workspace without activating it, disables renderer background throttling, and requests a compositor frame. A native Qt container reanchors the child at its own origin and nudges its size before fitting it, because Electron restores former top-level coordinates and can retain a stale surface. Hidden transitions are also sent to Electron. Showing Agents again repeats this handoff. Account navigation acknowledges success and reports failures; first-run onboarding yields to Settings without marking setup complete.
+
+The hidden IPC smoke cannot validate composed pixels. `smoke_fleet_display.py` adds opt-in Windows Graphics Capture checks for a rendered workspace, account-page transition, resizing and hide/show restoration using an isolated profile and owned process cleanup. Its optional capture dependency is used only for verification; screenshots stay outside tracked documentation because detected account labels may be personal.

@@ -15,6 +15,8 @@ Object.assign(window, {
         state.openSettingsPage()
         state.openSettingsTarget({ pane: target === 'permissions' ? 'agents' : 'accounts', repoId: null })
       }
+      else return false
+      return true
     },
     snapshot(language: unknown) {
       const state = useAppStore.getState()

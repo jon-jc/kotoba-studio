@@ -150,7 +150,7 @@ class FleetRuntime(QObject):
         self.channel = connection
 
     def request(self, operation, value, callback=None):
-        if not self.address or self.channel is None or operation not in ("snapshot", "draft", "addProject", "navigate") or not isinstance(value, str) or len(value) > 64000:
+        if not self.address or self.channel is None or operation not in ("snapshot", "draft", "addProject", "navigate", "present") or not isinstance(value, str) or len(value) > 64000:
             if callback:
                 callback(None)
             return
