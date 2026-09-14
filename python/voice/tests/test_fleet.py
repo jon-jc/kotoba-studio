@@ -161,3 +161,24 @@ def test_disconnected_workspace_clears_stale_project(application, tmp_path):
     workspace.set_state("failed")
     assert workspace.current_path == "" and not workspace.timer.isActive()
     workspace.shutdown()
+
+
+def test_embedded_keyboard_focus_only_follows_visible_container(application, tmp_path, monkeypatch):
+    from PySide6.QtCore import QEvent
+    from PySide6.QtWidgets import QWidget
+    from kotoba.fleet_workspace import FleetWorkspace
+    workspace = FleetWorkspace(tmp_path)
+    container = QWidget(workspace)
+    workspace.container = container
+    calls = []
+    monkeypatch.setattr(workspace, "focus_native_window", lambda: calls.append("focus"))
+    workspace.eventFilter(container, QEvent(QEvent.FocusIn))
+    assert calls == []
+    workspace.show()
+    workspace.eventFilter(container, QEvent(QEvent.FocusIn))
+    workspace.eventFilter(container, QEvent(QEvent.FocusOut))
+    workspace.eventFilter(workspace, QEvent(QEvent.FocusIn))
+    assert calls == ["focus"]
+    workspace.container = None
+    workspace.close()
+    workspace.shutdown()

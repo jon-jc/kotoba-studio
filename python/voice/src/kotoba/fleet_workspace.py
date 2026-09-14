@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from PySide6.QtCore import QTimer, Qt, Signal
+from PySide6.QtCore import QEvent, QTimer, Qt, Signal
 from PySide6.QtGui import QWindow
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QStackedWidget
 from .fleet_runtime import FleetRuntime
@@ -61,6 +61,7 @@ class FleetWorkspace(QWidget):
         self.container = None
         layout.addWidget(self.pages, 1)
         self.runtime.ready.connect(self.connect_runtime)
+        self.runtime.focus_requested.connect(self.focus_native_window)
         self.runtime.state.connect(self.set_state)
         self.timer = QTimer(self)
         self.timer.setInterval(1200)
@@ -108,11 +109,25 @@ class FleetWorkspace(QWidget):
         self.container = QWidget.createWindowContainer(self.foreign_window, self)
         self.container.setAttribute(Qt.WA_NativeWindow)
         self.container.setFocusPolicy(Qt.StrongFocus)
+        self.container.installEventFilter(self)
         self.pages.addWidget(self.container)
         self.pages.setCurrentWidget(self.container)
         QTimer.singleShot(0, self.present)
         self.timer.start()
         self.poll()
+
+    def eventFilter(self, watched, event):
+        if watched is self.container and event.type() == QEvent.FocusIn and self.isVisible():
+            self.focus_native_window()
+        return super().eventFilter(watched, event)
+
+    def focus_native_window(self):
+        if self.container is None or not self.isVisible() or not self.runtime.address:
+            return
+        from .fleet_focus import focus_owned_child
+        handle = int(self.runtime.address)
+        if self.runtime.owns_window(handle):
+            focus_owned_child(int(self.window().winId()), handle)
 
     def showEvent(self, event):
         super().showEvent(event)

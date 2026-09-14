@@ -41,6 +41,7 @@ def runtime_environment(home):
 class FleetRuntime(QObject):
     ready = Signal(str)
     state = Signal(str)
+    focus_requested = Signal()
 
     def __init__(self, home, parent=None, root=None):
         super().__init__(parent)
@@ -117,6 +118,9 @@ class FleetRuntime(QObject):
                     self.timer.stop()
                     self.state.emit("ready")
                     self.ready.emit(str(handle))
+                elif value.get("kind") == "focus":
+                    if self.address and self.owns_window(int(self.address)):
+                        self.focus_requested.emit()
                 elif value.get("kind") == "result":
                     callback = self.requests.pop(value.get("id"), None)
                     if callback:

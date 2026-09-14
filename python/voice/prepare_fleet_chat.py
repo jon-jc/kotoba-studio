@@ -1,0 +1,89 @@
+"""Promote the pinned runtime's supported conversation transports in Kotoba."""
+from pathlib import Path
+import shutil
+
+
+def prepare_chat(root, patch):
+    for before, after in (
+        ("command-code --trust '--yolo' 'fix the spinner'", "command-code --trust 'fix the spinner'"),
+        ('command: "command-code --trust \'--yolo\'"', 'command: "command-code --trust"'),
+        ('command: "claude \'--dangerously-skip-permissions\'"', 'command: "claude"'),
+    ):
+        patch(root, 'src/renderer/src/lib/launch-agent-in-new-tab.test.ts', before, after)
+    patch(root, 'src/renderer/src/lib/launch-agent-in-new-tab.ts',
+          'export type LaunchAgentInNewTabArgs = {',
+          "export type LaunchAgentInNewTabArgs = {\n  viewMode?: 'chat' | 'terminal'")
+    patch(root, 'src/renderer/src/lib/launch-agent-in-new-tab.ts',
+          '  const store = useAppStore.getState()',
+          '  const currentStore = useAppStore.getState()\n'
+          '  // A per-launch view choice never changes other chats or saved preferences.\n'
+          '  const store = args.viewMode && currentStore.settings ? { ...currentStore, settings: {\n'
+          '    ...currentStore.settings,\n'
+          "    experimentalNativeChat: args.viewMode === 'chat',\n"
+          "    experimentalStructuredNativeChat: args.viewMode === 'chat',\n"
+          "    openAgentTabsInChatByDefault: args.viewMode === 'chat'\n"
+          '  } } : currentStore')
+    patch(root, 'src/renderer/src/components/tab-bar/tab-bar-surface.tsx',
+          "import React from 'react'", "import React from 'react'\nimport { KotobaNewChat } from './KotobaNewChat'")
+    patch(root, 'src/renderer/src/components/tab-bar/tab-bar-surface.tsx',
+          '      <DropdownMenu\n        open={newTabMenuOpen}',
+          '      {!terminalOnly && showAgentLaunchItems && <KotobaNewChat worktreeId={worktreeId} groupId={resolvedGroupId} onFocusTerminal={queueTerminalTabFocusAfterNewTabMenuClose} onMenuClose={runPendingNewTabMenuFocusAfterClose} />}\n'
+          '      <DropdownMenu\n        open={newTabMenuOpen}')
+    patch(root, 'src/renderer/src/lib/launch-agent-in-new-tab.test.ts',
+          "  it('stamps the launched agent on the new tab for immediate provider icon bootstrap',",
+          """  it.each(['chat', 'terminal'] as const)('honors a per-launch %s choice without changing other sessions', async (viewMode) => {
+    const preferChat = viewMode !== 'chat'
+    store.settings.experimentalNativeChat = preferChat
+    store.settings.experimentalStructuredNativeChat = preferChat
+    store.settings.openAgentTabsInChatByDefault = preferChat
+    store.settings.agentDefaultArgs = { codex: '--sandbox workspace-write' }
+    const original = structuredClone(store.settings)
+    const { launchAgentInNewTab } = await import('./launch-agent-in-new-tab')
+    launchAgentInNewTab({ agent: 'codex', worktreeId: 'wt-1', viewMode })
+    expect(mockCreateTab.mock.calls[0]?.[3]?.viewMode ?? 'terminal').toBe(viewMode)
+    expect(store.settings).toEqual(original)
+  })
+
+  it('stamps the launched agent on the new tab for immediate provider icon bootstrap',""")
+    patch(root, 'src/main/windows/windows-process-table.ts',
+          "import { createRequire } from 'node:module'",
+          "import { createRequire } from 'node:module'\nimport { join } from 'node:path'")
+    patch(root, 'src/main/windows/windows-process-table.ts',
+          'const requireFromMain = createRequire(__filename)',
+          '// The validated native dependency closure lives in resources/node_modules.\n'
+          '// Do not select the collector\'s incomplete JS-only copy inside app.asar.\n'
+          'const requireFromMain = createRequire(\n'
+          '  process.env.KOTOBA_FLEET_HOME && process.resourcesPath\n'
+          "    ? join(process.resourcesPath, 'package.json') : __filename\n)")
+    # Kotoba deliberately removed upstream's global approval-bypass defaults.
+    patch(root, 'src/renderer/src/lib/agent-launch-routing.test.ts',
+          "hasExplicitTuiAgentArgs('codex', '--dangerously-bypass-approvals-and-sandbox')",
+          "hasExplicitTuiAgentArgs('codex', '')")
+    for key in ('openAgentTabsInChatByDefault', 'experimentalNativeChat', 'experimentalStructuredNativeChat'):
+        patch(root, 'src/shared/default-global-settings.ts', f'    {key}: false,', f'    {key}: true,')
+    patch(root, 'src/shared/global-settings-types.ts', 'export type GlobalSettings = {',
+          'export type GlobalSettings = {\n  kotobaChatDefaultsMigrated?: boolean')
+    patch(root, 'src/shared/default-global-settings.ts', '    openAgentTabsInChatByDefault: true,',
+          '    kotobaChatDefaultsMigrated: true,\n    openAgentTabsInChatByDefault: true,')
+    patch(root, 'src/main/persistence/loading-store/normalize-loaded-global-settings.ts',
+          "import { getDefaultVoiceSettings }", "import { migrateKotobaChatDefaults } from '../../../shared/kotoba-chat-defaults'\nimport { getDefaultVoiceSettings }")
+    patch(root, 'src/main/persistence/loading-store/normalize-loaded-global-settings.ts',
+          '    ...stripRetiredGlobalSettings(parsed.settings),',
+          '    ...stripRetiredGlobalSettings(parsed.settings),\n    ...migrateKotobaChatDefaults(parsed.settings),')
+    patch(root, 'src/main/persistence/loading-store/prepare-loaded-profile-settings.ts',
+          '  const migratedDisabledTuiAgents =',
+          '  if (parsed.settings?.kotobaChatDefaultsMigrated !== true) markNeedsSave()\n  const migratedDisabledTuiAgents =')
+    patch(root, 'src/renderer/src/components/settings/AgentsPane.tsx',
+          "import { KotobaAgentAccess }", "import { KotobaAgentChat } from './KotobaAgentChat'\nimport { KotobaAgentAccess }")
+    patch(root, 'src/renderer/src/components/settings/AgentsPane.tsx',
+          '      <KotobaAgentAccess settings={settings} updateSettings={updateSettings} />',
+          '      <KotobaAgentChat settings={settings} updateSettings={updateSettings} />\n      <KotobaAgentAccess settings={settings} updateSettings={updateSettings} />')
+    for source, target in (
+        ('fleet_chat_defaults.ts', 'src/shared/kotoba-chat-defaults.ts'),
+        ('fleet_chat_defaults.test.ts', 'src/shared/kotoba-chat-defaults.test.ts'),
+        ('fleet_chat_panel.tsx', 'src/renderer/src/components/settings/KotobaAgentChat.tsx'),
+        ('fleet_window_host.test.ts', 'src/main/window/kotoba-window-host.test.ts'),
+        ('fleet_new_chat.tsx', 'src/renderer/src/components/tab-bar/KotobaNewChat.tsx'),
+        ('fleet_new_chat.test.tsx', 'src/renderer/src/components/tab-bar/KotobaNewChat.test.tsx'),
+    ):
+        shutil.copyfile(Path(__file__).with_name(source), root / target)
