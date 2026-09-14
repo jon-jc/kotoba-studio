@@ -116,9 +116,16 @@ class FleetWorkspace(QWidget):
         self.timer.start()
         self.poll()
 
+    def event(self, event):
+        if event.type() == QEvent.WindowActivate and getattr(self, "container", None) is not None and self.isVisible():
+            # Qt restores focus to its own frame during activation. Hand it back
+            # after that transaction, retaining foreground/ownership checks.
+            QTimer.singleShot(0, self.focus_native_window)
+        return super().event(event)
+
     def eventFilter(self, watched, event):
-        if watched is self.container and event.type() == QEvent.FocusIn and self.isVisible():
-            self.focus_native_window()
+        if watched is self.container and event.type() in (QEvent.FocusIn, QEvent.MouseButtonPress) and self.isVisible():
+            QTimer.singleShot(0, self.focus_native_window)
         return super().eventFilter(watched, event)
 
     def focus_native_window(self):
@@ -130,6 +137,7 @@ class FleetWorkspace(QWidget):
             focus_owned_child(int(self.window().winId()), handle)
 
     def showEvent(self, event):
+        self._restore_native_focus = self.container is not None
         super().showEvent(event)
         QTimer.singleShot(0, self.present)
 
@@ -146,8 +154,13 @@ class FleetWorkspace(QWidget):
         if accepted is True and self.container is not None and self.foreign_window is not None:
             # Electron restores its former top-level screen position on show.
             # Our native container owns the child coordinates, including on restore.
+            if self.isVisible():
+                self.foreign_window.show()
             self.foreign_window.setGeometry(self.container.rect().adjusted(0, 0, 1, 0))
             QTimer.singleShot(0, self.fit_surface)
+            if getattr(self, "_restore_native_focus", False):
+                self._restore_native_focus = False
+                QTimer.singleShot(0, self.focus_native_window)
         elif accepted is not True:
             self.context.show()
             self.context.setText(self.tr("Could not display the agent workspace. Switch to API chat or reopen Agents to retry.", "エージェント画面を表示できませんでした。API チャットに切り替えるか、エージェント画面を開き直してください。"))

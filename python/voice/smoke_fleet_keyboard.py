@@ -75,19 +75,28 @@ def main():
             app.quit()
 
         def native_type(action):
-            widget.activateWindow()
-            widget.raise_()
-            foreground_thread = api.GetWindowThreadProcessId(ctypes.c_void_p(api.GetForegroundWindow()), None)
-            current_thread = ctypes.windll.kernel32.GetCurrentThreadId()
-            attached = api.AttachThreadInput(current_thread, foreground_thread, True)
-            api.SetForegroundWindow(int(widget.winId()))
-            if attached:
-                api.AttachThreadInput(current_thread, foreground_thread, False)
+            if api.GetAncestor(api.GetForegroundWindow(), 2) != int(widget.winId()):
+                widget.activateWindow()
+                widget.raise_()
+                foreground_thread = api.GetWindowThreadProcessId(ctypes.c_void_p(api.GetForegroundWindow()), None)
+                current_thread = ctypes.windll.kernel32.GetCurrentThreadId()
+                attached = api.AttachThreadInput(current_thread, foreground_thread, True)
+                api.SetForegroundWindow(int(widget.winId()))
+                if attached:
+                    api.AttachThreadInput(current_thread, foreground_thread, False)
 
             def click():
-                point = widget.container.mapToGlobal(QPoint(round(action['x']), round(action['y'])))
+                from ctypes import wintypes
+                rect = wintypes.RECT()
+                api.GetWindowRect(ctypes.c_void_p(int(widget.runtime.address)), ctypes.byref(rect))
+                # Win32 cursor coordinates are physical pixels; Qt points may be
+                # scaled logical pixels on a mixed-DPI desktop.
+                viewport = action['viewport']
+                point = QPoint(round(rect.left + action['x'] * (rect.right - rect.left) / viewport['width']),
+                               round(rect.top + action['y'] * (rect.bottom - rect.top) / viewport['height']))
                 target = api.WindowFromPoint(POINT(point.x(), point.y()))
                 if api.GetAncestor(target, 2) != int(widget.winId()):
+                    print("Native click target is outside the owned window", flush=True)
                     finish()
                     return
                 api.SetCursorPos(point.x(), point.y())
@@ -98,29 +107,48 @@ def main():
                 def keys():
                     api.GetFocus.restype = ctypes.c_void_p
                     api.IsChild.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
-                    focused = api.GetFocus()
+                    class GUIINFO(ctypes.Structure):
+                        _fields_ = [('cbSize', ctypes.c_ulong), ('flags', ctypes.c_ulong),
+                                    *[(name, ctypes.c_void_p) for name in ('active', 'focus', 'capture', 'menu', 'move', 'caret')],
+                                    ('rect', wintypes.RECT)]
+                    info = GUIINFO()
+                    info.cbSize = ctypes.sizeof(info)
+                    api.GetGUIThreadInfo(0, ctypes.byref(info))
+                    focused = info.focus
                     adopted = int(widget.runtime.address)
                     if focused != adopted and not api.IsChild(adopted, focused):
                         attempts[0] += 1
                         if attempts[0] < 90:
                             QTimer.singleShot(33, keys)
                         else:
+                            widget.grab().save(str(args.output / "native-focus-failure.png"))
+                            print("Native input focus did not reach the embedded renderer", focused, adopted, flush=True)
                             finish()
                         return
-                    for char in action['text']:
+                    characters = iter(action['text'])
+                    def next_key():
                         if api.GetAncestor(api.GetForegroundWindow(), 2) != int(widget.winId()):
                             finish()
                             return
-                        value = 13 if char == '\n' else api.VkKeyScanW(ord(char))
+                        char = next(characters, None)
+                        if char is None:
+                            return
+                        value = {'\n': 13, '\x1b': 27}.get(char)
+                        if value is None:
+                            value = api.VkKeyScanW(ord(char))
                         if value < 0:
                             finish()
                             return
+                        scan = api.MapVirtualKeyW(value & 255, 0)
                         if value & 256:
-                            api.keybd_event(16, 0, 0, 0)
-                        api.keybd_event(value & 255, 0, 0, 0)
-                        api.keybd_event(value & 255, 0, 2, 0)
+                            api.keybd_event(16, api.MapVirtualKeyW(16, 0), 0, 0)
+                        api.keybd_event(value & 255, scan, 0, 0)
+                        api.keybd_event(value & 255, scan, 2, 0)
                         if value & 256:
-                            api.keybd_event(16, 0, 2, 0)
+                            api.keybd_event(16, api.MapVirtualKeyW(16, 0), 2, 0)
+                        # Let native console input consume real scan-code pairs.
+                        QTimer.singleShot(20, next_key)
+                    next_key()
                 QTimer.singleShot(300, keys)
             QTimer.singleShot(400, click)
 

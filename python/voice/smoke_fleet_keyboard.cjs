@@ -10,7 +10,8 @@ const { chromium, expect } = require(path.resolve(process.argv[2], 'node_modules
   const type = async (element, text) => {
     await element.click();
     const box = await element.boundingBox(); assert.ok(box);
-    console.log('NATIVE_TYPE ' + JSON.stringify({ x: box.x + 35, y: box.y + Math.min(20, box.height / 2), text }));
+    const viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+    console.log('NATIVE_TYPE ' + JSON.stringify({ viewport, x: box.x + 35, y: box.y + Math.min(20, box.height / 2), text }));
   };
   try {
     await page.waitForFunction(() => window.kotobaWorkspace);
@@ -24,12 +25,18 @@ const { chromium, expect } = require(path.resolve(process.argv[2], 'node_modules
     for (const args of [['init', '-b', 'main'], ['add', '.'], ['-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-m', 'Fixture']]) {
       cp.execFileSync('git', ['-C', project, ...args], { windowsHide: true, stdio: 'pipe' });
     }
+    await page.evaluate(() => {
+      window.smokeShellOutput = '';
+      window.smokeShellUnsubscribe = window.api.pty.onData(event => { window.smokeShellOutput += event.data; });
+    });
     assert.equal(await page.evaluate(p => window.kotobaWorkspace.addProject(p), project), true);
     const tour = page.getByRole('button', { name: 'Skip tour', exact: true });
     await tour.waitFor(); await tour.click();
     await page.getByText('Terminal 1', { exact: true }).waitFor();
     const terminal = page.locator('.xterm-screen:visible').first();
-    await type(terminal, 'echo kotoba > keyboard-proof.txt\n');
+    await page.waitForFunction(() => /keyboard-project[^\r\n]*>/.test(window.smokeShellOutput));
+    await page.evaluate(() => window.smokeShellUnsubscribe());
+    await type(terminal, '\x1becho kotoba > keyboard-proof.txt\n');
     await expect.poll(() => fs.existsSync(path.join(project, 'keyboard-proof.txt')), { timeout: 15000 }).toBe(true);
     assert.ok(fs.readFileSync(path.join(project, 'keyboard-proof.txt'), 'utf8').includes('kotoba'));
     await page.screenshot({ path: path.join(output, 'terminal-keyboard.png') });
@@ -54,7 +61,7 @@ const { chromium, expect } = require(path.resolve(process.argv[2], 'node_modules
     // A native hide/show has no DOM visibility event to await. The following
     // command/result is the assertion; this delay only lets Qt process the request.
     await page.waitForTimeout(800);
-    await type(terminal, 'echo restored > restored-proof.txt\n');
+    await type(terminal, '\x1becho restored > restored-proof.txt\n');
     await expect.poll(() => fs.existsSync(path.join(project, 'restored-proof.txt')), { timeout: 15000 }).toBe(true);
     await page.getByText('Codex Chat', { exact: true }).click();
     await expect(composer).toContainText('review this workspace');

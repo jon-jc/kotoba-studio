@@ -16,9 +16,12 @@ export function installKotobaWindowHost(window: BrowserWindow): void {
   // A foreign Qt parent can own native focus while Chromium only has DOM focus.
   // Transfer focus on a user gesture, never on snapshot/presentation polling.
   const focusContent = (): void => {
-    if (!window.isDestroyed() && window.isVisible() && !window.webContents.isDestroyed()) {
+    if (!window.isDestroyed() && !window.webContents.isDestroyed()) {
+      // Qt owns visibility; Electron can report hidden after native adoption.
+      // The parent checks visibility, foreground and ownership before focusing.
       // Qt owns the foreground HWND. Let its UI thread hand native focus to
       // the adopted child; webContents.focus() alone changes only DOM focus.
+      window.webContents.focus()
       emit({ kind: 'focus' })
     }
   }
