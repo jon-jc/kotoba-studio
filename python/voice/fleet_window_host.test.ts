@@ -1,8 +1,8 @@
 import { EventEmitter } from 'node:events'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-const mocks = vi.hoisted(() => ({ ipc: { on: vi.fn(), removeListener: vi.fn() }, connect: vi.fn(), lines: vi.fn() }))
-vi.mock('electron', () => ({ BrowserWindow: class {}, ipcMain: mocks.ipc }))
+const mocks = vi.hoisted(() => ({ ipc: { on: vi.fn(), removeListener: vi.fn() }, connect: vi.fn(), lines: vi.fn(), quit: vi.fn() }))
+vi.mock('electron', () => ({ app: { quit: mocks.quit }, BrowserWindow: class {}, ipcMain: mocks.ipc }))
 vi.mock('node:net', () => ({ createConnection: mocks.connect }))
 vi.mock('node:readline', () => ({ createInterface: mocks.lines }))
 import { installKotobaWindowHost } from './kotoba-window-host'
@@ -52,5 +52,18 @@ describe('embedded keyboard focus', () => {
     window.isDestroyed.mockReturnValue(true)
     focus({ sender: webContents, senderFrame: webContents.mainFrame })
     expect(process.stdout.write).not.toHaveBeenCalled()
+  })
+})
+
+
+describe('embedded shutdown', () => {
+  it('uses normal app quit only for a valid parent request', () => {
+    const { input, webContents } = fixture()
+    input.emit('line', JSON.stringify({ id: 1, operation: 'quit', value: 'invalid' }))
+    input.emit('line', JSON.stringify({ id: '1', operation: 'quit', value: '' }))
+    expect(mocks.quit).not.toHaveBeenCalled()
+    input.emit('line', JSON.stringify({ id: 2, operation: 'quit', value: '' }))
+    expect(mocks.quit).toHaveBeenCalledOnce()
+    expect(webContents.executeJavaScript).not.toHaveBeenCalled()
   })
 })

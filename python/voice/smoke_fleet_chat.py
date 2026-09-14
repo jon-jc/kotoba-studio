@@ -1,4 +1,4 @@
-"""Opt-in packaged Windows smoke: sidebar chat, Claude sign-in recovery and EN/JA.
+"""Opt-in packaged Windows smoke: sidebar chat, Claude first-run terminal setup and EN/JA.
 
 Uses a disposable profile, empty Claude credentials directory and Git fixture.
 Never sends a prompt or starts sign-in, and does not type into the user's desktop.

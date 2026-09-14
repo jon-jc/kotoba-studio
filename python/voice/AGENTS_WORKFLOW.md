@@ -1,6 +1,6 @@
 # Subscription agents in Kotoba Studio
 
-The Windows 0.12.2 build opens **Agents** as the main workspace. Kotoba hosts the full Orca desktop interface inside its own window, alongside the existing API Harness, English/Japanese voice tools, code viewer and messaging. There is one outer window and one system tray entry.
+The Windows 0.12.3 build opens **Agents** as the main workspace. Kotoba hosts the full Orca desktop interface inside its own window, alongside the existing API Harness, English/Japanese voice tools, code viewer and messaging. There is one outer window and one system tray entry.
 
 ## Start a task
 
@@ -45,7 +45,7 @@ The packaged artifact is checked for native terminal process ownership, dependen
 
 ## 日本語
 
-Windows 版 0.12.2 は **エージェント** を中心に起動します。Orca の完全なデスクトップ実装を Kotoba の同じウィンドウに組み込み、API チャット、日英の音声入力、コード、メッセージ機能を併用できます。
+Windows 版 0.12.3 は **エージェント** を中心に起動します。Orca の完全なデスクトップ実装を Kotoba の同じウィンドウに組み込み、API チャット、日英の音声入力、コード、メッセージ機能を併用できます。
 
 **エージェントのアカウント** で Codex、Claude Code、OpenCode、Pi などの設定を行ってください。各 CLI が対応するログイン、サブスクリプション、認証情報、利用上限に従います。Git プロジェクトを追加し、タスクごとに作業ツリーを作成すると変更を分離できます。作業ツリー自体はセキュリティ上のサンドボックスではありません。
 
@@ -67,13 +67,21 @@ The left rail keeps Agents, API chat, Voice, Code and Terminal in a fixed order.
 
 左側にエージェント・API 会話・音声・コード・ターミナルを固定配置し、その下にメッセージと引き継ぎをまとめました。アカウント・アクセス・設定は最下部にあります。ヘッダーには現在の画面、プロジェクト、コマンド検索、表示言語だけを表示します。「設定 → 接続」でサブスクリプション、API キー、ローカルモデルを管理できます。音声パネルを閉じても下書きは保持されます。
 
-## Claude chat sign-in
+## Claude chat and terminal startup
 
-If Claude reports that the selected account is not signed in, choose **Connect account** in the notification. Kotoba opens the Claude section of **Agent accounts**. Add and sign in to a Claude account, return to the app, then choose **New chat → Claude Code chat** in the left sidebar. The selected project stays in place. A CLI subscription and an API key are separate credentials; Kotoba uses the selected Claude CLI account for this chat.
+Choose **New chat → Claude Code chat** in the left sidebar. Kotoba starts the installed Claude CLI with the selected account and displays its conversation in the chat interface. This uses the existing terminal-backed adapter because recent Claude versions do not publish the structured session-start event until the first prompt. Codex keeps its structured transport.
 
-### Claude チャットのサインイン
+On first launch, **Open Claude terminal** reveals Claude's workspace-trust or sign-in screen. Complete the requested setup, then switch back to Chat. Kotoba does not answer trust prompts automatically. An API key is separate from Claude subscription sign-in. New chat also offers **Claude Code terminal** for the interactive CLI.
 
-選択したアカウントが未認証の場合は、通知の **アカウントを接続** を押してください。Claude のアカウント設定が開きます。アカウントを追加してサインインし、アプリに戻って左側の **新しいチャット → Claude Code チャット** を選びます。選択したプロジェクトは保持されます。このチャットは選択した Claude CLI のアカウントを使用し、API キーとは別に認証します。
+When quitting, Kotoba asks the agent workspace to save its session and terminal state before exiting. Forced process cleanup is reserved for an unresponsive runtime after the normal checkpoint and teardown deadlines.
+
+### Claude チャットとターミナルの起動
+
+左側の **新しいチャット → Claude Code チャット** を選びます。選択したアカウントで Claude CLI を起動し、会話をチャット画面に表示します。最近の Claude は最初の入力まで構造化セッションの開始イベントを送信しないため、既存のターミナル経由の会話機能を使用します。Codex の接続方式は維持されます。
+
+初回は **Claude のターミナルを開く** から、ワークスペースの信頼確認やサインインを完了し、チャット表示に戻ってください。信頼確認は自動承認しません。API キーとサブスクリプションの認証は別です。**Claude Code ターミナル** では対話型 CLI を直接使用できます。
+
+終了時はエージェント用ワークスペースにセッションとターミナルの状態を保存させます。通常の保存・終了処理が応答しない場合に限り、制限時間後に所有プロセスを終了します。
 
 
 ## Interface languages

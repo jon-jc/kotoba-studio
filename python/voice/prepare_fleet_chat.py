@@ -105,3 +105,36 @@ def prepare_chat_experience(root, patch):
     patch(root, 'src/renderer/src/lib/structured-agent-session-launch-failure-toast.ts',
           '    const agentLabel = structuredAgentLabel(agent)',
           '    if (showKotobaChatRecovery(agent, error)) return\n    const agentLabel = structuredAgentLabel(agent)')
+
+
+def prepare_claude_chat_compatibility(root, patch):
+    # Claude's initialize control response is available before a prompt, but its
+    # session-id-bearing init frame is not. Keep the existing terminal-backed
+    # conversation adapter rather than sending a hidden prompt or inventing proof.
+    patch(root, 'src/shared/structured-native-chat-launch-route.ts',
+          'if (!isAgentSessionHandleProvider(input.agent)) {',
+          "if (!isAgentSessionHandleProvider(input.agent) || input.agent === 'claude') {")
+    for file in ('src/shared/structured-native-chat-launch-route.test.ts',
+                 'src/renderer/src/lib/agent-launch-routing.test.ts'):
+        path = root / file
+        source = path.read_text(encoding='utf-8').replace("it.each(['claude', 'codex'] as const)", "it.each(['codex'] as const)")
+        if file.startswith('src/shared/'):
+            source = source.replace("    agent: 'claude',", "    agent: 'codex',")
+        path.write_text(source, encoding='utf-8', newline='\n')
+    shutil.copyfile(Path(__file__).with_name('fleet_claude_chat_route.test.ts'),
+                    root / 'src/renderer/src/lib/kotoba-claude-chat-route.test.ts')
+
+    shutil.copyfile(Path(__file__).with_name('fleet_claude_setup.tsx'),
+                    root / 'src/renderer/src/components/native-chat/KotobaClaudeSetup.tsx')
+    patch(root, 'src/renderer/src/components/native-chat/NativeChatResolvedView.tsx',
+          "import { useCallback, useEffect, useMemo, useRef, useState } from 'react'",
+          "import { useCallback, useEffect, useMemo, useRef, useState } from 'react'\nimport { KotobaClaudeSetup } from './KotobaClaudeSetup'")
+    patch(root, 'src/renderer/src/components/native-chat/NativeChatResolvedView.tsx',
+          "  const canSend = useNativeChatCanSend(targetPtyId)",
+          "  const canSend = useNativeChatCanSend(targetPtyId)\n  const claudeStarting = agent === 'claude' && !sessionId")
+    patch(root, 'src/renderer/src/components/native-chat/NativeChatResolvedView.tsx',
+          "      {questionActive ? null : (",
+          "      {claudeStarting ? <KotobaClaudeSetup onOpenTerminal={onSwitchToTerminal} /> : questionActive ? null : (")
+
+    shutil.copyfile(Path(__file__).with_name('fleet_claude_setup.test.tsx'),
+                    root / 'src/renderer/src/components/native-chat/KotobaClaudeSetup.test.tsx')
