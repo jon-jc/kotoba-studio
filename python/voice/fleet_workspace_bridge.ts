@@ -1,4 +1,5 @@
 // Kotoba tools share the selected Orca worktree; drafts never submit a turn.
+import { setKotobaClaudeLanguageSettings } from '../lib/kotoba-claude-language'
 import { i18n } from '../i18n/i18n'
 import { useAppStore } from '../store'
 
@@ -18,7 +19,8 @@ Object.assign(window, {
       else return false
       return true
     },
-    snapshot(language: unknown) {
+    snapshot(language: unknown, languageSettings?: unknown) {
+      if (languageSettings !== undefined) setKotobaClaudeLanguageSettings(languageSettings)
       const state = useAppStore.getState()
       if ((language === 'en' || language === 'ja') && state.settings && appliedLocale !== language) {
         appliedLocale = language

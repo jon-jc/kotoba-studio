@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({ ipc: { on: vi.fn(), removeListener: vi.fn() },
 vi.mock('electron', () => ({ app: { quit: mocks.quit }, BrowserWindow: class {}, ipcMain: mocks.ipc }))
 vi.mock('node:net', () => ({ createConnection: mocks.connect }))
 vi.mock('node:readline', () => ({ createInterface: mocks.lines }))
+vi.mock('./kotoba-claude-language-file', () => ({ writeClaudeLanguageSettings: () => '/owned/claude-language.json' }))
 import { installKotobaWindowHost } from './kotoba-window-host'
 
 afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks() })
