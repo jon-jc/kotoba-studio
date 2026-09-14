@@ -23,12 +23,6 @@ def prepare_chat(root, patch):
           "    experimentalStructuredNativeChat: args.viewMode === 'chat',\n"
           "    openAgentTabsInChatByDefault: args.viewMode === 'chat'\n"
           '  } } : currentStore')
-    patch(root, 'src/renderer/src/components/tab-bar/tab-bar-surface.tsx',
-          "import React from 'react'", "import React from 'react'\nimport { KotobaNewChat } from './KotobaNewChat'")
-    patch(root, 'src/renderer/src/components/tab-bar/tab-bar-surface.tsx',
-          '      <DropdownMenu\n        open={newTabMenuOpen}',
-          '      {!terminalOnly && showAgentLaunchItems && <KotobaNewChat worktreeId={worktreeId} groupId={resolvedGroupId} onFocusTerminal={queueTerminalTabFocusAfterNewTabMenuClose} onMenuClose={runPendingNewTabMenuFocusAfterClose} />}\n'
-          '      <DropdownMenu\n        open={newTabMenuOpen}')
     patch(root, 'src/renderer/src/lib/launch-agent-in-new-tab.test.ts',
           "  it('stamps the launched agent on the new tab for immediate provider icon bootstrap',",
           """  it.each(['chat', 'terminal'] as const)('honors a per-launch %s choice without changing other sessions', async (viewMode) => {
@@ -87,3 +81,27 @@ def prepare_chat(root, patch):
         ('fleet_new_chat.test.tsx', 'src/renderer/src/components/tab-bar/KotobaNewChat.test.tsx'),
     ):
         shutil.copyfile(Path(__file__).with_name(source), root / target)
+
+
+def prepare_chat_experience(root, patch):
+    voice = Path(__file__).resolve().parent
+    for name, dest in [('fleet_sidebar_chat.tsx', 'src/renderer/src/components/sidebar/KotobaSidebarChat.tsx'),
+                       ('fleet_chat_recovery.ts', 'src/renderer/src/lib/kotoba-chat-recovery.ts'),
+                       ('fleet_chat_recovery.test.ts', 'src/renderer/src/lib/kotoba-chat-recovery.test.ts'),
+                       ('fleet_sidebar_chat.test.tsx', 'src/renderer/src/components/sidebar/KotobaSidebarChat.test.tsx')]:
+        (root / dest).write_text((voice / name).read_text(encoding='utf-8'), encoding='utf-8', newline='\n')
+    path = root / 'src/renderer/src/components/tab-bar/tab-bar-surface.tsx'
+    source = path.read_text(encoding='utf-8')
+    source = source.replace("import { KotobaNewChat } from './KotobaNewChat'\n", '')
+    source = '\n'.join(line for line in source.split('\n') if '<KotobaNewChat worktreeId=' not in line)
+    path.write_text(source, encoding='utf-8', newline='\n')
+    patch(root, 'src/renderer/src/components/sidebar/SidebarNav.tsx', "import React from 'react'",
+          "import React from 'react'\nimport { KotobaSidebarChat } from './KotobaSidebarChat'")
+    patch(root, 'src/renderer/src/components/sidebar/SidebarNav.tsx',
+          '      <button\n        type="button"\n        onClick={() => openModal(\'worktree-palette\')}',
+          '      <KotobaSidebarChat />\n      <button\n        type="button"\n        onClick={() => openModal(\'worktree-palette\')}')
+    patch(root, 'src/renderer/src/lib/structured-agent-session-launch-failure-toast.ts',
+          "import { toast } from 'sonner'", "import { toast } from 'sonner'\nimport { showKotobaChatRecovery } from './kotoba-chat-recovery'")
+    patch(root, 'src/renderer/src/lib/structured-agent-session-launch-failure-toast.ts',
+          '    const agentLabel = structuredAgentLabel(agent)',
+          '    if (showKotobaChatRecovery(agent, error)) return\n    const agentLabel = structuredAgentLabel(agent)')

@@ -1,12 +1,12 @@
 # Subscription agents in Kotoba Studio
 
-The Windows 0.12.1 build opens **Agents** as the main workspace. Kotoba hosts the full Orca desktop interface inside its own window, alongside the existing API Harness, English/Japanese voice tools, code viewer and messaging. There is one outer window and one system tray entry.
+The Windows 0.12.2 build opens **Agents** as the main workspace. Kotoba hosts the full Orca desktop interface inside its own window, alongside the existing API Harness, English/Japanese voice tools, code viewer and messaging. There is one outer window and one system tray entry.
 
 ## Start a task
 
 1. Open **Agent accounts** and connect the coding agent you use. Codex, Claude Code, OpenCode and Pi retain their own CLI installation, authentication, plan limits and supported providers. Follow the selected agent's setup instructions; Kotoba does not supply a subscription.
 2. Add a Git project. Create a workspace/worktree for each task to isolate file edits. A worktree is a separate checkout, not a security sandbox.
-3. Use **New chat → Codex chat** or **Claude Code chat** for a conversation with the agent. The same menu offers **Codex terminal** and **Claude Code terminal** for their original interactive interfaces. Choose an agent for that task and enter its instruction. The chat menu includes installed, enabled Codex, Claude Code, OpenClaude, Grok and OMP adapters. New supported Codex and Claude Code tasks open in chat view, with a message composer, model selection and tool activity. **Settings → Agents → Agent conversations** changes the default for future tasks; existing sessions keep their current view. OpenCode and Pi continue in their interactive terminals. Other tasks can continue while you select a different row in the left sidebar. Splitting terminals is optional.
+3. In the left sidebar, use **New chat → Codex chat** or **Claude Code chat** for a conversation with the agent. The same menu offers **Codex terminal** and **Claude Code terminal** for their original interactive interfaces. Choose an agent for that task and enter its instruction. The chat menu includes installed, enabled Codex, Claude Code, OpenClaude, Grok and OMP adapters. New supported Codex and Claude Code tasks open in chat view, with a message composer, model selection and tool activity. **Settings → Agents → Agent conversations** changes the default for future tasks; existing sessions keep their current view. OpenCode and Pi continue in their interactive terminals. Other tasks can continue while you select a different row in the left sidebar. Splitting terminals is optional.
 4. Review changes and terminal output in that task. Commit, branch and pull-request actions remain explicit upstream controls.
 5. Use **Voice** to review English or Japanese speech. **Add to chat** inserts into an empty native chat composer without sending. If no compatible composer is available or it already contains text, the transcript stays in Voice. Use paste-at-cursor dictation for a terminal-based agent.
 
@@ -45,7 +45,7 @@ The packaged artifact is checked for native terminal process ownership, dependen
 
 ## 日本語
 
-Windows 版 0.12.1 は **エージェント** を中心に起動します。Orca の完全なデスクトップ実装を Kotoba の同じウィンドウに組み込み、API チャット、日英の音声入力、コード、メッセージ機能を併用できます。
+Windows 版 0.12.2 は **エージェント** を中心に起動します。Orca の完全なデスクトップ実装を Kotoba の同じウィンドウに組み込み、API チャット、日英の音声入力、コード、メッセージ機能を併用できます。
 
 **エージェントのアカウント** で Codex、Claude Code、OpenCode、Pi などの設定を行ってください。各 CLI が対応するログイン、サブスクリプション、認証情報、利用上限に従います。Git プロジェクトを追加し、タスクごとに作業ツリーを作成すると変更を分離できます。作業ツリー自体はセキュリティ上のサンドボックスではありません。
 
@@ -66,3 +66,20 @@ The left rail keeps Agents, API chat, Voice, Code and Terminal in a fixed order.
 ### ワークスペースのレイアウト
 
 左側にエージェント・API 会話・音声・コード・ターミナルを固定配置し、その下にメッセージと引き継ぎをまとめました。アカウント・アクセス・設定は最下部にあります。ヘッダーには現在の画面、プロジェクト、コマンド検索、表示言語だけを表示します。「設定 → 接続」でサブスクリプション、API キー、ローカルモデルを管理できます。音声パネルを閉じても下書きは保持されます。
+
+## Claude chat sign-in
+
+If Claude reports that the selected account is not signed in, choose **Connect account** in the notification. Kotoba opens the Claude section of **Agent accounts**. Add and sign in to a Claude account, return to the app, then choose **New chat → Claude Code chat** in the left sidebar. The selected project stays in place. A CLI subscription and an API key are separate credentials; Kotoba uses the selected Claude CLI account for this chat.
+
+### Claude チャットのサインイン
+
+選択したアカウントが未認証の場合は、通知の **アカウントを接続** を押してください。Claude のアカウント設定が開きます。アカウントを追加してサインインし、アプリに戻って左側の **新しいチャット → Claude Code チャット** を選びます。選択したプロジェクトは保持されます。このチャットは選択した Claude CLI のアカウントを使用し、API キーとは別に認証します。
+
+
+## Interface languages
+
+The desktop language selector applies English or Japanese to the embedded agent workspace as well as the desktop tools. The packaging step requires a Japanese entry for every English catalog key and validates interpolation placeholders in the Kotoba supplement. Agent responses, terminal output, file contents, and third-party names retain their original text.
+
+### 表示言語
+
+デスクトップの言語選択は、エージェント用ワークスペースと各ツールに英語または日本語を適用します。パッケージ作成時に英語カタログの全項目に対応する日本語の存在を確認し、追加翻訳の埋め込み変数を検証します。エージェントの回答、ターミナル出力、ファイル内容、外部製品名は原文を保持します。

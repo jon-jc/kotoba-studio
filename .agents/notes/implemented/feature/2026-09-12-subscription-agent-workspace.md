@@ -66,3 +66,14 @@ Structured Codex initially fell back because Electron resolved an incomplete Jav
 Verification includes native routing, migration, focus ownership and launch-mode tests plus an opt-in real Windows input smoke. The latter navigates the actual Agents project/Terminal 1 and Codex chat, executes a fixture shell command, retains an unsent draft across tab switches, opens model choices and restores the embedded window. Browser-injected keyboard events or a synthetic input field are not accepted as terminal-input proof. Paid agent turns, Japanese IME composition and unsupported provider chat transports remain outside this check.
 
 The Windows host focuses Chromium’s renderer child only inside the owned foreground window, releases temporary UI-thread attachment, and defers Qt focus handoffs until activation finishes. Presentation explicitly shows the adopted surface after restore; the native keyboard smoke verifies shell execution, chat drafts, restored input, and the actual Codex terminal.
+
+
+## Sidebar chat and Japanese catalog (0.12.2)
+
+The left sidebar owns New chat. It targets the selected worktree, lists installed and enabled conversation adapters, retains explicit terminal choices, and opens project setup when no worktree is selected. Closing the menu without launching returns focus to its trigger. The tab toolbar no longer duplicates this entry.
+
+An explicit Claude CLI authentication refusal opens an actionable sign-in notification instead of the generic structured-chat failure. Its action opens the Claude account section without replacing the selected project. Other errors preserve the existing ownership and reconciliation behavior. The user must complete Claude sign-in; the application does not substitute API credentials or bypass provider authentication.
+
+The Japanese supplement completes the pinned English catalog and corrects short account and agent labels. Packaging rejects missing Japanese entries, unknown supplement keys and changed interpolation placeholders. Catalog merging preserves original nested and dotted keys and existing translations. English/Japanese UI switching does not translate user content, agent responses, commands or third-party product names.
+
+Focused tests cover recovery classification, both languages, account navigation, selected worktrees, focus restoration and catalog validation. The packaged Windows smoke opens a disposable Git project, reproduces Claude refusal with an empty credential directory, follows Connect account, switches both languages and verifies project retention. It uses an isolated profile, atomically allocated debug port and owned process cleanup, with no global keyboard injection, sign-in or paid prompt. Live authenticated Claude responses remain unverified.
