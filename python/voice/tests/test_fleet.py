@@ -189,3 +189,46 @@ def test_embedded_keyboard_focus_only_follows_visible_container(application, tmp
     workspace.container = None
     workspace.close()
     workspace.shutdown()
+
+
+@pytest.mark.parametrize("graceful", [True, False])
+def test_runtime_checkpoints_before_forced_shutdown(application, tmp_path, monkeypatch, graceful):
+    from kotoba.fleet_runtime import FleetRuntime, QProcess
+    runtime = FleetRuntime(tmp_path, root=tmp_path)
+    calls = []
+    monkeypatch.setattr("kotoba.fleet_runtime.sys", SimpleNamespace(platform="win32"))
+    runtime.address = "123"
+    runtime.channel = SimpleNamespace(
+        flush=lambda: calls.append("flush"), bytesToWrite=lambda: 0)
+    runtime.process = SimpleNamespace(
+        state=lambda: QProcess.Running,
+        processId=lambda: 1234,
+        waitForFinished=lambda duration: calls.append(("wait", duration)) or (graceful or duration != 35000),
+        kill=lambda: calls.append("kill"))
+    monkeypatch.setattr(runtime, "request", lambda *args: calls.append(args))
+    monkeypatch.setattr(QProcess, "execute", lambda *args: calls.append(("force", args)))
+    monkeypatch.setattr(runtime, "wait_for_exit", lambda duration: calls.append(("wait", duration)) or graceful)
+    runtime.stop()
+    assert calls[:3] == [("quit", ""), "flush", ("wait", 35000)]
+    forced = [call for call in calls if isinstance(call, tuple) and call[0] == "force"]
+    assert bool(forced) is not graceful
+    if forced:
+        assert forced[0][1][1] == ["/PID", "1234", "/T", "/F"]
+
+
+@pytest.mark.parametrize("delay,deadline,exited", [(0.05, 2000, True), (2, 30, False)])
+def test_shutdown_wait_processes_qt_events_and_is_bounded(application, tmp_path, delay, deadline, exited):
+    import sys
+    from PySide6.QtCore import QTimer
+    from kotoba.fleet_runtime import FleetRuntime
+    runtime = FleetRuntime(tmp_path, root=tmp_path)
+    runtime.process.start(sys.executable, ["-c", f"import time; time.sleep({delay})"])
+    assert runtime.process.waitForStarted(2000)
+    ticks = []
+    QTimer.singleShot(1, lambda: ticks.append(True))
+    try:
+        assert runtime.wait_for_exit(deadline) is exited
+        assert ticks == [True]
+    finally:
+        runtime.process.kill()
+        runtime.process.waitForFinished(2000)

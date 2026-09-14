@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 import { createInterface } from 'node:readline'
 import { createConnection } from 'node:net'
 
@@ -43,8 +43,14 @@ export function installKotobaWindowHost(window: BrowserWindow): void {
     let request: { id?: unknown; operation?: unknown; value?: unknown }
     try { request = JSON.parse(line) } catch { return }
     if (!request || typeof request !== 'object' || Array.isArray(request)) return
-    if (!Number.isSafeInteger(request.id) || !['snapshot', 'draft', 'addProject', 'navigate', 'present'].includes(String(request.operation))) return
+    if (!Number.isSafeInteger(request.id) || !['snapshot', 'draft', 'addProject', 'navigate', 'present', 'quit'].includes(String(request.operation))) return
     if (typeof request.value !== 'string' || request.value.length > 64000) return
+    if (request.operation === 'quit') {
+      // The owned parent requests the normal checkpoint/teardown path.
+      // Killing Electron skips renderer session and terminal restoration saves.
+      if (request.value === '') app.quit()
+      return
+    }
     if (request.operation === 'present') {
       // Called only after Qt has adopted the owned HWND. Native reparenting alone
       // does not notify Chromium that its initially hidden surface is visible.

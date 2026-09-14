@@ -30,28 +30,23 @@ const { chromium, expect } = require(path.resolve(process.argv[2], 'node_modules
     await expect(page.getByRole('menuitem', { name: 'Claude Code chat', exact: true })).toBeVisible();
     await page.screenshot({ animations: 'disabled', path: path.join(output, 'sidebar-chat-en.png') });
     await page.getByRole('menuitem', { name: 'Claude Code chat', exact: true }).click();
-    await expect(page.getByText('Sign in to Claude Code', { exact: true })).toBeVisible();
+    await expect(page.getByText('Starting Claude Code', { exact: true })).toBeVisible();
+    await expect(page.locator('[data-native-chat-root] [contenteditable=true]')).toHaveCount(0);
     await expect(page.getByText('Could not open Claude chat', { exact: true })).toHaveCount(0);
-    await page.getByRole('button', { name: 'Connect account', exact: true }).click();
-    await expect(page.locator('#accounts-claude')).toBeVisible();
+    await page.screenshot({ animations: 'disabled', path: path.join(output, 'claude-setup-en.png') });
     const before = await page.evaluate(() => window.kotobaWorkspace.snapshot());
-    assert.equal(before.path.toLowerCase().replaceAll('\\', '/'), project.toLowerCase().replaceAll('\\', '/'));
     console.log('LOCALE ja');
-    await expect(page.getByText('アプリに戻る', { exact: true })).toBeVisible();
-    await expect(page.locator('#accounts-claude')).toBeVisible();
-    await page.screenshot({ animations: 'disabled', path: path.join(output, 'claude-accounts-ja.png') });
-    await page.getByText('アプリに戻る', { exact: true }).click();
-    await sidebar.getByRole('button', { name: '新しいチャット', exact: true }).click();
-    await expect(page.getByRole('menuitem', { name: 'Claude Code チャット', exact: true })).toBeVisible();
-    await page.screenshot({ animations: 'disabled', path: path.join(output, 'sidebar-chat-ja.png') });
-    await page.getByRole('menuitem', { name: 'Claude Code チャット', exact: true }).click();
-    await expect(page.getByText('Claude Code にサインインしてください', { exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'アカウントを接続', exact: true })).toBeVisible();
+    await expect(page.getByText('Claude Code を起動しています', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Claude のターミナルを開く', exact: true })).toBeVisible();
+    await page.screenshot({ animations: 'disabled', path: path.join(output, 'claude-setup-ja.png') });
+    await page.getByRole('button', { name: 'Claude のターミナルを開く', exact: true }).click();
+    await expect(page.locator('[data-native-chat-root]')).toHaveCount(0);
+    await expect(page.locator('.xterm-screen').last()).toBeVisible();
     console.log('LOCALE en');
     await expect(sidebar.getByRole('button', { name: 'New chat', exact: true })).toBeVisible();
     assert.equal((await page.evaluate(() => window.kotobaWorkspace.snapshot())).path, before.path);
-    console.log(JSON.stringify({ passed: true, sidebar: true, projectSetup: true, claudeAuthRecovery: true,
-      accountTarget: true, japanese: true, english: true, projectPreserved: true, promptsSent: 0 }));
+    console.log(JSON.stringify({ passed: true, sidebar: true, projectSetup: true, claudeSetup: true,
+      terminalAccessible: true, japanese: true, english: true, projectPreserved: true, promptsSent: 0 }));
   } catch (error) {
     await page.screenshot({ animations: 'disabled', path: path.join(output, 'failure.png') }).catch(() => {});
     console.log((await page.locator('body').innerText()).slice(-4000));

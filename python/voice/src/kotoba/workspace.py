@@ -312,7 +312,7 @@ class Workspace(QMainWindow):
         self.locale_scope.setStyleSheet("color:#999daa;font-size:11px")
         self.locale_scope.hide()
         status.addSpacing(18)
-        version = QLabel("Kotoba Studio  0.12.2")
+        version = QLabel("Kotoba Studio  0.12.3")
         version.setObjectName("micro")
         status.addWidget(version)
         content.addWidget(statusbar)

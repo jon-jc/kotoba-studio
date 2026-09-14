@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import secrets
 import sys
-from PySide6.QtCore import QObject, QProcess, QProcessEnvironment, QTimer, Signal
+from PySide6.QtCore import QEventLoop, QObject, QProcess, QProcessEnvironment, QTimer, Signal
 from PySide6.QtNetwork import QLocalServer
 
 
@@ -154,7 +154,7 @@ class FleetRuntime(QObject):
         self.channel = connection
 
     def request(self, operation, value, callback=None):
-        if not self.address or self.channel is None or operation not in ("snapshot", "draft", "addProject", "navigate", "present") or not isinstance(value, str) or len(value) > 64000:
+        if not self.address or self.channel is None or operation not in ("snapshot", "draft", "addProject", "navigate", "present", "quit") or not isinstance(value, str) or len(value) > 64000:
             if callback:
                 callback(None)
             return
@@ -190,12 +190,40 @@ class FleetRuntime(QObject):
             self.expire(identity)
         self.state.emit("stopped" if self.stopping else "failed")
 
+    def wait_for_exit(self, timeout_ms):
+        # Keep native window messages moving while Electron closes its adopted
+        # HWND and checkpoints. waitForFinished blocks that Windows handshake.
+        loop = QEventLoop()
+        timer = QTimer()
+        timer.setSingleShot(True)
+        timer.timeout.connect(loop.quit)
+        self.process.finished.connect(loop.quit)
+        try:
+            timer.start(timeout_ms)
+            if self.process.state() != QProcess.NotRunning:
+                loop.exec()
+            return self.process.state() == QProcess.NotRunning
+        finally:
+            timer.stop()
+            self.process.finished.disconnect(loop.quit)
+
     def stop(self):
+        if self.stopping:
+            return
         self.timer.stop()
         self.stopping = True
         if self.process.state() == QProcess.NotRunning:
             self.server.close()
             return
+        if self.address and self.channel is not None:
+            # Give Electron's renderer checkpoint (10s) and teardown (20s)
+            # their normal deadlines before falling back to process cleanup.
+            self.request("quit", "")
+            self.channel.flush()
+            if self.channel.bytesToWrite():
+                self.channel.waitForBytesWritten(1000)
+            if self.wait_for_exit(35000):
+                return
         if sys.platform == "win32":
             # Terminate only this live runtime and the processes it owns.
             QProcess.execute("taskkill.exe", ["/PID", str(self.process.processId()), "/T", "/F"])

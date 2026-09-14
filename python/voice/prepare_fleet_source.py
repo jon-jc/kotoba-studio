@@ -88,9 +88,10 @@ def prepare(root):
     prepare_access(root, replace_once)
     from prepare_fleet_sidebar import prepare_sidebar
     prepare_sidebar(root)
-    from prepare_fleet_chat import prepare_chat, prepare_chat_experience
+    from prepare_fleet_chat import prepare_chat, prepare_chat_experience, prepare_claude_chat_compatibility
     prepare_chat(root, replace_once)
     prepare_chat_experience(root, replace_once)
+    prepare_claude_chat_compatibility(root, replace_once)
     from prepare_fleet_locale import prepare_locale
     prepare_locale(root)
     replace_once(root, 'src/preload/index.ts',
