@@ -1,7 +1,7 @@
 [Setup]
 AppId={{62638D33-46D2-498E-A5D7-DC3434020298}
 AppName=Kotoba Studio
-AppVersion=0.12.3
+AppVersion=0.12.4
 AppPublisher=Kotoba Studio
 AppPublisherURL=https://github.com/jon-jc/kotoba-studio
 DefaultDirName={localappdata}\Programs\Kotoba Studio
@@ -10,7 +10,7 @@ PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=dist
-OutputBaseFilename=Kotoba-Studio-0.12.3-Setup
+OutputBaseFilename=Kotoba-Studio-0.12.4-Setup
 Compression=lzma2/fast
 SolidCompression=yes
 WizardStyle=modern

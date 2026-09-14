@@ -85,3 +85,9 @@ A signed-in Claude CLI can complete SDK initialization without publishing a sess
 Until Claude establishes its session, bilingual setup guidance replaces the composer and opens the underlying terminal for trust or sign-in. The user makes these choices in Claude and can return to Chat afterward. Real signed-in Windows tests delivered a short prompt through the composer, reopened the same profile, confirmed Claude in the restored terminal, and received another assistant reply through the chat Send button.
 
 The parent now requests Electron's normal quit path over its owned local pipe. This allows renderer checkpoints and durable teardown before exit; forced cleanup is only a deadline fallback. The quit operation is not forwarded to page JavaScript. Tests cover valid quit requests, graceful and forced shutdown, launch routing and both setup languages. The credential-free packaged smoke verifies the first-run guide, terminal access and preserved project in English and Japanese.
+
+## Claude language integration (0.12.4)
+
+Claude Code's terminal menus are provider-owned English text. A Japanese terminal notice links to Kotoba's translated chat view while preserving the same session and terminal. The notice occupies its own layout row so terminal content and input remain unobstructed; switching to English removes it.
+
+The owned parent pipe writes an atomic, language-only settings file inside the Kotoba runtime profile and passes its path to the renderer bridge. New local Windows Claude launches use that file with the supported settings flag. Custom settings arguments, other agents and remote targets are untouched; no global account settings or project files are modified. Older sessions need a new launch to attach the file. Tests cover language changes, path quoting, permission/model flag preservation, custom settings and target exclusions, plus the translated view button.

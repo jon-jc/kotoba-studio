@@ -1,3 +1,4 @@
+import { writeClaudeLanguageSettings } from './kotoba-claude-language-file'
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { createInterface } from 'node:readline'
 import { createConnection } from 'node:net'
@@ -69,7 +70,12 @@ export function installKotobaWindowHost(window: BrowserWindow): void {
       )
       return
     }
-    const script = `window.kotobaWorkspace?.[${JSON.stringify(request.operation)}](${JSON.stringify(request.value)}) ?? null`
+    let languageSettings: string | null = null
+    if (request.operation === 'snapshot' && (request.value === 'ja' || request.value === 'en')) {
+      try { languageSettings = writeClaudeLanguageSettings(process.env.KOTOBA_FLEET_HOME!, request.value) }
+      catch { /* Keep the interface usable if a settings file cannot be written. */ }
+    }
+    const script = `window.kotobaWorkspace?.[${JSON.stringify(request.operation)}](${JSON.stringify(request.value)}, ${JSON.stringify(languageSettings)}) ?? null`
     void window.webContents.executeJavaScript(script).then(
       value => emit({ kind: 'result', id: request.id, value }),
       () => emit({ kind: 'result', id: request.id, value: null })

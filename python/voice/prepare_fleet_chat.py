@@ -138,3 +138,31 @@ def prepare_claude_chat_compatibility(root, patch):
 
     shutil.copyfile(Path(__file__).with_name('fleet_claude_setup.test.tsx'),
                     root / 'src/renderer/src/components/native-chat/KotobaClaudeSetup.test.tsx')
+
+    for source, target in (
+        ('fleet_claude_language_file.ts', 'src/main/window/kotoba-claude-language-file.ts'),
+        ('fleet_claude_language.ts', 'src/renderer/src/lib/kotoba-claude-language.ts'),
+        ('fleet_claude_language_notice.tsx', 'src/renderer/src/components/terminal-pane/KotobaClaudeLanguageNotice.tsx'),
+    ):
+        shutil.copyfile(Path(__file__).with_name(source), root / target)
+    patch(root, 'src/renderer/src/lib/launch-agent-in-new-tab.ts',
+          "import { useAppStore } from '@/store'",
+          "import { useAppStore } from '@/store'\nimport { claudeLanguageArgs } from './kotoba-claude-language'")
+    patch(root, 'src/renderer/src/lib/launch-agent-in-new-tab.ts',
+          '    agentArgs: effectiveAgentArgs,',
+          "    agentArgs: claudeLanguageArgs(agent, effectiveAgentArgs, queuedShell ?? 'powershell', resolvedLaunchPlatform === 'win32' && !isRemote),")
+    patch(root, 'src/renderer/src/components/terminal-pane/TerminalPaneSurface.tsx',
+          "import { createPortal } from 'react-dom'",
+          "import { createPortal } from 'react-dom'\nimport { KotobaClaudeLanguageNotice } from './KotobaClaudeLanguageNotice'")
+    patch(root, 'src/renderer/src/components/terminal-pane/TerminalPaneSurface.tsx',
+          '  return (\n    <>',
+          "  return (\n    <div className=\"absolute inset-0 flex min-h-0 flex-col\">\n      {isActive && activePaneCanToggleChat && !activePaneIsChatLeaf && activePane && controller.resolveAgentForLeaf(activePane.leafId) === 'claude' && <KotobaClaudeLanguageNotice onOpenChat={handleToggleNativeChat} />}\n      <div className=\"relative min-h-0 flex-1\">")
+    patch(root, 'src/renderer/src/components/terminal-pane/TerminalPaneSurface.tsx',
+          '    </>\n  )', '      </div>\n    </div>\n  )')
+
+    for source, target in (
+        ('fleet_claude_language_file.test.ts', 'src/main/window/kotoba-claude-language-file.test.ts'),
+        ('fleet_claude_language.test.ts', 'src/renderer/src/lib/kotoba-claude-language.test.ts'),
+        ('fleet_claude_language_notice.test.tsx', 'src/renderer/src/components/terminal-pane/KotobaClaudeLanguageNotice.test.tsx'),
+    ):
+        shutil.copyfile(Path(__file__).with_name(source), root / target)
