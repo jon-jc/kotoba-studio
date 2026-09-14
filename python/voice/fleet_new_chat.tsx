@@ -12,8 +12,8 @@ import type { TuiAgent } from '../../../../shared/tui-agent'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 
-export function KotobaNewChat({ worktreeId, groupId, onFocusTerminal, onMenuClose }: {
-  worktreeId: string; groupId: string; onFocusTerminal: (id: string) => void; onMenuClose: () => void
+export function KotobaNewChat({ worktreeId, groupId, onFocusTerminal, onMenuClose, sidebar = false }: {
+  worktreeId: string; groupId?: string; onFocusTerminal: (id: string) => void; onMenuClose: () => boolean | void; sidebar?: boolean
 }): React.JSX.Element {
   const { i18n } = useTranslation()
   const text = (en: string, ja: string) => i18n.language.startsWith('ja') ? ja : en
@@ -35,12 +35,12 @@ export function KotobaNewChat({ worktreeId, groupId, onFocusTerminal, onMenuClos
   }
   return <DropdownMenu modal={false}>
     <DropdownMenuTrigger asChild>
-      <button className="ml-2 my-auto inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-border/70 px-2.5 text-xs text-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      <button type="button" className={sidebar ? "flex w-full items-center gap-2 rounded-md px-2 py-2 text-[13px] font-medium text-worktree-sidebar-foreground transition-colors hover:bg-worktree-sidebar-foreground/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" : "ml-2 my-auto inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-border/70 px-2.5 text-xs text-foreground hover:bg-accent"}
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
         <MessageSquare className="size-3.5" aria-hidden="true" />{text('New chat', '新しいチャット')}
       </button>
     </DropdownMenuTrigger>
-    <DropdownMenuContent align="start" className="w-64 max-h-[70vh] overflow-y-auto" onCloseAutoFocus={event => { event.preventDefault(); onMenuClose() }}>
+    <DropdownMenuContent align="start" className="w-64 max-h-[70vh] overflow-y-auto" onCloseAutoFocus={event => { if (onMenuClose()) event.preventDefault() }}>
       <DropdownMenuLabel>{text('Conversation', '会話')}</DropdownMenuLabel>
       {chats.map(agent => <DropdownMenuItem key={agent.id} disabled={(agent.id === 'codex' || agent.id === 'claude') && pending[agent.id] === 'pending'} onSelect={() => launch(agent.id, 'chat')}>
         <MessageSquare className="size-4" />{label(agent)}{text(' chat', ' チャット')}
