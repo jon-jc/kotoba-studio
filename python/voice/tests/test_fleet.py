@@ -196,6 +196,7 @@ def test_runtime_checkpoints_before_forced_shutdown(application, tmp_path, monke
     from kotoba.fleet_runtime import FleetRuntime, QProcess
     runtime = FleetRuntime(tmp_path, root=tmp_path)
     calls = []
+    monkeypatch.setattr("kotoba.fleet_runtime.sys", SimpleNamespace(platform="win32"))
     runtime.address = "123"
     runtime.channel = SimpleNamespace(
         flush=lambda: calls.append("flush"), bytesToWrite=lambda: 0)
