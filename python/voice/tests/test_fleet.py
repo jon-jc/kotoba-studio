@@ -122,16 +122,22 @@ def test_account_navigation_reports_failure_and_waits_for_runtime(application, t
     workspace.deleteLater()
 
 
-def test_present_reanchors_and_repaints_the_foreign_surface(application, tmp_path):
+def test_present_reanchors_and_repaints_the_foreign_surface(application, tmp_path, monkeypatch):
     from PySide6.QtCore import QRect
     from kotoba.fleet_workspace import FleetWorkspace
     workspace = FleetWorkspace(tmp_path)
     geometries = []
     workspace.container = SimpleNamespace(rect=lambda: QRect(0, 0, 1040, 680))
-    workspace.foreign_window = SimpleNamespace(setGeometry=geometries.append)
+    shown = []
+    workspace.foreign_window = SimpleNamespace(setGeometry=geometries.append, show=lambda: shown.append(True))
+    monkeypatch.setattr(workspace, "isVisible", lambda: True)
     workspace.present_result(True)
     workspace.fit_surface()
-    assert geometries == [QRect(0, 0, 1041, 680), QRect(0, 0, 1040, 680)]
+    assert shown == [True]
+    monkeypatch.setattr(workspace, "isVisible", lambda: False)
+    workspace.present_result(True)
+    assert shown == [True]
+    assert geometries[:2] == [QRect(0, 0, 1041, 680), QRect(0, 0, 1040, 680)]
     workspace.container = None
     workspace.foreign_window = None
     workspace.deleteLater()
@@ -160,4 +166,26 @@ def test_disconnected_workspace_clears_stale_project(application, tmp_path):
     workspace.current_path = str(tmp_path)
     workspace.set_state("failed")
     assert workspace.current_path == "" and not workspace.timer.isActive()
+    workspace.shutdown()
+
+
+def test_embedded_keyboard_focus_only_follows_visible_container(application, tmp_path, monkeypatch):
+    from PySide6.QtCore import QEvent
+    from PySide6.QtWidgets import QWidget
+    from kotoba.fleet_workspace import FleetWorkspace
+    workspace = FleetWorkspace(tmp_path)
+    container = QWidget(workspace)
+    workspace.container = container
+    calls = []
+    monkeypatch.setattr(workspace, "focus_native_window", lambda: calls.append("focus"))
+    workspace.eventFilter(container, QEvent(QEvent.FocusIn))
+    assert calls == []
+    workspace.show()
+    workspace.eventFilter(container, QEvent(QEvent.FocusIn))
+    workspace.eventFilter(container, QEvent(QEvent.FocusOut))
+    workspace.eventFilter(workspace, QEvent(QEvent.FocusIn))
+    application.processEvents()
+    assert calls and set(calls) == {"focus"}
+    workspace.container = None
+    workspace.close()
     workspace.shutdown()

@@ -1,6 +1,6 @@
 # Kotoba Studio for Windows
 
-The installer is `python/voice/dist/Kotoba-Studio-0.12.0-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes the embedded Orca/Electron agent workspace, Python, Qt WebEngine, the matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
+The installer is `python/voice/dist/Kotoba-Studio-0.12.1-Setup.exe` after a successful build. It installs for the current user, adds a Start menu entry, and supports English and Japanese installer text. The distribution includes the embedded Orca/Electron agent workspace, Python, Qt WebEngine, the matching Harness executable, ripgrep, the OpenWhispr-derived capture helper, and the pinned llama.cpp CPU engine. Prepare speech weights explicitly in Audio settings; weights are not included in the installer. The installer bundles sherpa-onnx and faster-whisper.
 
 ## Try the application
 
@@ -112,3 +112,8 @@ Set a configured provider, model and reply language for each platform. **Prepare
 ### Embedded agent display verification
 
 The hidden agent smoke checks IPC and project context, but cannot detect a black embedded surface. On Windows, install the optional `windows-capture` package in your test environment and run `python python/voice/smoke_fleet_display.py --runtime dist-exe/fleet --output tmp/agent-display`. This opens an inactive test window with a disposable profile, captures the actual composed window, and checks Accounts, resize, and hide/show restoration. Inspect the images before shipping. Do not publish captures containing detected personal account labels. No provider turn or sign-in is submitted.
+
+
+### Terminal and chat keyboard verification
+
+Run `python python/voice/smoke_fleet_keyboard.py --checkout tmp/orca-reference --runtime dist-exe/fleet --output tmp/agent-keyboard` on Windows with Codex installed and the pinned checkout dependencies available. This opt-in check temporarily brings its own test window to the foreground. It opens the real Agents project and Terminal 1, types a harmless command through the Windows keyboard queue, opens **New chat → Codex chat**, types an unsent draft, opens the model menu, switches tabs, and checks hide/show restoration. It also launches **Codex terminal** and types an unsent slash command. The private Git fixture and profile are discarded; only screenshots in the requested output folder remain. Do not interact with the test window while it runs. No model prompt is submitted.

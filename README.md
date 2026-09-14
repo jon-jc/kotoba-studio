@@ -4,7 +4,7 @@
 
 **Your coding agents. One place to build.**
 
-Windows x64 · 0.12.0
+Windows x64 · 0.12.1
 
 [English](#english) · [日本語](#japanese)
 
@@ -21,6 +21,8 @@ A Windows desktop workspace for Japanese and English voice input, AI conversatio
 **Agents is the main workspace.** Run Codex, Claude Code, OpenCode or Pi through its installed CLI and sign-in. Use the subscriptions or credentials supported by that agent; one provider's subscription does not grant access to another. Open **Agent accounts** to manage supported connections.
 
 Add a project, create a worktree for a task, and launch an agent. Concurrent tasks stay in the left sidebar, with one selected at a time. Terminals, changes, review and account switching use Orca's complete desktop implementation inside Kotoba's window. Split layouts remain optional. **API chat** is a secondary route to the full Harness and its configured providers.
+
+**New chat** opens a conversation with any installed, enabled agent supported by the chat runtime: Codex, Claude Code, OpenClaude, Grok, or OMP. Each chat keeps its own model and draft. The same menu offers original interactive terminals; OpenCode and Pi remain terminal-based.
 
 The selected local worktree follows you into Code and Voice. Review dictated text before adding it to an empty native agent-chat draft; terminal-only agents can use paste-at-cursor dictation. Team handoffs and LINE-first messaging remain in the same application. Each external CLI manages its own permissions; **Access** opens the controls for the current workspace.
 
@@ -76,7 +78,7 @@ A persistent left rail keeps development tools together and separates collaborat
 
 ## Start on Windows
 
-The desktop build is **Kotoba Studio 0.12.0**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.12.0-Setup.exe` from your build output. The installer includes the subscription-agent workspace, full Harness runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
+The desktop build is **Kotoba Studio 0.12.1**, an unsigned developer preview for Windows x64. Install `Kotoba-Studio-0.12.1-Setup.exe` from your build output. The installer includes the subscription-agent workspace, full Harness runtime, audio capture helper, and CPU inference engine. Speech and language-model weights are separate. See the [Windows guide](python/voice/WINDOWS.md) to build and verify the installer.
 
 1. **Open Agents.** Add a project, connect an installed coding agent in Agent accounts, and create a task in its own worktree.
 2. **Optionally use API chat.** Open **Settings → Connections** to configure an API provider, or choose Configure later and open Local models. Register a local model, then select Kotoba Local in the chat composer.
@@ -153,6 +155,8 @@ Kotoba Studio builds on the actual [DeepSeek Harness](https://github.com/deepsee
 
 起動後は **エージェント** がメイン画面になります。Codex、Claude Code、OpenCode、Pi を、それぞれの CLI とログインで利用できます。各エージェントが対応するサブスクリプションや認証情報が必要です。**エージェントのアカウント** から接続を設定してください。
 
+**新しいチャット** から、インストール・有効化済みの対応エージェント（Codex、Claude Code、OpenClaude、Grok、OMP）と会話できます。チャットごとにモデルと下書きを保持します。同じメニューから対話型ターミナルも開けます。OpenCode と Pi はターミナルを使用します。
+
 プロジェクトを追加し、タスクごとに作業ツリーを作成してエージェントを起動します。並行するタスクは左の一覧にまとまり、一度にひとつを表示します。Orca の実際のデスクトップ実装を Kotoba 内に組み込み、ターミナル、変更差分、レビュー、アカウント切り替えを利用できます。分割表示は任意です。従来の Harness は **API チャット** から利用できます。
 
 選択したローカルの作業ツリーはコード・音声画面と共有されます。音声は確認後、空のネイティブチャット下書きへ挿入します。ターミナル形式のエージェントではカーソル位置への貼り付けを利用してください。各 CLI の権限はそのエージェントが管理します。[設定と対応範囲](python/voice/AGENTS_WORKFLOW.md)をご覧ください。
@@ -203,7 +207,7 @@ Kotoba Studio は、日本語と英語の音声入力、AI エージェント、
 
 ### Windows で始める
 
-現在のデスクトップ版は **0.12.0**、Windows x64 向けの未署名の開発者プレビューです。[Windows パッケージ作成ガイド](python/voice/WINDOWS.md)に従って `Kotoba-Studio-0.12.0-Setup.exe` を作成できます。インストーラーには、サブスクリプションのエージェント用ワークスペース、Harness 実行環境、音声キャプチャー、CPU 推論エンジンが含まれます。モデルの重みは別途ダウンロードするか、手元のファイルを登録してください。
+現在のデスクトップ版は **0.12.1**、Windows x64 向けの未署名の開発者プレビューです。[Windows パッケージ作成ガイド](python/voice/WINDOWS.md)に従って `Kotoba-Studio-0.12.1-Setup.exe` を作成できます。インストーラーには、サブスクリプションのエージェント用ワークスペース、Harness 実行環境、音声キャプチャー、CPU 推論エンジンが含まれます。モデルの重みは別途ダウンロードするか、手元のファイルを登録してください。
 
 1. **作業フォルダーを選ぶ。** エージェントが作業するフォルダーを指定します。
 2. **モデルを接続する。** **··· → 接続** で OpenAI、Anthropic Claude、Kimi、DeepSeek、またはカスタムの接続先を設定します。ローカルで使う場合は **ローカル AI** で GGUF モデルを登録してエンジンを起動し、会話の入力欄で **Kotoba Local** を選びます。Ollama と LM Studio にも接続できます。

@@ -53,3 +53,16 @@ Kotoba suppresses automatic and explicitly requested Orca CLI promotion tips. Th
 ## Sidebar and Windows Codex discovery (0.11.2)
 
 The help menu omits upstream feedback, milestones, onboarding, documentation, changelog and social links. Its feedback dialog is no longer prefetched. Windows agent discovery includes valid executables in the desktop Codex version cache, preserving explicit PATH installs. Startup and Refresh append discovered directories so terminal launch and detection agree. Lookup is bounded, ignores incomplete downloads and does not execute binaries. Tests cover empty GUI PATH, updated installs, redirected LocalAppData, selection precedence and menu removal.
+
+
+## Native keyboard and explicit agent chats (0.12.1)
+
+The adopted Chromium child could have DOM focus while the outer Qt window retained Win32 keyboard focus. A trusted main-frame pointer gesture now requests a native focus handoff over the owned runtime's nonce-checked stdout. Qt revalidates the process owner, foreground root and child ancestry before `SetFocus`; background, hidden and detached windows cannot activate or receive focus. Tab focus into the native container follows the same handoff. No keys are synthesized by the application and polling never changes focus.
+
+New supported chats use the pinned runtime's existing conversation transports. A one-time settings migration upgrades terminal-only defaults while preserving subsequent choices and existing sessions. **New chat** exposes Codex/Claude chat and terminal choices; each launch overrides only its local view preference, preserving account, permission arguments, workspace ownership and other conversations. Agents settings expose the default. Unsupported agents retain terminals; API chat remains separate.
+
+Structured Codex initially fell back because Electron resolved an incomplete JavaScript-only native-module copy inside app.asar. The Windows process reader now resolves the validated resources/node_modules closure when hosted by Kotoba. It retains the compiled creation-time capability gate; no process-ownership proof is bypassed.
+
+Verification includes native routing, migration, focus ownership and launch-mode tests plus an opt-in real Windows input smoke. The latter navigates the actual Agents project/Terminal 1 and Codex chat, executes a fixture shell command, retains an unsent draft across tab switches, opens model choices and restores the embedded window. Browser-injected keyboard events or a synthetic input field are not accepted as terminal-input proof. Paid agent turns, Japanese IME composition and unsupported provider chat transports remain outside this check.
+
+The Windows host focuses Chromium’s renderer child only inside the owned foreground window, releases temporary UI-thread attachment, and defers Qt focus handoffs until activation finishes. Presentation explicitly shows the adopted surface after restore; the native keyboard smoke verifies shell execution, chat drafts, restored input, and the actual Codex terminal.

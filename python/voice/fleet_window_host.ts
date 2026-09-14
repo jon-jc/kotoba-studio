@@ -1,4 +1,4 @@
-import { BrowserWindow } from 'electron'
+import { BrowserWindow, ipcMain } from 'electron'
 import { createInterface } from 'node:readline'
 import { createConnection } from 'node:net'
 
@@ -13,6 +13,23 @@ export function installKotobaWindowHost(window: BrowserWindow): void {
   // hidden-launch state cannot observe the foreign parent becoming visible.
   window.webContents.setBackgroundThrottling(false)
   const emit = (value: object): void => { process.stdout.write(JSON.stringify({ kotoba: nonce, ...value }) + '\n') }
+  // A foreign Qt parent can own native focus while Chromium only has DOM focus.
+  // Transfer focus on a user gesture, never on snapshot/presentation polling.
+  const focusContent = (): void => {
+    if (!window.isDestroyed() && !window.webContents.isDestroyed()) {
+      // Qt owns visibility; Electron can report hidden after native adoption.
+      // The parent checks visibility, foreground and ownership before focusing.
+      // Qt owns the foreground HWND. Let its UI thread hand native focus to
+      // the adopted child; webContents.focus() alone changes only DOM focus.
+      window.webContents.focus()
+      emit({ kind: 'focus' })
+    }
+  }
+  const focusFromRenderer = (event: Electron.IpcMainEvent): void => {
+    if (event.sender === window.webContents && event.senderFrame === window.webContents.mainFrame) focusContent()
+  }
+  ipcMain.on('kotoba:focusEmbedded', focusFromRenderer)
+  window.once('closed', () => ipcMain.removeListener('kotoba:focusEmbedded', focusFromRenderer))
   window.webContents.on('did-finish-load', () => {
     emit({ kind: 'window', handle: window.getNativeWindowHandle().readBigUInt64LE().toString() })
   })

@@ -1,12 +1,12 @@
 # Subscription agents in Kotoba Studio
 
-The Windows 0.12.0 build opens **Agents** as the main workspace. Kotoba hosts the full Orca desktop interface inside its own window, alongside the existing API Harness, English/Japanese voice tools, code viewer and messaging. There is one outer window and one system tray entry.
+The Windows 0.12.1 build opens **Agents** as the main workspace. Kotoba hosts the full Orca desktop interface inside its own window, alongside the existing API Harness, English/Japanese voice tools, code viewer and messaging. There is one outer window and one system tray entry.
 
 ## Start a task
 
 1. Open **Agent accounts** and connect the coding agent you use. Codex, Claude Code, OpenCode and Pi retain their own CLI installation, authentication, plan limits and supported providers. Follow the selected agent's setup instructions; Kotoba does not supply a subscription.
 2. Add a Git project. Create a workspace/worktree for each task to isolate file edits. A worktree is a separate checkout, not a security sandbox.
-3. Choose an agent for that task and enter its instruction. Other tasks can continue while you select a different row in the left sidebar. Splitting terminals is optional.
+3. Use **New chat → Codex chat** or **Claude Code chat** for a conversation with the agent. The same menu offers **Codex terminal** and **Claude Code terminal** for their original interactive interfaces. Choose an agent for that task and enter its instruction. The chat menu includes installed, enabled Codex, Claude Code, OpenClaude, Grok and OMP adapters. New supported Codex and Claude Code tasks open in chat view, with a message composer, model selection and tool activity. **Settings → Agents → Agent conversations** changes the default for future tasks; existing sessions keep their current view. OpenCode and Pi continue in their interactive terminals. Other tasks can continue while you select a different row in the left sidebar. Splitting terminals is optional.
 4. Review changes and terminal output in that task. Commit, branch and pull-request actions remain explicit upstream controls.
 5. Use **Voice** to review English or Japanese speech. **Add to chat** inserts into an empty native chat composer without sending. If no compatible composer is available or it already contains text, the transcript stays in Voice. Use paste-at-cursor dictation for a terminal-based agent.
 
@@ -45,7 +45,7 @@ The packaged artifact is checked for native terminal process ownership, dependen
 
 ## 日本語
 
-Windows 版 0.12.0 は **エージェント** を中心に起動します。Orca の完全なデスクトップ実装を Kotoba の同じウィンドウに組み込み、API チャット、日英の音声入力、コード、メッセージ機能を併用できます。
+Windows 版 0.12.1 は **エージェント** を中心に起動します。Orca の完全なデスクトップ実装を Kotoba の同じウィンドウに組み込み、API チャット、日英の音声入力、コード、メッセージ機能を併用できます。
 
 **エージェントのアカウント** で Codex、Claude Code、OpenCode、Pi などの設定を行ってください。各 CLI が対応するログイン、サブスクリプション、認証情報、利用上限に従います。Git プロジェクトを追加し、タスクごとに作業ツリーを作成すると変更を分離できます。作業ツリー自体はセキュリティ上のサンドボックスではありません。
 

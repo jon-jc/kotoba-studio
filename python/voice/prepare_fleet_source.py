@@ -88,6 +88,18 @@ def prepare(root):
     prepare_access(root, replace_once)
     from prepare_fleet_sidebar import prepare_sidebar
     prepare_sidebar(root)
+    from prepare_fleet_chat import prepare_chat
+    prepare_chat(root, replace_once)
+    replace_once(root, 'src/preload/index.ts',
+        "import { contextBridge, ipcRenderer } from 'electron'",
+        "import { contextBridge, ipcRenderer } from 'electron'\n"
+        "// Chromium needs native focus after Qt adopts its window. Do not expose this\n"
+        "// channel to page scripts or forward synthetic gestures from embedded pages.\n"
+        "if (process.isMainFrame) {\n"
+        "  window.addEventListener('pointerdown', event => {\n"
+        "    if (event.isTrusted) ipcRenderer.send('kotoba:focusEmbedded')\n"
+        "  }, { capture: true, passive: true })\n"
+        "}")
     shutil.copyfile(Path(__file__).with_name('fleet_windows_codex.ts'), root / 'src/shared/kotoba-windows-codex.ts')
     shutil.copyfile(Path(__file__).with_name('fleet_windows_codex.test.ts'), root / 'src/shared/kotoba-windows-codex.test.ts')
     replace_once(root, 'src/shared/system-cli-install-dirs.ts',

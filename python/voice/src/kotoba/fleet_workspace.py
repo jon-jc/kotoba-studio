@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from PySide6.QtCore import QTimer, Qt, Signal
+from PySide6.QtCore import QEvent, QTimer, Qt, Signal
 from PySide6.QtGui import QWindow
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QStackedWidget
 from .fleet_runtime import FleetRuntime
@@ -61,6 +61,7 @@ class FleetWorkspace(QWidget):
         self.container = None
         layout.addWidget(self.pages, 1)
         self.runtime.ready.connect(self.connect_runtime)
+        self.runtime.focus_requested.connect(self.focus_native_window)
         self.runtime.state.connect(self.set_state)
         self.timer = QTimer(self)
         self.timer.setInterval(1200)
@@ -108,13 +109,35 @@ class FleetWorkspace(QWidget):
         self.container = QWidget.createWindowContainer(self.foreign_window, self)
         self.container.setAttribute(Qt.WA_NativeWindow)
         self.container.setFocusPolicy(Qt.StrongFocus)
+        self.container.installEventFilter(self)
         self.pages.addWidget(self.container)
         self.pages.setCurrentWidget(self.container)
         QTimer.singleShot(0, self.present)
         self.timer.start()
         self.poll()
 
+    def event(self, event):
+        if event.type() == QEvent.WindowActivate and getattr(self, "container", None) is not None and self.isVisible():
+            # Qt restores focus to its own frame during activation. Hand it back
+            # after that transaction, retaining foreground/ownership checks.
+            QTimer.singleShot(0, self.focus_native_window)
+        return super().event(event)
+
+    def eventFilter(self, watched, event):
+        if watched is self.container and event.type() in (QEvent.FocusIn, QEvent.MouseButtonPress) and self.isVisible():
+            QTimer.singleShot(0, self.focus_native_window)
+        return super().eventFilter(watched, event)
+
+    def focus_native_window(self):
+        if self.container is None or not self.isVisible() or not self.runtime.address:
+            return
+        from .fleet_focus import focus_owned_child
+        handle = int(self.runtime.address)
+        if self.runtime.owns_window(handle):
+            focus_owned_child(int(self.window().winId()), handle)
+
     def showEvent(self, event):
+        self._restore_native_focus = self.container is not None
         super().showEvent(event)
         QTimer.singleShot(0, self.present)
 
@@ -131,8 +154,13 @@ class FleetWorkspace(QWidget):
         if accepted is True and self.container is not None and self.foreign_window is not None:
             # Electron restores its former top-level screen position on show.
             # Our native container owns the child coordinates, including on restore.
+            if self.isVisible():
+                self.foreign_window.show()
             self.foreign_window.setGeometry(self.container.rect().adjusted(0, 0, 1, 0))
             QTimer.singleShot(0, self.fit_surface)
+            if getattr(self, "_restore_native_focus", False):
+                self._restore_native_focus = False
+                QTimer.singleShot(0, self.focus_native_window)
         elif accepted is not True:
             self.context.show()
             self.context.setText(self.tr("Could not display the agent workspace. Switch to API chat or reopen Agents to retry.", "エージェント画面を表示できませんでした。API チャットに切り替えるか、エージェント画面を開き直してください。"))
