@@ -26,11 +26,11 @@ Add a project, create a worktree for a task, and launch an agent. Concurrent tas
 
 The selected local worktree follows you into Code and Voice. Review dictated text before adding it to an empty native agent-chat draft; terminal-only agents can use paste-at-cursor dictation. Team handoffs and LINE-first messaging remain in the same application. Each external CLI manages its own permissions; **Access** opens the controls for the current workspace.
 
-See [the subscription-agent workflow](python/voice/AGENTS_WORKFLOW.md) for setup, retained Orca workflows and validation limits. The screenshots below document the earlier API-chat and voice surfaces, which remain available.
+See [the subscription-agent workflow](python/voice/AGENTS_WORKFLOW.md) for setup, retained Orca workflows and validation limits. The screenshots below show Kotoba Studio 0.12.4, captured in separate demo profiles. API and voice text are unsent examples; messaging and handoff content is fictional. Live voice and messaging connections are stopped.
 
-![Kotoba Studio 0.11.0: unified left navigation and agent setup](assets/screenshots/workspace-shell-en.png)
+![Kotoba Studio 0.12.4: Claude Code chat with a real bilingual release-review response](assets/screenshots/subscription-workspace-en.png)
 
-The current embedded Agents onboarding detects locally installed CLIs. This screenshot does not establish account sign-in or model access; no agent instruction has been sent.
+A real Claude Code reply illustrates the native chat view. **New chat** separates supported chat views from interactive terminals; available choices depend on installed and enabled agents. Japanese controls are available in chat. Claude’s own terminal menus remain English; new local Claude launches follow Kotoba’s response-language preference. [Agent setup and chat support](python/voice/AGENTS_WORKFLOW.md).
 
 ## One workspace, from voice to action
 
@@ -48,25 +48,25 @@ The desktop combines persistent chat, a voice dock, a file explorer, a code view
 | Repeatable dictation | Global Windows hotkey, paste at cursor, saved phrases, undo, and reviewed agent drafts |
 | Measurable results | Transcription latency, real-time factor, Japanese character error rate, and English word error rate against a supplied reference |
 
-These screenshots show the running 0.7.3 app with **OpenAI → GPT-6 Astra** selected in chat and voice. The provider dropdown lists only configured providers; the adjacent model dropdown shows models for the selected provider. Chat and voice drafts are manually entered, unsent examples, not transcription results or generated responses.
+These screenshots show the running 0.12.4 app with **OpenAI → GPT-6 Astra** selected in chat and voice. The provider dropdown lists only configured providers; the adjacent model dropdown shows models for the selected provider. Chat and voice drafts are manually entered, unsent examples, not transcription results or generated responses.
 
 ### API chats, independent conversations
 
 Use **+ New agent** or **Ctrl+T** to open another retained chat. Choose its provider and model in its own composer: OpenAI, Claude, Kimi, DeepSeek, and local routes can work in parallel. The left-hand chat list keeps one conversation visible at a time. Select a chat to make it the destination for reviewed voice input. Rows show the model, running activity, and background completion, with the full provider/model in the tooltip. Double-click a row to name the task. **Ctrl+Tab** and **Ctrl+Shift+Tab** switch chats. Closing a view leaves saved sessions and running agents on the host; confirm before discarding a view with an unsent draft. Separate browser storage preserves each open view's session selection across restarts. Agents sharing a workspace can edit the same files; use separate folders for conflicting work.
 
-![Kotoba Studio 0.7.3 with independent agents in the left sidebar](assets/screenshots/agents-workspace-en.png)
+![Kotoba Studio 0.12.4 with independent agents in the left sidebar](assets/screenshots/agents-workspace-en.png)
 
 ### Chat and voice, side by side
 
 Review a voice draft alongside your agent workspace. This screenshot shows an example draft in the review field; it has not been sent to a provider.
 
-![Kotoba Studio 0.7.3 with English chat and the voice review panel](assets/screenshots/voice-workspace-en.png)
+![Kotoba Studio 0.12.4 with English chat and the voice review panel](assets/screenshots/voice-workspace-en.png)
 
 ### A clearer view of your code
 
 Browse files, compare tabs, and search when you need it. Click **Code** again, use **Close Code**, or press **Esc** to return to chat without losing your open tabs.
 
-![Kotoba Studio 0.7.3 Code workspace with Explorer, source tabs, and Close Code](assets/screenshots/code-workspace-en.png)
+![Kotoba Studio 0.12.4 Code workspace with Explorer, source tabs, and Close Code](assets/screenshots/code-workspace-en.png)
 
 <a id="run"></a>
 
@@ -74,7 +74,7 @@ Browse files, compare tabs, and search when you need it. Click **Code** again, u
 
 A persistent left rail keeps development tools together and separates collaboration from configuration. The header stays focused on your current view, project, command search and language. **Settings → Connections** gives subscription accounts, API providers and local models their own clear entry points. Voice and Terminal open only when needed.
 
-![Kotoba Studio 0.11.0: Connections for subscription agents, API providers and local models](assets/screenshots/connections-en.png)
+![Kotoba Studio 0.12.4: Connections for subscription agents, API providers and local models](assets/screenshots/connections-en.png)
 
 ## Start on Windows
 
@@ -107,15 +107,45 @@ Enable **Desktop dictation** to speak into the focused application with **Ctrl+S
 
 ## Messaging, with LINE first
 
-Connect LINE, Slack, Discord, and Telegram from **··· → Messaging**. Keep a local inbox, name conversations, save drafts, review delivery status, and prepare replies with your selected voice agent. English/Japanese reply preferences and team handoffs connect messaging to the rest of your workspace. LINE needs your own public HTTPS webhook endpoint; messages and AI replies are sent explicitly. See [setup and platform limits](python/voice/WINDOWS.md#messaging-hub).
+Open **Messages** in the left rail to connect LINE, Slack, Discord, and Telegram. Keep a local inbox, name conversations, save drafts, review delivery status, and prepare replies with your selected voice agent. English/Japanese reply preferences and team handoffs connect messaging to the rest of your workspace. LINE needs your own public HTTPS webhook endpoint; messages and AI replies are sent explicitly. See [setup and platform limits](python/voice/WINDOWS.md#messaging-hub).
 
-![Kotoba Studio 0.9.0 messaging inbox with LINE selected](assets/screenshots/messaging-inbox-en.png)
+![Kotoba Studio 0.12.4 messaging inbox with LINE selected](assets/screenshots/messaging-inbox-en.png)
 
-This native 0.9.0 preview uses fictional, manually entered messages and an unsent draft. The gateway is stopped; the image is not evidence of a live LINE account connection.
+Fictional release-review messages and an unsent bilingual reply illustrate the inbox. The gateway is stopped; this is not a live LINE connection.
 
 ## English–Japanese team handoffs
 
-Open **··· → Team handoffs** to keep original context, terminology, English/Japanese briefs, and reviewed decisions or action items together. Copy a meeting into a handoff, prepare an explicit request for your selected voice agent, and import its JSON reply for review. Share by copying or exporting bilingual Markdown. Handoffs stay on this device; translation uses a manual request/import step and there is no remote team synchronization. See the [handoff workflow](python/voice/WINDOWS.md#englishjapanese-team-handoffs).
+Open **Handoffs** in the left rail to keep original context, terminology, English/Japanese briefs, and reviewed decisions or action items together. Copy a meeting into a handoff, prepare an explicit request for your selected voice agent, and import its JSON reply for review. Share by copying or exporting bilingual Markdown. Handoffs stay on this device; translation uses a manual request/import step and there is no remote team synchronization. See the [handoff workflow](python/voice/WINDOWS.md#englishjapanese-team-handoffs).
+
+
+![Kotoba Studio 0.12.4 bilingual team handoff with an example release checklist](assets/screenshots/team-handoff-en.png)
+
+### Live voice, meetings, and setup
+
+<details>
+<summary>View live conversation, meeting notes, terminal, local models, and LINE setup</summary>
+
+**Live conversation:** OpenAI Realtime selected, before connecting. Voice API credentials and billing are separate from a coding-agent subscription.
+
+![Kotoba Studio 0.12.4 live-voice setup with OpenAI Realtime](assets/screenshots/live-voice-en.png)
+
+**Meetings & notes:** choose a source, review transcripts, and keep highlights and development notes. This capture shows the meeting setup; no recording is running.
+
+![Kotoba Studio 0.12.4 meeting capture and notes controls](assets/screenshots/meetings-en.png)
+
+**Code and terminal:** source tabs above the desktop command console. Interactive coding-agent terminals live in Agents.
+
+![Kotoba Studio 0.12.4 source browser and terminal panel](assets/screenshots/terminal-workspace-en.png)
+
+**Local models:** register GGUF weights or connect to a local inference server.
+
+![Kotoba Studio 0.12.4 local-model setup](assets/screenshots/local-models-en.png)
+
+**LINE setup:** configure your own Messaging API credentials and public HTTPS webhook origin.
+
+![Kotoba Studio 0.12.4 LINE connection settings](assets/screenshots/messaging-line-en.png)
+
+</details>
 
 ## Choose where inference runs
 
@@ -161,9 +191,9 @@ Kotoba Studio builds on the actual [DeepSeek Harness](https://github.com/deepsee
 
 選択したローカルの作業ツリーはコード・音声画面と共有されます。音声は確認後、空のネイティブチャット下書きへ挿入します。ターミナル形式のエージェントではカーソル位置への貼り付けを利用してください。各 CLI の権限はそのエージェントが管理します。[設定と対応範囲](python/voice/AGENTS_WORKFLOW.md)をご覧ください。
 
-![Kotoba Studio 0.11.0：左側に集約したナビゲーションとエージェントの初期設定](assets/screenshots/workspace-shell-ja.png)
+![Kotoba Studio 0.12.4：Claude Code のチャットと実際のバイリンガル回答](assets/screenshots/subscription-workspace-ja.png)
 
-この画面は、組み込まれたエージェント画面がローカルの CLI を検出した状態です。アカウント認証やモデルへのアクセスを確認した画像ではなく、指示も送信していません。
+画像は Claude Code の実際のバイリンガル回答です。「新しいチャット」では会話形式と対話型ターミナルを選べます。チャットの操作画面は日本語に対応しています。Claude 自体のターミナルメニューは英語ですが、新しく起動したローカルの Claude は Kotoba の設定に合わせた言語で回答します。
 
 Kotoba Studio は、日本語と英語の音声入力、AI エージェント、開発作業を一つにまとめた Windows デスクトップアプリです。ローカルモデルやクラウド API を選び、複数のエージェントを独立したチャットで動かせます。音声で伝えた内容は、送信前に確認・編集できます。
 
@@ -173,7 +203,7 @@ Kotoba Studio は、日本語と英語の音声入力、AI エージェント、
 
 **＋ 新しいエージェント** または **Ctrl+T** でチャットを追加し、ワークスペースとモデルを選択してください。検索、名前のダブルクリックによる変更、**Ctrl+Tab** での切り替えに対応しています。**履歴とワークスペース** から保存済みの会話を開き、**エージェントに戻る** で一覧に戻れます。同じファイルへの編集が競合しそうな場合は、作業フォルダーを分けてください。
 
-![Kotoba Studio 0.7.3：日本語のエージェント一覧と送信前の下書き](assets/screenshots/agents-workspace-ja.png)
+![Kotoba Studio 0.12.4：日本語のエージェント一覧と送信前の下書き](assets/screenshots/agents-workspace-ja.png)
 
 ### 音声を確認して、次のアクションへ
 
@@ -183,34 +213,68 @@ Kotoba Studio は、日本語と英語の音声入力、AI エージェント、
 
 名前・数字・意図を確認して修正し、**チャットに追加** で選択中の会話の下書きに入れます。内容を確認してから送信してください。デスクトップ音声入力を有効にすると、**Ctrl+Shift+Space** でカーソル位置に入力できます。会議とノートの機能では、時刻付きの文字起こし、重要箇所、検索できるメモを残せます。詳しくは[音声ワークフロー](python/voice/VOICE.md)をご覧ください。
 
-![Kotoba Studio 0.7.3：日本語の音声スタジオと会議後のタスク整理の入力例](assets/screenshots/voice-workspace-ja.png)
+![Kotoba Studio 0.12.4：日本語の音声スタジオと会議後のタスク整理の入力例](assets/screenshots/voice-workspace-ja.png)
 
 ### コードとツールを、同じアプリで
 
 ファイル一覧、ソースコードのタブ、検索、PowerShell ターミナルを利用できます。**コード** を再度クリックするか、**コードを閉じる** または **Esc** で会話に戻れます。Harness のツール、権限、スキル、ワークフロー、サブエージェント、Cordis プラグインも利用できます。
 
-![Kotoba Studio 0.7.3：日本語のコード画面と Python ソースのタブ](assets/screenshots/code-workspace-ja.png)
+![Kotoba Studio 0.12.4：日本語のコード画面と Python ソースのタブ](assets/screenshots/code-workspace-ja.png)
 
-画像は 0.7.3 の実際のアプリ画面です。会話と音声エージェントには **OpenAI → GPT-6 Astra** を選択しています。プロバイダーの一覧には設定済みの接続先のみを表示し、隣のモデル一覧からその接続先のモデルを選べます。チャットと音声欄の文章は手入力した未送信の例であり、文字起こし結果や AI の生成結果ではありません。
+画像は 0.12.4 の実際のアプリ画面です。会話と音声エージェントには **OpenAI → GPT-6 Astra** を選択しています。プロバイダーの一覧には設定済みの接続先のみを表示し、隣のモデル一覧からその接続先のモデルを選べます。チャットと音声欄の文章は手入力した未送信の例であり、文字起こし結果や AI の生成結果ではありません。
 
 ### LINE を先頭に、メッセージをまとめる
 
-**··· → メッセージ** から LINE、Slack、Discord、Telegram を設定できます。受信トレイ・会話名・下書き・送信状態を端末に保存し、英語と日本語の返信を音声エージェントに依頼できます。LINE には利用者側の公開 HTTPS Webhook が必要です。受信では自動実行せず、返信は確認して送信します。[設定と制約](python/voice/WINDOWS.md#messaging-hub)をご確認ください。
+左側の **メッセージ** から LINE、Slack、Discord、Telegram を設定できます。受信トレイ・会話名・下書き・送信状態を端末に保存し、英語と日本語の返信を音声エージェントに依頼できます。LINE には利用者側の公開 HTTPS Webhook が必要です。受信では自動実行せず、返信は確認して送信します。[設定と制約](python/voice/WINDOWS.md#messaging-hub)をご確認ください。
 
-![Kotoba Studio 0.9.0：LINE を先頭にした日本語の接続設定](assets/screenshots/messaging-line-ja.png)
+![Kotoba Studio 0.12.4：LINE を先頭にした日本語の接続設定](assets/screenshots/messaging-line-ja.png)
 
-この画面は 0.9.0 の手動設定例です。認証情報はテスト用で、ゲートウェイは停止中です。実際の LINE 接続を示す画像ではありません。
+画像は 0.12.4 のセットアップ画面です。ゲートウェイは停止中で、実際の LINE 接続を示すものではありません。受信トレイと引き継ぎの文章は架空の例です。
 
 ### 英語と日本語のチームで引き継ぐ
 
-**··· → チームの引き継ぎ** で、原文・用語・両言語の要約・決定事項・担当者をまとめられます。会議からコピーし、選択した音声エージェントへの依頼を確認して送信した後、JSON の応答を未確認の下書きとして取り込みます。共有はコピーまたは Markdown の書き出しで行います。データはこの端末に保存され、自動翻訳や遠隔同期はありません。
+左側の **引き継ぎ** で、原文・用語・両言語の要約・決定事項・担当者をまとめられます。会議からコピーし、選択した音声エージェントへの依頼を確認して送信した後、JSON の応答を未確認の下書きとして取り込みます。共有はコピーまたは Markdown の書き出しで行います。データはこの端末に保存され、自動翻訳や遠隔同期はありません。
+
+![Kotoba Studio 0.12.4：英語と日本語の引き継ぎ例](assets/screenshots/team-handoff-ja.png)
+
+
+### 音声会話・会議・開発ツールの画面
+
+<details>
+<summary>音声会話、会議、ターミナル、接続設定、ローカルモデル、受信トレイを見る</summary>
+
+**音声会話：** OpenAI Realtime を選択した接続前の画面です。音声 API の認証情報・料金は、コーディングエージェントのサブスクリプションとは別です。
+
+![Kotoba Studio 0.12.4：日本語の音声会話設定](assets/screenshots/live-voice-ja.png)
+
+**会議とメモ：** 音声の取得元を選び、文字起こし・重要箇所・開発メモを確認します。この画面では録音していません。
+
+![Kotoba Studio 0.12.4：会議の準備とメモ](assets/screenshots/meetings-ja.png)
+
+**コードとターミナル：** ソースのタブとコマンド用コンソールです。エージェントの対話型ターミナルは「エージェント」から開きます。
+
+![Kotoba Studio 0.12.4：コードとターミナル](assets/screenshots/terminal-workspace-ja.png)
+
+**接続：** サブスクリプションのエージェント、API プロバイダー、ローカルモデルの設定を開きます。
+
+![Kotoba Studio 0.12.4：日本語の接続設定](assets/screenshots/connections-ja.png)
+
+**ローカルモデル：** GGUF ファイルを登録するか、ローカルの推論サーバーに接続します。
+
+![Kotoba Studio 0.12.4：ローカルモデルの設定](assets/screenshots/local-models-ja.png)
+
+**受信トレイ：** 架空のリリースレビューと、未送信のバイリンガル返信例です。ゲートウェイは停止しています。
+
+![Kotoba Studio 0.12.4：LINE の受信トレイと返信の下書き](assets/screenshots/messaging-inbox-ja.png)
+
+</details>
 
 ### Windows で始める
 
 現在のデスクトップ版は **0.12.4**、Windows x64 向けの未署名の開発者プレビューです。[Windows パッケージ作成ガイド](python/voice/WINDOWS.md)に従って `Kotoba-Studio-0.12.4-Setup.exe` を作成できます。インストーラーには、サブスクリプションのエージェント用ワークスペース、Harness 実行環境、音声キャプチャー、CPU 推論エンジンが含まれます。モデルの重みは別途ダウンロードするか、手元のファイルを登録してください。
 
 1. **作業フォルダーを選ぶ。** エージェントが作業するフォルダーを指定します。
-2. **モデルを接続する。** **··· → 接続** で OpenAI、Anthropic Claude、Kimi、DeepSeek、またはカスタムの接続先を設定します。ローカルで使う場合は **ローカル AI** で GGUF モデルを登録してエンジンを起動し、会話の入力欄で **Kotoba Local** を選びます。Ollama と LM Studio にも接続できます。
+2. **モデルを接続する。** **設定 → 接続** で OpenAI、Anthropic Claude、Kimi、DeepSeek、またはカスタムの接続先を設定します。ローカルで使う場合は **ローカル AI** で GGUF モデルを登録してエンジンを起動し、会話の入力欄で **Kotoba Local** を選びます。Ollama と LM Studio にも接続できます。
 3. **会話または音声入力を始める。** チャットごとにモデルを選びます。ローカル録音の前に音声モデルを準備し、文字起こしを確認してから送信してください。
 
 | ショートカット | 操作 |
