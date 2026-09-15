@@ -1,6 +1,6 @@
 # Subscription agents in Kotoba Studio
 
-The Windows 0.12.4 build opens **Agents** as the main workspace. Kotoba hosts the full Orca desktop interface inside its own window, alongside the existing API Harness, English/Japanese voice tools, code viewer and messaging. There is one outer window and one system tray entry.
+The Windows 0.12.5 build opens **Agents** as the main workspace. Kotoba hosts the full Orca desktop interface inside its own window, alongside the existing API Harness, English/Japanese voice tools, code viewer and messaging. There is one outer window and one system tray entry.
 
 ## Start a task
 
@@ -45,7 +45,7 @@ The packaged artifact is checked for native terminal process ownership, dependen
 
 ## 日本語
 
-Windows 版 0.12.4 は **エージェント** を中心に起動します。Orca の完全なデスクトップ実装を Kotoba の同じウィンドウに組み込み、API チャット、日英の音声入力、コード、メッセージ機能を併用できます。
+Windows 版 0.12.5 は **エージェント** を中心に起動します。Orca の完全なデスクトップ実装を Kotoba の同じウィンドウに組み込み、API チャット、日英の音声入力、コード、メッセージ機能を併用できます。
 
 **エージェントのアカウント** で Codex、Claude Code、OpenCode、Pi などの設定を行ってください。各 CLI が対応するログイン、サブスクリプション、認証情報、利用上限に従います。Git プロジェクトを追加し、タスクごとに作業ツリーを作成すると変更を分離できます。作業ツリー自体はセキュリティ上のサンドボックスではありません。
 
@@ -95,12 +95,12 @@ The desktop language selector applies English or Japanese to the embedded agent 
 
 ## Claude language
 
-Claude's terminal menus are supplied by Claude Code and remain English. In Japanese mode, its terminal has a **日本語のチャット表示** button that opens Kotoba's translated conversation interface without starting another session.
+Selecting Japanese automatically opens the active Claude pane in Kotoba’s Japanese chat view. Each pane switches once per language selection. Returning to the original terminal for sign-in, trust, or other CLI prompts remains possible; it stays open until Japanese is selected again. The provider-owned terminal menus are English. A **日本語のチャット表示** button returns from the terminal to chat. Claude’s signed-out error is displayed in Japanese with a `/login` instruction; changing the interface language does not sign in to an account.
 
 New local Windows Claude chats and terminals load the selected reply language from a Kotoba-owned `claude-language.json` file through Claude's `--settings` option. Switching Kotoba's language updates that file. No global Claude settings or project files are edited. Existing sessions created before this integration need a new chat to load it. Explicit custom `--settings` options and remote launches retain their own configuration; organization-managed settings still take precedence. The [Claude settings documentation](https://code.claude.com/docs/en/settings) describes settings scope and precedence.
 
 ### Claude の言語
 
-Claude Code 自体のターミナルメニューは英語です。日本語を選択すると、ターミナルに **日本語のチャット表示** ボタンが表示されます。同じセッションを維持したまま、日本語の操作画面に切り替えられます。
+日本語を選択すると、選択中の Claude は同じセッションの日本語チャット表示へ自動で切り替わります。切り替えは、言語を選択するたびに各画面で一度だけ行います。サインインや信頼確認のために元のターミナルへ戻った場合は、日本語を選び直すまでその画面を維持します。**日本語のチャット表示** ボタンでもチャットに戻れます。Claude 自体のターミナルメニューは英語です。未ログインのエラーは `/login` の案内とともに日本語で表示しますが、言語の切り替えでアカウントにサインインすることはありません。
 
 新しいローカル Windows の Claude チャットとターミナルは、Kotoba 専用の `claude-language.json` を `--settings` で読み込み、応答言語に使用します。言語の切り替えでこのファイルを更新します。Claude のグローバル設定やプロジェクトのファイルは変更しません。この機能の導入前に作成したセッションは、新しいチャットで設定を読み込んでください。独自の `--settings`、リモート接続、組織の管理設定は優先されます。

@@ -156,7 +156,7 @@ def prepare_claude_chat_compatibility(root, patch):
           "import { createPortal } from 'react-dom'\nimport { KotobaClaudeLanguageNotice } from './KotobaClaudeLanguageNotice'")
     patch(root, 'src/renderer/src/components/terminal-pane/TerminalPaneSurface.tsx',
           '  return (\n    <>',
-          "  return (\n    <div className=\"absolute inset-0 flex min-h-0 flex-col\">\n      {isActive && activePaneCanToggleChat && !activePaneIsChatLeaf && activePane && controller.resolveAgentForLeaf(activePane.leafId) === 'claude' && <KotobaClaudeLanguageNotice onOpenChat={handleToggleNativeChat} />}\n      <div className=\"relative min-h-0 flex-1\">")
+          "  return (\n    <div className=\"absolute inset-0 flex min-h-0 flex-col\">\n      {isActive && activePaneCanToggleChat && activePane && controller.resolveAgentForLeaf(activePane.leafId) === 'claude' && <KotobaClaudeLanguageNotice paneId={activePane.leafId} isChat={activePaneIsChatLeaf} onOpenChat={handleToggleNativeChat} />}\n      <div className=\"relative min-h-0 flex-1\">")
     patch(root, 'src/renderer/src/components/terminal-pane/TerminalPaneSurface.tsx',
           '    </>\n  )', '      </div>\n    </div>\n  )')
 
@@ -166,3 +166,13 @@ def prepare_claude_chat_compatibility(root, patch):
         ('fleet_claude_language_notice.test.tsx', 'src/renderer/src/components/terminal-pane/KotobaClaudeLanguageNotice.test.tsx'),
     ):
         shutil.copyfile(Path(__file__).with_name(source), root / target)
+
+    patch(root, 'src/renderer/src/components/native-chat/NativeChatMessageRow.tsx',
+          "import { translate } from '@/i18n/i18n'",
+          "import { translate } from '@/i18n/i18n'\nimport { useTranslation } from 'react-i18next'\nimport { localizedClaudeStatus } from '../../lib/kotoba-claude-language'")
+    patch(root, 'src/renderer/src/components/native-chat/NativeChatMessageRow.tsx',
+          '  const rowRef = useRef<HTMLDivElement | null>(null)',
+          '  const { i18n } = useTranslation()\n  const rowRef = useRef<HTMLDivElement | null>(null)')
+    patch(root, 'src/renderer/src/components/native-chat/NativeChatMessageRow.tsx',
+          '          content={markdown}\n          variant="document"',
+          '          content={localizedClaudeStatus(markdown, i18n.language)}\n          variant="document"')

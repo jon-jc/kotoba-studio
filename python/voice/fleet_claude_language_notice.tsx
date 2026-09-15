@@ -1,8 +1,14 @@
+import { useEffect } from 'react'
+import { claimJapaneseClaudeChat } from '../../lib/kotoba-claude-language'
 import { useTranslation } from 'react-i18next'
 import { MessageSquare } from 'lucide-react'
-export function KotobaClaudeLanguageNotice({ onOpenChat }: { onOpenChat: () => void }): React.JSX.Element | null {
+export function KotobaClaudeLanguageNotice({ paneId, isChat, onOpenChat }: { paneId: string; isChat: boolean; onOpenChat: () => void }): React.JSX.Element | null {
   const { i18n } = useTranslation()
-  if (!i18n.language.startsWith('ja')) return null
+  const japanese = i18n.language.startsWith('ja')
+  useEffect(() => {
+    if (japanese && claimJapaneseClaudeChat(paneId) && !isChat) onOpenChat()
+  }, [japanese, paneId, isChat, onOpenChat])
+  if (!japanese || isChat) return null
   return <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/30 px-4 py-2 text-xs">
     <div className="min-w-0 text-muted-foreground">
       <span className="font-medium text-foreground">Claude Code のターミナル</span>

@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-09-12-subscription-agent-workspace.md
-2026-09-12-subscription-agent-workspace.md: 4f0629e650b912c0f258c79bb4862924232f8ea8
-2026-09-12-subscription-agent-workspace.zh.md: 4dca3e3227461735bba0ae6fd465966c14228e46
+2026-09-12-subscription-agent-workspace.md: b377e0daf695241b682b1c6e03f4c2626a8805d1
+2026-09-12-subscription-agent-workspace.zh.md: f25e1e77a594c71097d8ec491683f3232537362d
