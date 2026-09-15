@@ -1,5 +1,5 @@
 import { afterEach, expect, it } from 'vitest'
-import { claudeLanguageArgs, setKotobaClaudeLanguageSettings } from './kotoba-claude-language'
+import { claudeLanguageArgs, setKotobaClaudeLanguageSettings, localizedClaudeStatus } from './kotoba-claude-language'
 import { tokenizeStartupCommand } from '../../../shared/tui-agent-startup-shell'
 afterEach(() => setKotobaClaudeLanguageSettings(null))
 it('quotes the profile file and preserves model and permission flags', () => {
@@ -16,4 +16,11 @@ it('does not replace custom settings or send local paths to other agents or host
   }
   expect(claudeLanguageArgs('codex', '', 'powershell', true)).toBe('')
   expect(claudeLanguageArgs('claude', '', 'posix', false)).toBe('')
+})
+
+it('translates the exact sign-in failure while preserving prose and English status', () => {
+  const status = 'Not logged in · Please run /login'
+  expect(localizedClaudeStatus(status, 'ja')).toContain('サインインしていません')
+  expect(localizedClaudeStatus(status, 'en')).toBe(status)
+  expect(localizedClaudeStatus('Example: ' + status, 'ja')).toBe('Example: ' + status)
 })
